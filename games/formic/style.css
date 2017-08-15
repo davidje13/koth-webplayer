@@ -1,0 +1,132 @@
+.game-container {
+	position: relative;
+	padding: 10px;
+	background: #999999;
+	margin: 10px;
+	float: left;
+}
+
+.options {
+	color: #333333;
+	font-size: 0.8em;
+	margin: -5px -5px 5px;
+}
+
+.options button {
+	margin: 0 5px;
+}
+
+.options .semidestructive {
+	margin-right: 10px;
+}
+
+.options .frames {
+	margin: 0 10px;
+}
+
+.options .frame {
+	display: inline-block;
+	min-width: 50px;
+	text-align: right;
+}
+
+.options .frames input[type=number] {
+	width: 70px;
+	text-align: right;
+}
+
+.options input.seed-entry {
+	width: 150px;
+	font: 0.9em monospace;
+	vertical-align: top;
+}
+
+.options .play-speed {
+	margin: 0 10px;
+}
+
+.options .play-speed button {
+	margin: 0;
+}
+
+.options .performance {
+	display: inline-block;
+	font-size: 0.8em;
+	vertical-align: -5px;
+	margin: 0 10px;
+}
+
+.options .metric {
+	font: 1.1em monospace;
+}
+
+.options .destructive {
+	margin: 5px 0 0 10px;
+	float: right;
+}
+
+.game-board-3d {
+	position: absolute;
+	top: 50px;
+	right: 10px;
+}
+
+.game-board .mark.region-indicator {
+	box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+.game-board .mark.queen-locator, .game-board .mark.worker-locator {
+	background: #EEEEEE;
+	border: 1px solid rgba(0, 0, 0, 0.3);
+	border-radius: 100%;
+	border-top-left-radius: 0;
+	text-align: center;
+	opacity: 0.9;
+	overflow: hidden;
+}
+
+.game-board .mark.queen-locator {
+	font-size: 12px;
+	width: 14px;
+	height: 14px;
+	z-index: 2;
+}
+
+.game-board .mark.worker-locator {
+	font-size: 10px;
+	width: 12px;
+	height: 12px;
+	z-index: 1;
+}
+
+.game-board .mark.queen-locator:after {
+	content: '\01F451';
+	position: relative;
+	top: -4px;
+}
+
+.game-board .mark.worker-locator:after {
+	content: '\01F477';
+	position: relative;
+	top: -2px;
+}
+
+.fouls {
+	margin: 20px;
+	border-collapse: collapse;
+	display: inline-block;
+	background: #FFFFFF;
+	color: #444444;
+	font-size: 0.8em;
+	vertical-align: top;
+	max-width: 500px;
+}
+
+.fouls td, .fouls th {
+	border: 1px solid #444444;
+	padding: 5px;
+}
+
+.fouls .foul-reason {
+	font-family: monospace;
+}

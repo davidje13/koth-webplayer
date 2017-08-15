@@ -1,0 +1,18 @@
+.game-board, .game-board-3d {
+	position: relative;
+}
+
+.game-board-clip {
+	position: relative;
+	overflow: hidden;
+}
+
+.game-board canvas {
+	background: #808080;
+	transform-origin: top left;
+	-webkit-transform-style: preserve-3d;
+}
+
+.game-board .mark {
+	position: absolute;
+}

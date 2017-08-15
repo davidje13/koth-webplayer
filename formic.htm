@@ -1,0 +1,48 @@
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="content-security-policy" content="
+	base-uri 'self';
+	block-all-mixed-content;
+	default-src 'none';
+	frame-src blob:;
+	connect-src https://api.stackexchange.com;
+	script-src 'self' 'unsafe-inline' blob:;
+	worker-src blob:;
+	style-src 'self';
+	form-action 'none';
+">
+
+<!-- these properties are read by the engine to configure the game -->
+<title>Formic Functions</title>
+<meta name="stack-exchange-site" content="codegolf">
+<meta name="stack-exchange-qid" content="135102">
+<meta name="game-type" content="formic">
+<meta name="game-config" content='{
+	"width": 2500,
+	"height": 1000,
+	"foodRatio": 0.001,
+	"maxFrame": 30000
+}'>
+<meta name="play-config" content='{
+	"delay": 0,
+	"speed": 50
+}'>
+<meta name="display-config" content='{
+	"scale": 0.5,
+	"colourscheme": "muted",
+	"highlightRedrawRegions": false,
+	"proportion3D": 0,
+	"wireframe": false
+}'>
+
+<script src="core/require.js"></script>
+<script src="engine/engine.js" async></script>
+</head>
+<body>
+<h1>Formic Functions</h1>
+
+<noscript>This viewer requires Javascript!</noscript>
+
+</body>
+</html>

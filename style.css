@@ -1,0 +1,280 @@
+body, html {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	background: #666666;
+	color: #FFFFFF;
+	font-family: sans-serif;
+	margin: 10px;
+}
+
+h1, h2, h3, h4, h5, h6, p, ul, li, table, thead, tbody, tr, td, th {
+	font: 1em sans-serif;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	text-align: left;
+}
+
+header {
+}
+
+h1 {
+	font-size: 2em;
+}
+
+h2 {
+	font-size: 1.5em;
+}
+
+h3 {
+	font-size: 1.2em;
+}
+
+h4 {
+	font-size: 1em;
+}
+
+header p {
+	font-family: monospace;
+	font-size: 0.8em;
+	margin-top: -0.2em;
+	margin-left: 2px;
+	color: #DDDDDD;
+}
+
+.tournament {
+	margin: 10px;
+}
+
+.match {
+	margin: 20px;
+	border-collapse: collapse;
+	display: inline-block;
+}
+
+.match th {
+	vertical-align: bottom;
+	font-size: 0.7em;
+	padding: 0 5px 2px;
+	min-width: 40px;
+}
+
+.match th header {
+	font-size: 1.4em;
+}
+
+.match th header p {
+	font-size: 0.7em;
+}
+
+.match th.player {
+	padding: 0 0 5px;
+	min-width: 150px;
+}
+
+.match th.game {
+	padding: 0 0 2px;
+}
+
+.match th.result {
+	min-width: 40px;
+}
+
+.match tbody {
+	box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5);
+	color: #333333;
+}
+
+.match td {
+	border: 1px solid #333333;
+	padding: 0 4px;
+	text-align: right;
+	font-size: 0.8em;
+}
+
+.match td.player {
+	padding: 5px;
+	text-align: left;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 200px;
+}
+
+.match td.game {
+	text-align: center;
+	padding: 0;
+}
+
+.match td.result {
+	text-align: center;
+	padding: 0 16px;
+	border-left-width: 0;
+}
+
+.match .win {
+	font-size: 1em;
+	text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+	background: rgba(255, 255, 255, 0.05);
+}
+
+.match .loss {
+}
+
+.match .game {
+	opacity: 0;
+	max-width: 0;
+	box-sizing: border-box;
+	white-space: nowrap;
+	border-left-width: 0;
+	border-right-width: 0;
+	transition: opacity 0.15s, padding 0.15s, max-width 0.2s;
+}
+
+.match:hover .game, .match.expanded .game {
+	opacity: 1;
+	max-width: 100px;
+	transition: opacity 0.3s ease, padding 0.2s ease, max-width 0.3s ease;
+}
+
+.match:hover th.game, .match.expanded th.game {
+	padding-left: 2px;
+	padding-right: 2px;
+}
+
+.match:hover td.game, .match.expanded td.game {
+	padding-left: 10px;
+	padding-right: 10px;
+	border-width: 1px;
+}
+
+.match:hover td.result, .match.expanded td.result {
+	border-left-width: 1px;
+}
+
+.match .disqualified .player {
+	text-decoration: line-through;
+}
+
+.match .disqualified {
+	color: rgba(51, 51, 51, 0.6);
+}
+
+.match tbody tr {
+	background: #DDDDDD;
+}
+
+.match tbody tr.cur-hover {
+	background: #FFFFFF;
+}
+
+.match tbody tr.last-hover {
+	background: #EEEEEE;
+}
+
+
+.match .team-1 {
+	background: #DD9999;
+}
+
+.match .team-2 {
+	background: #99DD99;
+}
+
+.match .team-3 {
+	background: #9999DD;
+}
+
+
+.match .team-4 {
+	background: #DDDD99;
+}
+
+.match .team-5 {
+	background: #99DDDD;
+}
+
+.match .team-6 {
+	background: #DD99DD;
+}
+
+
+.match .team-7 {
+	background: #BBDD99;
+}
+
+.match .team-8 {
+	background: #99BBDD;
+}
+
+.match .team-9 {
+	background: #DD99BB;
+}
+
+
+.match .team-10 {
+	background: #99DDBB;
+}
+
+.match .team-11 {
+	background: #BB99DD;
+}
+
+.match .team-12 {
+	background: #DDBB99;
+}
+
+
+.match .team-13 {
+	background: #99DDAA;
+}
+
+.match .team-14 {
+	background: #AA99DD;
+}
+
+.match .team-15 {
+	background: #DDAA99;
+}
+
+
+.match .team-16 {
+	background: #99CCDD;
+}
+
+.match .team-17 {
+	background: #DD99CC;
+}
+
+.match .team-18 {
+	background: #CCDD99;
+}
+
+
+.match .team-19 {
+	background: #99AADD;
+}
+
+.match .team-20 {
+	background: #DD99AA;
+}
+
+.match .team-21 {
+	background: #AADD99;
+}
+
+
+.match .team-22 {
+	background: #CC99DD;
+}
+
+.match .team-23 {
+	background: #DDCC99;
+}
+
+.match .team-24 {
+	background: #99DDCC;
+}

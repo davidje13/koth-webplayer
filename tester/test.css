@@ -1,0 +1,37 @@
+body {
+	font: 0.9em sans-serif;
+}
+
+.module-begin {
+	color: #444444;
+}
+
+.failure {
+	color: #400000;
+}
+
+.test-failure {
+	color: #CC0000;
+}
+
+.compile-failure {
+	color: #CC0000;
+}
+
+.module-done {
+	color: #008800;
+}
+
+.done {
+	color: #00AA00;
+}
+
+div {
+	padding: 10px 0;
+	border-top: 2px solid #EEEEEE;
+}
+
+div span {
+	font: 0.9em monospace;
+	color: #444444;
+}
