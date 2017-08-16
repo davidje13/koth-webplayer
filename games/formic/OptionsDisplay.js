@@ -138,6 +138,14 @@ define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
 				}
 			});
 
+			this.dimPicker = docutil.make('select');
+			this.dimPicker.appendChild(docutil.make('option', {'value': '2D'}, '2D'));
+			this.dimPicker.appendChild(docutil.make('option', {'value': '3D'}, '3D'));
+			this.dimPicker.addEventListener('change', () => {
+				const value = this.dimPicker.value;
+				this.trigger('changedisplay', [{view3D: value === '3D'}]);
+			});
+
 			this.stepTime = docutil.text('-');
 			this.engineTime = docutil.text('-');
 			this.renderTime = docutil.text('-');
@@ -157,6 +165,7 @@ define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
 					this.buttons.map((button) => button.element)
 				),
 				this.colourPicker,
+				this.dimPicker,
 				docutil.make('span', {'class': 'performance'}, [
 					'Step avg.: ', docutil.make('span', {'class': 'metric'}, [this.stepTime]), 'ms',
 					' ',
@@ -181,8 +190,9 @@ define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
 			}
 			for(let i in this.colourChoices) {
 				if(this.colourChoices.hasOwnProperty(i)) {
-					const option = docutil.make('option', {'value': i}, this.colourChoices[i].name);
-					this.colourPicker.appendChild(option);
+					this.colourPicker.appendChild(
+						docutil.make('option', {'value': i}, this.colourChoices[i].name)
+					);
 				}
 			}
 		}
@@ -215,6 +225,7 @@ define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
 
 		updateDisplayConfig(config) {
 			this.colourPicker.value = config.colourscheme;
+			this.dimPicker.value = config.view3D ? '3D' : '2D';
 		}
 
 		updateState(state) {

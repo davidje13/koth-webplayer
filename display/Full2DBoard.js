@@ -2,7 +2,7 @@ define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
 	'use strict';
 
 	return class Full2DBoard extends EventObject {
-		constructor(renderer, scale = 1) {
+		constructor(renderer, scaleX = 1, scaleY = null) {
 			super();
 
 			this.renderer = renderer;
@@ -19,7 +19,7 @@ define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
 			this.board = docutil.make('div', {'class': 'game-board'}, [this.boardClip]);
 
 			this.context = this.canvas.getContext('2d');
-			this.setScale(scale);
+			this.setScale(scaleX, scaleY);
 		}
 
 		_repaintMark(mark) {
@@ -86,9 +86,11 @@ define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
 			if(y === null) {
 				y = x;
 			}
-			this.scaleX = x;
-			this.scaleY = y;
-			this._updateStyles();
+			if(this.scaleX !== x || this.scaleY !== y) {
+				this.scaleX = x;
+				this.scaleY = y;
+				this._updateStyles();
+			}
 		}
 
 		mark(key, {x, y, w, h, className, wrap = true, clip = true}) {

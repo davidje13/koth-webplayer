@@ -1,4 +1,4 @@
-define(['core/document_utils', './BoardRenderer', 'display/Full2DBoard', 'display/Full3DBoard', './OptionsDisplay', './LeaderboardDisplay', './DisqualificationsDisplay'], (docutil, BoardRenderer, Full2DBoard, Full3DBoard, OptionsDisplay, LeaderboardDisplay, DisqualificationsDisplay) => {
+define(['core/document_utils', './BoardRenderer', 'display/FullSwitchingBoard', './OptionsDisplay', './LeaderboardDisplay', './DisqualificationsDisplay'], (docutil, BoardRenderer, FullSwitchingBoard, OptionsDisplay, LeaderboardDisplay, DisqualificationsDisplay) => {
 	'use strict';
 
 	// TODO:
@@ -6,7 +6,6 @@ define(['core/document_utils', './BoardRenderer', 'display/Full2DBoard', 'displa
 	// * optional highlight for latest moved ant
 	// * UI for following team's queen
 	// * table sorting options
-	// * animate from 2D to 3D according to proportion3D instead of showing both
 
 	const COLOUR_OPTIONS = {
 		saturated: {
@@ -63,8 +62,7 @@ define(['core/document_utils', './BoardRenderer', 'display/Full2DBoard', 'displa
 		constructor() {
 			this.renderer = new BoardRenderer();
 			this.options = new OptionsDisplay();
-			this.board2D = new Full2DBoard(this.renderer, 0);
-			this.board3D = new Full3DBoard(this.renderer, 200, 200);
+			this.board = new FullSwitchingBoard(this.renderer, null, 0);
 			this.table = new LeaderboardDisplay();
 			this.errors = new DisqualificationsDisplay();
 			this.renderer.setColourChoices(COLOUR_OPTIONS);
@@ -73,8 +71,7 @@ define(['core/document_utils', './BoardRenderer', 'display/Full2DBoard', 'displa
 
 			this.root = docutil.make('section', {'class': 'game-container'}, [
 				this.options.dom(),
-				this.board2D.dom(),
-				this.board3D.dom(),
+				this.board.dom(),
 				this.table.dom(),
 				this.errors.dom(),
 			]);
@@ -86,11 +83,8 @@ define(['core/document_utils', './BoardRenderer', 'display/Full2DBoard', 'displa
 			this.table.clear();
 			this.errors.clear();
 
-			this.board2D.removeAllMarks();
-			this.board2D.repaint();
-
-			this.board3D.removeAllMarks();
-			this.board3D.repaint();
+			this.board.removeAllMarks();
+			this.board.repaint();
 		}
 
 		updatePlayConfig(config) {
@@ -103,8 +97,7 @@ define(['core/document_utils', './BoardRenderer', 'display/Full2DBoard', 'displa
 			this.table.updateGameConfig(config);
 			this.errors.updateGameConfig(config);
 
-			this.board2D.repaint();
-			this.board3D.repaint();
+			this.board.repaint();
 		}
 
 		updateDisplayConfig(config) {
@@ -113,11 +106,11 @@ define(['core/document_utils', './BoardRenderer', 'display/Full2DBoard', 'displa
 			this.table.updateDisplayConfig(config);
 			this.errors.updateDisplayConfig(config);
 
-			this.board2D.setScale(config.scale);
-			this.board2D.repaint();
+			this.board.setScale(config.scale);
+			this.board.setWireframe(config.wireframe);
+			this.board.switch3D(config.view3D, true);
 
-			this.board3D.wireframe = config.wireframe;
-			this.board3D.repaint();
+			this.board.repaint();
 		}
 
 		updateState(state) {
@@ -126,13 +119,12 @@ define(['core/document_utils', './BoardRenderer', 'display/Full2DBoard', 'displa
 			this.table.updateState(state);
 			this.errors.updateState(state);
 
-			this.board2D.repaint();
-			this.board3D.repaint();
+			this.board.repaint();
 
 //			for(let i = 0; i < state.entries.length; ++ i) {
 //				const entry = state.entries[i];
 //				const ant = state.ants[entry.queen];
-//				this.board2D.mark(i, {
+//				this.board.mark(i, {
 //					x: ant.x,
 //					y: ant.y,
 //					className: 'queen-locator',
@@ -143,7 +135,7 @@ define(['core/document_utils', './BoardRenderer', 'display/Full2DBoard', 'displa
 //			const QUEEN = 5;
 //			for(let i = 0; i < state.ants.length; ++ i) {
 //				const ant = state.ants[i];
-//				this.board2D.mark('ant-' + ant.id, {
+//				this.board.mark('ant-' + ant.id, {
 //					x: ant.x,
 //					y: ant.y,
 //					className: (ant.type === QUEEN) ? 'queen-locator' : 'worker-locator',

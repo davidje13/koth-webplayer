@@ -15,6 +15,14 @@ define(() => {
 			return this;
 		}
 
+		add(v) {
+			return new Vec3(
+				this.x + v.x,
+				this.y + v.y,
+				this.z + v.z
+			);
+		}
+
 		sub(v) {
 			return new Vec3(
 				this.x - v.x,

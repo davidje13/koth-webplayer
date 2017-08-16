@@ -65,12 +65,6 @@
 	float: right;
 }
 
-.game-board-3d {
-	position: absolute;
-	top: 50px;
-	right: 10px;
-}
-
 .game-board .mark.region-indicator {
 	box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
 }

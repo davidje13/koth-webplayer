@@ -3,7 +3,6 @@ define(['core/document_utils', 'core/webgl_utils', 'core/EventObject', 'math/Mat
 
 	// TODO:
 	// * move more low-level logic into webgl_utils
-	// * provide transition parameter (animate from 2D to 3D)
 	// * is mip-mapping enabled on the texture? occasionally tries to read
 	//   beyond provided data, causing a black mark at the wrap point
 	//   (and can't use non-PoT texture)
@@ -20,6 +19,89 @@ define(['core/document_utils', 'core/webgl_utils', 'core/EventObject', 'math/Mat
 		return v + 1;
 	}
 
+	class Torus {
+		constructor(segsX, segsY) {
+			this.segsX = segsX;
+			this.segsY = segsY;
+			this.vertNormUV = new Float32Array((segsX + 1) * (segsY + 1) * 8);
+			this.indices = new Uint16Array(segsX * segsY * 6);
+
+			for(let x = 0; x < segsX; ++ x) {
+				for(let y = 0; y < segsY; ++ y) {
+					const o = (x * segsY + y) * 6;
+					this.indices[o    ] =  x      * (segsY + 1) + y;
+					this.indices[o + 1] =  x      * (segsY + 1) + y + 1;
+					this.indices[o + 2] = (x + 1) * (segsY + 1) + y + 1;
+					this.indices[o + 3] = (x + 1) * (segsY + 1) + y + 1;
+					this.indices[o + 4] = (x + 1) * (segsY + 1) + y;
+					this.indices[o + 5] =  x      * (segsY + 1) + y;
+				}
+			}
+		}
+
+		faces() {
+			return this.indices.length / 3;
+		}
+
+		generateShape(rad1, rad2A, rad2B, loopX = 1, loopY = 1) {
+			const normFactorA = (rad2A === 0) ? 1 : (rad2B / rad2A);
+			const normFactorB = (rad2B === 0) ? 1 : (rad2A / rad2B);
+
+			const crossSection = new Ellipse(rad2A, rad2B);
+
+			const yStartFrac = -0.5 * loopY;
+			const yEndFrac = 0.5 * loopY;
+			const yStartTheta = crossSection.thetaFromFrac(yStartFrac);
+			const yEndTheta = crossSection.thetaFromFrac(yEndFrac);
+
+			const ySin = [];
+			const yCos = [];
+			const yFrac = [];
+			for(let y = 0; y <= this.segsY; ++ y) {
+				const a = (
+					yStartTheta +
+					(yEndTheta - yStartTheta) * (y / this.segsY)
+				);
+				ySin.push(Math.sin(a));
+				yCos.push(Math.cos(a));
+				yFrac.push(
+					(crossSection.fracFromTheta(a) - yStartFrac) /
+					(yEndFrac - yStartFrac)
+				);
+			}
+
+			const target = this.vertNormUV;
+
+			for(let x = 0; x <= this.segsX; ++ x) {
+				const a0 = Math.PI * 2 * (x / this.segsX - 0.5) * loopX;
+				const dx = -Math.sin(a0);
+				const dy = -Math.cos(a0);
+				const xf = x / this.segsX;
+
+				for(let y = 0; y <= this.segsY; ++ y) {
+					const dr = yCos[y];
+					const dz = ySin[y];
+					const yf = yFrac[y];
+
+					const p = x * (this.segsY + 1) + y;
+					// Vertex
+					target[p * 8    ] = dx * (rad1 + dr * rad2A);
+					target[p * 8 + 1] = dy * (rad1 + dr * rad2A);
+					target[p * 8 + 2] = dz * rad2B;
+					// Normal
+					target[p * 8 + 3] = dx * dr * normFactorA;
+					target[p * 8 + 4] = dy * dr * normFactorA;
+					target[p * 8 + 5] = dz * normFactorB;
+					// UV
+					target[p * 8 + 6] = xf;
+					target[p * 8 + 7] = yf;
+				}
+			}
+
+			return target;
+		}
+	}
+
 	return class Full3DBoard extends EventObject {
 		constructor(renderer, width, height) {
 			super();
@@ -29,6 +111,7 @@ define(['core/document_utils', 'core/webgl_utils', 'core/EventObject', 'math/Mat
 			this.viewAngle = 0;
 			this.viewLift = Math.PI * 0.25;
 			this.viewDist = 3.5;
+			this.frac3D = 1;
 
 			this.marks = new Map();
 
@@ -119,10 +202,13 @@ define(['core/document_utils', 'core/webgl_utils', 'core/EventObject', 'math/Mat
 			this.hasTex = false;
 			this.nextRerender = 0;
 			this.rerenderTm = null;
-			this.torus = null;
+			this.torus = new Torus(128, 128);
+			this.torusLow = new Torus(64, 64);
+			this.torusFaces = 0;
+			this.torusFocus = new Mat4.Vec3(0, 0, 0);
 
 			docutil.addDragHandler(this.board, (dx, dy) => {
-				this.viewAngle -= dx * Math.PI / this.canvas.width;
+				this.viewAngle -= dx * Math.PI / this.canvas.height;
 				this.viewLift += dy * Math.PI / this.canvas.height;
 				if(this.viewAngle > Math.PI) {
 					this.viewAngle -= Math.PI * 2;
@@ -149,104 +235,63 @@ define(['core/document_utils', 'core/webgl_utils', 'core/EventObject', 'math/Mat
 			this.texHeight = 0;
 			this.texScaleX = 1;
 			this.texScaleY = 1;
+			this.torusDirty = true;
 
-			this.buildTorus();
+			this._buildTorus(false);
 		}
 
-		buildTorus() {
-			const segsX = 128;
-			const segsY = 128;
-			const rad1 = 1;
-			const rad2A = 0.2;
-			const rad2B = 0.7;
-			const loopX = 1;
-			const loopY = 1;
+		resize(width, height) {
+			if(this.canvas.width !== width * 2 || this.canvas.height !== height * 2) {
+				this.canvas.width = width * 2;
+				this.canvas.height = height * 2;
+				this.canvas.style.width = width + 'px';
+				this.canvas.style.height = height + 'px';
+			}
+		}
 
-			const normFactorA = (rad2A === 0) ? 1 : (rad2B / rad2A);
-			const normFactorB = (rad2B === 0) ? 1 : (rad2A / rad2B);
-
+		_buildTorus() {
 			const gl = this.context;
 
-			if(loopX >= 1 && loopY >= 1) {
+			const fullRad2A = 0.2;
+			const fullRad2B = 0.7;
+
+			const depth = this.frac3D;
+			const easeIn = depth * depth;
+			const easeOut = 1 - (1 - depth) * (1 - depth);
+			const animating = (depth > 0 && depth < 1);
+			const torus = animating ? this.torusLow : this.torus;
+
+			const rad1 = 1 / Math.max(depth, 0.00001);
+			const loopX = 1 / ((rad1 * Math.PI) * (1 - depth) + depth);
+			const loopY = 0.5 + 0.5 * easeIn;
+			const rad2A = fullRad2A * easeOut;
+			const rad2B = (1 - depth) + fullRad2B * depth;
+			const verts = torus.generateShape(rad1, rad2A, rad2B, loopX, loopY);
+			this.torusFocus.y = rad1 - depth;
+
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.bufTorus);
+			gl.bufferData(gl.ARRAY_BUFFER, verts, animating ? gl.STREAM_DRAW : gl.STATIC_DRAW);
+
+			if(this.torusFaces !== torus.faces()) {
+				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.bufTorusTris);
+				gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, torus.indices, gl.STATIC_DRAW);
+				this.torusFaces = torus.faces();
+			}
+
+			if(depth >= 1) {
 				gl.enable(gl.CULL_FACE);
 			} else {
 				gl.disable(gl.CULL_FACE);
 			}
 
-			if(this.genSegX !== segsX || this.genSegY !== segsY) {
-				this.genSegX = segsX;
-				this.genSegY = segsY;
-				this.torus = new Float32Array((this.genSegX + 1) * (this.genSegY + 1) * 8);
-				this.torusTris = new Uint16Array(this.genSegX * this.genSegY * 6);
+			this.torusDirty = false;
+		}
 
-				for(let x = 0; x < this.genSegX; ++ x) {
-					for(let y = 0; y < this.genSegY; ++ y) {
-						const o = (x * this.genSegY + y) * 6;
-						this.torusTris[o    ] =  x      * (this.genSegY + 1) + y;
-						this.torusTris[o + 1] =  x      * (this.genSegY + 1) + y + 1;
-						this.torusTris[o + 2] = (x + 1) * (this.genSegY + 1) + y + 1;
-						this.torusTris[o + 3] = (x + 1) * (this.genSegY + 1) + y + 1;
-						this.torusTris[o + 4] = (x + 1) * (this.genSegY + 1) + y;
-						this.torusTris[o + 5] =  x      * (this.genSegY + 1) + y;
-					}
-				}
-				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.bufTorusTris);
-				gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.torusTris, gl.STATIC_DRAW);
-				this.torusTriCount = this.torusTris.length / 3;
+		updateTorus(frac3D) {
+			if(this.frac3D !== frac3D) {
+				this.frac3D = frac3D;
+				this.torusDirty = true;
 			}
-
-			const crossSection = new Ellipse(rad2A, rad2B);
-
-			const yStartFrac = -0.5 * loopY;
-			const yEndFrac = 0.5 * loopY;
-			const yStartTheta = crossSection.thetaFromFrac(yStartFrac);
-			const yEndTheta = crossSection.thetaFromFrac(yEndFrac);
-
-			const ySin = [];
-			const yCos = [];
-			const yFrac = [];
-			for(let y = 0; y <= this.genSegY; ++ y) {
-				const a = (
-					yStartTheta +
-					(yEndTheta - yStartTheta) * (y / this.genSegY)
-				);
-				ySin.push(Math.sin(a));
-				yCos.push(Math.cos(a));
-				yFrac.push(
-					(crossSection.fracFromTheta(a) - yStartFrac) /
-					(yEndFrac - yStartFrac)
-				);
-			}
-
-			const torus = this.torus;
-			for(let x = 0; x <= this.genSegX; ++ x) {
-				const a0 = Math.PI * 2 * (x / this.genSegX - 0.5) * loopX;
-				const dx = -Math.sin(a0);
-				const dy = -Math.cos(a0);
-				const xf = x / this.genSegX;
-
-				for(let y = 0; y <= this.genSegY; ++ y) {
-					const dr = yCos[y];
-					const dz = ySin[y];
-					const yf = yFrac[y];
-
-					const p = x * (this.genSegY + 1) + y;
-					// Vertex
-					this.torus[p * 8    ] = dx * (rad1 + dr * rad2A);
-					this.torus[p * 8 + 1] = dy * (rad1 + dr * rad2A);
-					this.torus[p * 8 + 2] = dz * rad2B;
-					// Normal
-					this.torus[p * 8 + 3] = dx * dr * normFactorA;
-					this.torus[p * 8 + 4] = dy * dr * normFactorA;
-					this.torus[p * 8 + 5] = dz * normFactorB;
-					// UV
-					this.torus[p * 8 + 6] = xf;
-					this.torus[p * 8 + 7] = yf;
-				}
-			}
-
-			gl.bindBuffer(gl.ARRAY_BUFFER, this.bufTorus);
-			gl.bufferData(gl.ARRAY_BUFFER, this.torus, gl.STATIC_DRAW);
 		}
 
 		rerender() {
@@ -262,18 +307,30 @@ define(['core/document_utils', 'core/webgl_utils', 'core/EventObject', 'math/Mat
 				return;
 			}
 
+			if(this.torusDirty) {
+				this._buildTorus(true);
+			}
+
+			const depth = this.frac3D;
 			const aspect = this.canvas.width / this.canvas.height;
-			const matProjection = Mat4.perspective(Math.PI * 0.125, aspect, 0.1, 10.0);
+			const fov = Math.PI * (0.125 * depth + 0.25 * (1 - depth));
+			const matProjection = Mat4.perspective(fov, aspect * depth + (1 - depth), 0.1, 10.0);
+			let ang = this.viewAngle;
+			if(depth < 1) {
+				ang = (ang % (Math.PI * 2)) * depth * depth * depth * depth;
+			}
+			const lift = this.viewLift * depth;
+			const dist = this.viewDist * depth + 1 * (1 - depth);
 			const matModelView = Mat4.look(
+				this.torusFocus.add(new Mat4.Vec3(
+					dist * Math.sin(ang) * Math.cos(lift),
+					dist * Math.cos(ang) * Math.cos(lift),
+					dist * Math.sin(lift)
+				)),
+				this.torusFocus,
 				new Mat4.Vec3(
-					this.viewDist * Math.sin(this.viewAngle) * Math.cos(this.viewLift),
-					this.viewDist * Math.cos(this.viewAngle) * Math.cos(this.viewLift),
-					this.viewDist * Math.sin(this.viewLift)
-				),
-				new Mat4.Vec3(0, 0, 0),
-				new Mat4.Vec3(
-					Math.sin(this.viewAngle) * 0.1 * this.viewLift,
-					Math.cos(this.viewAngle) * 0.1 * this.viewLift,
+					Math.sin(ang) * 0.1 * lift,
+					Math.cos(ang) * 0.1 * lift,
 					-1
 				),
 			);
@@ -300,10 +357,14 @@ define(['core/document_utils', 'core/webgl_utils', 'core/EventObject', 'math/Mat
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.bufTorusTris);
 			gl.drawElements(
 				this.wireframe ? gl.LINES : gl.TRIANGLES,
-				this.torusTriCount * 3,
+				this.torusFaces * 3,
 				gl.UNSIGNED_SHORT,
 				0
 			);
+		}
+
+		setWireframe(on) {
+			this.wireframe = on;
 		}
 
 		repaint() {
