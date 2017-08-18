@@ -105,9 +105,12 @@ define(['require', 'document', './EventObject', 'def:./EventObject', 'def:./sand
 		// permission to run unsafe eval code & arbitrary https code as a
 		// workaround. For other browsers, we get to keep our stricter
 		// permissions.
-		const needUnsafe = safari;
+		const protocol = window.rootProtocol || window.location.protocol;
+		const needUnsafeEval = safari && (protocol === 'https:' || protocol === 'file:');
+		const needUnsafeRemote = safari && (protocol === 'https:');
 
 		const src = (
+			'const rootProtocol = ' + JSON.stringify(protocol) + ';\n' +
 			'const require_factory = ' + require_factory.toString() + ';\n' +
 			'require_factory();\n' +
 			EventObject_def.code() + '\n' +
@@ -123,7 +126,7 @@ define(['require', 'document', './EventObject', 'def:./EventObject', 'def:./sand
 			'<head>\n' +
 			'<meta charset="utf-8">\n' +
 			'<meta http-equiv="content-security-policy" content="' +
-			"script-src 'nonce-" + nonce + "'" + (needUnsafe ? " 'unsafe-eval' https:" : '') + " blob:;" +
+			"script-src 'nonce-" + nonce + "'" + (needUnsafeEval ? " 'unsafe-eval'" : '') + (needUnsafeRemote ? " https:" : '') + " blob:;" +
 			"style-src 'none';" +
 			'">\n' +
 			'<script nonce="' + nonce + '">' + src + '</script>\n' +
