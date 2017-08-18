@@ -110,7 +110,7 @@ define(['require', 'document', './EventObject', 'def:./EventObject', 'def:./sand
 		const needUnsafeRemote = safari && (protocol === 'https:');
 
 		const src = (
-			'const rootProtocol = ' + JSON.stringify(protocol) + ';\n' +
+			'window.rootProtocol = ' + JSON.stringify(protocol) + ';\n' +
 			'const require_factory = ' + require_factory.toString() + ';\n' +
 			'require_factory();\n' +
 			EventObject_def.code() + '\n' +
