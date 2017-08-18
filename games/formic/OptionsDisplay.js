@@ -104,7 +104,6 @@ define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
 			super();
 
 			this.renderPerf = null;
-			this.colourChoices = {};
 			this.currentSeed = '';
 			this.frame = docutil.text('0');
 			this.maxFrame = docutil.make('input', {
@@ -130,22 +129,6 @@ define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
 
 			this.buttons = makeButtons(SPEED_BUTTONS, this);
 
-			this.colourPicker = docutil.make('select');
-			this.colourPicker.addEventListener('change', () => {
-				const value = this.colourPicker.value;
-				if(this.colourChoices[value]) {
-					this.trigger('changedisplay', [{colourscheme: value}]);
-				}
-			});
-
-			this.dimPicker = docutil.make('select');
-			this.dimPicker.appendChild(docutil.make('option', {'value': '2D'}, '2D'));
-			this.dimPicker.appendChild(docutil.make('option', {'value': '3D'}, '3D'));
-			this.dimPicker.addEventListener('change', () => {
-				const value = this.dimPicker.value;
-				this.trigger('changedisplay', [{view3D: value === '3D'}]);
-			});
-
 			this.stepTime = docutil.text('-');
 			this.engineTime = docutil.text('-');
 			this.renderTime = docutil.text('-');
@@ -164,8 +147,6 @@ define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
 				docutil.make('span', {'class': 'play-speed'},
 					this.buttons.map((button) => button.element)
 				),
-				this.colourPicker,
-				this.dimPicker,
 				docutil.make('span', {'class': 'performance'}, [
 					'Step avg.: ', docutil.make('span', {'class': 'metric'}, [this.stepTime]), 'ms',
 					' ',
@@ -181,20 +162,6 @@ define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
 					makeButton(RANDOM_BUTTON, this).element,
 				]),
 			]);
-		}
-
-		setColourChoices(colourChoices) {
-			this.colourChoices = colourChoices;
-			while(this.colourPicker.lastChild) {
-				this.colourPicker.removeChild(this.colourPicker.lastChild);
-			}
-			for(let i in this.colourChoices) {
-				if(this.colourChoices.hasOwnProperty(i)) {
-					this.colourPicker.appendChild(
-						docutil.make('option', {'value': i}, this.colourChoices[i].name)
-					);
-				}
-			}
 		}
 
 		setRenderPerformance(renderer) {
@@ -224,8 +191,6 @@ define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
 		}
 
 		updateDisplayConfig(config) {
-			this.colourPicker.value = config.colourscheme;
-			this.dimPicker.value = config.view3D ? '3D' : '2D';
 		}
 
 		updateState(state) {

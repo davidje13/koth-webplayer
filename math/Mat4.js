@@ -82,6 +82,14 @@ define(() => {
 			return this;
 		}
 
+		as3() {
+			return [
+				this.data[ 0], this.data[ 1], this.data[ 2],
+				this.data[ 4], this.data[ 5], this.data[ 6],
+				this.data[ 8], this.data[ 9], this.data[10],
+			];
+		}
+
 		sub(m) {
 			for(let i = 0; i < 16; ++ i) {
 				this.data[i] -= m.data[i];
@@ -209,12 +217,6 @@ define(() => {
 			const dz = to.sub(from).norm();
 			const dx = up.cross(dz).norm();
 			const dy = dz.cross(dx).norm();
-//			return Mat4.of([
-//				dx.x, dy.x, dz.x, -from.x,
-//				dx.y, dy.y, dz.y, -from.y,
-//				dx.z, dy.z, dz.z, -from.z,
-//				0, 0, 0, 1,
-//			]);
 			return (
 				Mat4.identity()
 				.translate(from.x, from.y, from.z)
@@ -225,6 +227,18 @@ define(() => {
 					0, 0, 0, 1,
 				]))
 			);
+		}
+
+		static lookObj(from, to, up) {
+			const dz = to.sub(from).norm();
+			const dx = up.cross(dz).norm();
+			const dy = dz.cross(dx).norm();
+			return Mat4.of([
+				dx.x, dy.x, dz.x, from.x,
+				dx.y, dy.y, dz.y, from.y,
+				dx.z, dy.z, dz.z, from.z,
+				0, 0, 0, 1,
+			]);
 		}
 
 		static perspective(fovy, aspect, znear, zfar) {

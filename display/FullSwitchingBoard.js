@@ -2,10 +2,12 @@ define(['core/document_utils', 'core/EventObject', './Full2DBoard', './Full3DBoa
 	'use strict';
 
 	return class FullSwitchingBoard extends EventObject {
-		constructor(renderer, begin3D = false, scaleX = 1, scaleY = null) {
+		constructor({renderer, markerStore = null, markerTypes3D = null, begin3D = false, scaleX = 1, scaleY = null}) {
 			super();
 
 			this.renderer = renderer;
+			this.markerStore = markerStore;
+			this.markerTypes3D = markerTypes3D;
 			this.board2D = null;
 			this.board3D = null;
 			this.active = null;
@@ -41,11 +43,28 @@ define(['core/document_utils', 'core/EventObject', './Full2DBoard', './Full3DBoa
 			}
 		}
 
+		_make2DBoard() {
+			if(!this.board2D) {
+				this.board2D = new Full2DBoard({
+					renderer: this.renderer,
+					markerStore: this.markerStore,
+					scaleX: this.scaleX,
+					scaleY: this.scaleY
+				});
+			}
+		}
+
 		_make3DBoard() {
 			if(!this.board3D) {
 				const ww = (this.latestWidth * this.scaleX)|0;
 				const hh = (this.latestHeight * this.scaleY)|0;
-				this.board3D = new Full3DBoard(this.renderer, ww, hh);
+				this.board3D = new Full3DBoard({
+					renderer: this.renderer,
+					markerStore: this.markerStore,
+					markerTypes: this.markerTypes3D,
+					width: ww,
+					height: hh
+				});
 				this.board3D.setWireframe(this.wireframe);
 			}
 		}
@@ -56,7 +75,7 @@ define(['core/document_utils', 'core/EventObject', './Full2DBoard', './Full3DBoa
 				this._make3DBoard();
 			}
 			if(!is3D && !this.board2D) {
-				this.board2D = new Full2DBoard(this.renderer, this.scaleX, this.scaleY);
+				this._make2DBoard();
 			}
 
 			if(is3D && this.drawnFrac !== this.currentFrac) {
@@ -105,16 +124,21 @@ define(['core/document_utils', 'core/EventObject', './Full2DBoard', './Full3DBoa
 			this._updateRendered();
 		}
 
-		mark(key, {x, y, w, h, className, wrap = true, clip = true}) {
-			// TODO
+		setMarkerStore(markerStore) {
+			this.markerStore = markerStore;
+			if(this.board2D) {
+				this.board2D.setMarkerStore(this.markerStore);
+			}
+			if(this.board3D) {
+				this.board3D.setMarkerStore(this.markerStore);
+			}
 		}
 
-		removeMark(key) {
-			// TODO
-		}
-
-		removeAllMarks() {
-			// TODO
+		setmarkerTypes3D(markerTypes3D) {
+			this.markerTypes3D = markerTypes3D;
+			if(this.board3D) {
+				this.board3D.setmarkerTypes(this.markerTypes3D);
+			}
 		}
 
 		setScale(x, y = null) {
@@ -133,6 +157,12 @@ define(['core/document_utils', 'core/EventObject', './Full2DBoard', './Full3DBoa
 			}
 		}
 
+		rerender() {
+			if(this.active) {
+				this.active.rerender();
+			}
+		}
+
 		repaint() {
 			const data = this.renderer.getImageData();
 			if(data) {
@@ -141,6 +171,8 @@ define(['core/document_utils', 'core/EventObject', './Full2DBoard', './Full3DBoa
 				this._updateSizes();
 				if(!this.board3D) {
 					// Prepare 3D board in advance to avoid glitchy animation
+					// (might be worth using requestIdleCallback, but we can't
+					// control how long it will take to build the canvas)
 					setTimeout(this._make3DBoard.bind(this), 0);
 				}
 			}
@@ -155,6 +187,7 @@ define(['core/document_utils', 'core/EventObject', './Full2DBoard', './Full3DBoa
 
 		switch3D(on, animated = true) {
 			if(this.target === (on ? 1 : 0)) {
+				this.blockFirstAnim = false;
 				return;
 			}
 			this.target = (on ? 1 : 0);

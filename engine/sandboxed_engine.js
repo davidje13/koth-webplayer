@@ -80,7 +80,7 @@ define(['core/worker_utils', 'fetch/entry_utils'], (worker_utils, entry_utils) =
 			this.speed = 0;
 			clearTimeout(this.timeout);
 			this.timeout = null;
-			if(!waiting) {
+			if(!this.waiting) {
 				this._advance(type, steps);
 			}
 		}

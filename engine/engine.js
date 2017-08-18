@@ -73,15 +73,15 @@ require(['document', 'core/document_utils', 'core/sandbox_utils', 'math/Random',
 				});
 			}
 
-			display.options.addEventListener('replay', () => {
+			display.addEventListener('replay', () => {
 				begin(config.game.seed);
 			});
 
-			display.options.addEventListener('new', (seed) => {
+			display.addEventListener('new', (seed) => {
 				begin(seed);
 			});
 
-			display.options.addEventListener('step', (type, steps) => {
+			display.addEventListener('step', (type, steps) => {
 				config.play.delta = 0;
 				config.play.speed = 0;
 				display.updatePlayConfig(config.play);
@@ -93,7 +93,7 @@ require(['document', 'core/document_utils', 'core/sandbox_utils', 'math/Random',
 				});
 			});
 
-			display.options.addEventListener('changegame', (delta) => {
+			display.addEventListener('changegame', (delta) => {
 				Object.assign(config.game, delta);
 				display.updateGameConfig(config.game);
 				sandbox.postMessage({
@@ -103,7 +103,7 @@ require(['document', 'core/document_utils', 'core/sandbox_utils', 'math/Random',
 				});
 			});
 
-			display.options.addEventListener('changeplay', (delta) => {
+			display.addEventListener('changeplay', (delta) => {
 				Object.assign(config.play, delta);
 				display.updatePlayConfig(config.play);
 				sandbox.postMessage({
@@ -113,7 +113,7 @@ require(['document', 'core/document_utils', 'core/sandbox_utils', 'math/Random',
 				});
 			});
 
-			display.options.addEventListener('changedisplay', (delta) => {
+			display.addEventListener('changedisplay', (delta) => {
 				Object.assign(config.display, delta);
 				display.updateDisplayConfig(config.display);
 			});

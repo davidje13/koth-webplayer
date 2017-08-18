@@ -1,15 +1,18 @@
 define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
 	'use strict';
 
+	const EMPTY_MAP = new Map();
+
 	return class Full2DBoard extends EventObject {
-		constructor(renderer, scaleX = 1, scaleY = null) {
+		constructor({renderer, markerStore = null, scaleX = 1, scaleY = null}) {
 			super();
 
 			this.renderer = renderer;
+			this.markerStore = markerStore;
 			this.scaleX = 0;
 			this.scaleY = 0;
 
-			this.marks = new Map();
+			this.renderedMarks = new Map();
 
 			window.devicePixelRatio = 1;
 			this.canvas = docutil.make('canvas');
@@ -20,31 +23,6 @@ define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
 
 			this.context = this.canvas.getContext('2d');
 			this.setScale(scaleX, scaleY);
-		}
-
-		_repaintMark(mark) {
-			if(!mark.element) {
-				mark.element = docutil.make('div');
-			}
-			const x1 = ((mark.x * this.scaleX)|0);
-			const y1 = ((mark.y * this.scaleY)|0);
-			docutil.update_attrs(mark.element, {
-				'class': 'mark ' + (mark.className || ''),
-			});
-			docutil.update_style(mark.element, {
-				'left': x1 + 'px',
-				'top': y1 + 'px',
-			});
-			if(mark.w !== undefined && mark.h !== undefined) {
-				// TODO: wrapping
-				const x2 = (((mark.x + mark.w) * this.scaleX)|0);
-				const y2 = (((mark.y + mark.h) * this.scaleY)|0);
-				docutil.update_style(mark.element, {
-					'width': (x2 - x1) + 'px',
-					'height': (y2 - y1) + 'px',
-				});
-			}
-			docutil.set_parent(mark.element, mark.clip ? this.boardClip : this.board);
 		}
 
 		_updateStyles() {
@@ -64,7 +42,44 @@ define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
 				'width': ((this.canvas.width * this.scaleX)|0) + 'px',
 				'height': ((this.canvas.height * this.scaleY)|0) + 'px',
 			});
-			this.marks.forEach((mark) => this._repaintMark(mark));
+		}
+
+		rerender() {
+			const markers = this.markerStore ? this.markerStore.marks : EMPTY_MAP;
+
+			markers.forEach((mark, key) => {
+				let dom = this.renderedMarks.get(key);
+				if(!dom) {
+					dom = {element: docutil.make('div')};
+					this.renderedMarks.set(key, dom);
+				}
+				const x1 = ((mark.x * this.scaleX)|0);
+				const y1 = ((mark.y * this.scaleY)|0);
+				docutil.update_attrs(dom.element, {
+					'class': 'mark ' + (mark.className || ''),
+				});
+				docutil.update_style(dom.element, {
+					'left': x1 + 'px',
+					'top': y1 + 'px',
+				});
+				if(mark.w !== null && mark.h !== null) {
+					// TODO: wrapping
+					const x2 = (((mark.x + mark.w) * this.scaleX)|0);
+					const y2 = (((mark.y + mark.h) * this.scaleY)|0);
+					docutil.update_style(dom.element, {
+						'width': (x2 - x1) + 'px',
+						'height': (y2 - y1) + 'px',
+					});
+				}
+				docutil.set_parent(dom.element, mark.clip ? this.boardClip : this.board);
+			});
+
+			this.renderedMarks.forEach((dom, key) => {
+				if(!markers.has(key)) {
+					docutil.set_parent(dom.element, null);
+					this.renderedMarks.delete(key);
+				}
+			});
 		}
 
 		repaint() {
@@ -80,6 +95,12 @@ define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
 				}
 				this.context.putImageData(data, 0, 0);
 			}
+
+			this.rerender();
+		}
+
+		setMarkerStore(markerStore) {
+			this.markerStore = markerStore;
 		}
 
 		setScale(x, y = null) {
@@ -91,44 +112,6 @@ define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
 				this.scaleY = y;
 				this._updateStyles();
 			}
-		}
-
-		mark(key, {x, y, w, h, className, wrap = true, clip = true}) {
-			if(x === undefined || y === undefined) {
-				this.removeMark(key);
-				return;
-			}
-			let o = this.marks.get(key);
-			if(!o) {
-				this.marks.set(key, o = {
-					x: null,
-					y: null,
-					w: null,
-					h: null,
-					className: null,
-					clipped: null,
-				});
-			}
-			o.x = x;
-			o.y = y;
-			o.w = w;
-			o.h = h;
-			o.className = className;
-			o.wrap = wrap;
-			o.clip = clip;
-			this._repaintMark(o);
-		}
-
-		removeMark(key) {
-			const mark = this.marks.get(key);
-			if(mark) {
-				docutil.set_parent(mark.element, null)
-				this.marks.delete(key);
-			}
-		}
-
-		removeAllMarks() {
-			this.marks.forEach((mark, key) => this.removeMark(key));
 		}
 
 		dom() {

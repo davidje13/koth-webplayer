@@ -9,10 +9,18 @@
 .options {
 	color: #333333;
 	font-size: 0.8em;
-	margin: -5px -5px 5px;
+	margin: 5px -5px;
 }
 
-.options button {
+.options:first-child {
+	margin-top: -5px;
+}
+
+.options label {
+	margin-left: 10px;
+}
+
+.options button, .options select {
 	margin: 0 5px;
 }
 
@@ -69,7 +77,16 @@
 	box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
 }
 
-.game-board .mark.queen-locator, .game-board .mark.worker-locator {
+.game-board .mark.queen-locator-ring {
+	margin: -3px;
+	width: 6px;
+	height: 6px;
+	border: 1px solid rgba(255, 128, 0, 0.5);
+	border-radius: 100%;
+	box-sizing: border-box;
+}
+
+.game-board .mark.queen-locator-pointer, .game-board .mark.worker-locator-pointer {
 	background: #EEEEEE;
 	border: 1px solid rgba(0, 0, 0, 0.3);
 	border-radius: 100%;
@@ -79,27 +96,27 @@
 	overflow: hidden;
 }
 
-.game-board .mark.queen-locator {
+.game-board .mark.queen-locator-pointer {
 	font-size: 12px;
 	width: 14px;
 	height: 14px;
 	z-index: 2;
 }
 
-.game-board .mark.worker-locator {
+.game-board .mark.worker-locator-pointer {
 	font-size: 10px;
 	width: 12px;
 	height: 12px;
 	z-index: 1;
 }
 
-.game-board .mark.queen-locator:after {
+.game-board .mark.queen-locator-pointer:after {
 	content: '\01F451';
 	position: relative;
 	top: -4px;
 }
 
-.game-board .mark.worker-locator:after {
+.game-board .mark.worker-locator-pointer:after {
 	content: '\01F477';
 	position: relative;
 	top: -2px;

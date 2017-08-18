@@ -4,6 +4,7 @@ define(() => {
 	return class EventObject {
 		constructor() {
 			this.listeners = new Map();
+			this.forwards = new Set();
 		}
 
 		addEventListener(type, callback) {
@@ -38,10 +39,23 @@ define(() => {
 			}
 		}
 
+		addEventForwarding(target) {
+			this.forwards.add(target);
+		}
+
+		removeEventForwarding(target) {
+			this.forwards.delete(target);
+		}
+
+		removeAllEventForwardings(target) {
+			this.forwards.clear();
+		}
+
 		trigger(type, params) {
 			(this.listeners.get(type) || []).forEach(
 				(listener) => listener.apply(null, params)
 			);
+			this.forwards.forEach((fwd) => fwd.trigger(type, params));
 		}
 	}
 });
