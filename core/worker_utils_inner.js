@@ -9,10 +9,17 @@ define(['require', './EventObject'], (require, EventObject) => {
 		if(!done) {
 			return;
 		}
-		importScripts(URL.createObjectURL(new Blob(
-			[event.data.require_script_blob],
-			{type: 'text/javascript'}
-		)));
+		try {
+			importScripts(URL.createObjectURL(new Blob(
+				[event.data.require_script_blob],
+				{type: 'text/javascript'}
+			)));
+		} catch(e) {
+			// WORKAROUND: Safari considers blobs inaccessible when run from
+			// the filesystem, so fall-back to a nasty eval (the sandbox_utils
+			// will detect Safari and ensure we can do this)
+			eval(event.data.require_script_blob);
+		}
 		awaiting.delete(src);
 		done();
 	}
@@ -66,4 +73,14 @@ define(['require', './EventObject'], (require, EventObject) => {
 		listeners.removeEventListener(type, fn);
 		rawRemoveEventListener(type, fn, opts);
 	};
+
+	// WORKAROUND: safari does not give access to performance from inside workers
+	if(!self.performance) {
+		self.performance = {
+			now: () => Date.now(),
+		};
+	}
+
+	// WORKAROUND (see worker_utils for details)
+	self.postMessage({worker_ready: true});
 });

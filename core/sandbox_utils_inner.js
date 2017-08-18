@@ -72,7 +72,11 @@ define(['require', 'document', './EventObject'], (require, document, EventObject
 		rawRemoveEventListener(type, fn, opts);
 	};
 
-	self.postMessage = (message) => {
+	const rawPostMessage = self.postMessage;
+	self.postMessage = (message, origin) => {
+		if(origin) {
+			return rawPostMessage(message, origin);
+		}
 		if(parent) {
 			parent.postMessage(message, '*');
 		} else {

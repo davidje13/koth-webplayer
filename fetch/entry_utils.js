@@ -51,7 +51,19 @@ define(['core/worker_utils'], (worker_utils) => {
 				fn = self.tempFn.bind({});
 				self.tempFn = null;
 			} catch(e) {
-				compileError = e.toString();
+				// WORKAROUND: Safari considers blobs inaccessible when run
+				// from the filesystem, so fall-back to a nasty eval
+				if(e.toString().includes('DOM Exception 19')) {
+					try {
+						eval(src);
+						fn = self.tempFn.bind({});
+						self.tempFn = null;
+					} catch(e2) {
+						compileError = e2.toString();
+					}
+				} else {
+					compileError = e.toString();
+				}
 			}
 			const compileTime = performance.now() - begin;
 

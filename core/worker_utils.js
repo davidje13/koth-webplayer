@@ -33,6 +33,11 @@ define(['require', './EventObject', 'def:./EventObject', 'def:./worker_utils_inn
 
 		let blockRequire = false;
 
+		// WORKAROUND: Some browsers don't queue messages properly, so we have
+		// to queue them ourselves until the worker declares itself ready
+		let ready = false;
+		const queueOut = [];
+
 		worker.addEventListener('message', () => {
 			if(event.data && event.data.require_script_src !== undefined) {
 				const src = event.data.require_script_src;
@@ -49,6 +54,12 @@ define(['require', './EventObject', 'def:./EventObject', 'def:./worker_utils_inn
 						require_script_blob: def.code(),
 					});
 				});
+				return;
+			}
+			if(!ready && event.data && event.data.worker_ready) {
+				ready = true;
+				queueOut.forEach((message) => worker.postMessage(message));
+				queueOut.length = 0;
 				return;
 			}
 			if(listeners.countEventListeners('message') > 0) {
@@ -75,6 +86,16 @@ define(['require', './EventObject', 'def:./EventObject', 'def:./worker_utils_inn
 		worker.removeEventListener = (type, fn, opts) => {
 			listeners.removeEventListener(type, fn);
 			rawRemoveEventListener(type, fn, opts);
+		};
+
+		// WORKAROUND (see 'ready' notes above for details)
+		const rawPostMessage = worker.postMessage.bind(worker);
+		worker.postMessage = (message) => {
+			if(ready) {
+				rawPostMessage(message);
+			} else {
+				queueOut.push(message);
+			}
 		};
 
 		return worker;
