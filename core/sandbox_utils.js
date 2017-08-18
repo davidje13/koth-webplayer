@@ -101,9 +101,11 @@ define(['require', 'document', './EventObject', 'def:./EventObject', 'def:./sand
 		// Thanks, https://stackoverflow.com/a/23522755/1180785
 		const safari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-		// WORKAROUND: Safari fails to load blobs in workers, so we give a
-		// special permission to run unsafe eval code as a workaround
-		const needUnsafeEval = safari && (window.location.protocol === 'file:');
+		// WORKAROUND: Safari fails to load blobs, so we give a special
+		// permission to run unsafe eval code & arbitrary https code as a
+		// workaround. For other browsers, we get to keep our stricter
+		// permissions.
+		const needUnsafe = safari;
 
 		const src = (
 			'const require_factory = ' + require_factory.toString() + ';\n' +
@@ -121,7 +123,7 @@ define(['require', 'document', './EventObject', 'def:./EventObject', 'def:./sand
 			'<head>\n' +
 			'<meta charset="utf-8">\n' +
 			'<meta http-equiv="content-security-policy" content="' +
-			"script-src 'nonce-" + nonce + "'" + (needUnsafeEval ? " 'unsafe-eval'" : '') + " blob:;" +
+			"script-src 'nonce-" + nonce + "'" + (needUnsafe ? " 'unsafe-eval' https:" : '') + " blob:;" +
 			"style-src 'none';" +
 			'">\n' +
 			'<script nonce="' + nonce + '">' + src + '</script>\n' +

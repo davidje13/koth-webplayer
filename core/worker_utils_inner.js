@@ -18,7 +18,9 @@ define(['require', './EventObject'], (require, EventObject) => {
 			// WORKAROUND: Safari considers blobs inaccessible when run from
 			// the filesystem, so fall-back to a nasty eval (the sandbox_utils
 			// will detect Safari and ensure we can do this)
-			eval(event.data.require_script_blob);
+			if(e.toString().includes('DOM Exception 19')) {
+				eval(event.data.require_script_blob);
+			}
 		}
 		awaiting.delete(src);
 		done();
