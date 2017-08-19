@@ -45,6 +45,31 @@ header p {
 	color: #DDDDDD;
 }
 
+.initial-load {
+	background: rgba(0, 0, 0, 0.5);
+	margin: 10px;
+	padding: 10px;
+	width: 400px;
+	border-radius: 5px;
+	box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+	margin: 20px auto;
+}
+
+.initial-load .message {
+	font-size: 0.8em;
+	margin-bottom: 5px;
+}
+
+.initial-load .bar {
+	height: 6px;
+	background: rgba(0, 0, 0, 0.5);
+	border-radius: 3px;
+}
+
+.initial-load .bar-filled {
+	background: #FFFFFF;
+}
+
 .tournament {
 	margin: 10px;
 }

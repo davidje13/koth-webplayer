@@ -5,6 +5,7 @@ define([
 	'3d/ModelTorus',
 	'core/EventObject',
 	'math/Mat4',
+	'./style.css',
 ], (
 	docutil,
 	webgl_utils,

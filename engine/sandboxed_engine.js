@@ -5,7 +5,8 @@ define(['core/worker_utils', 'fetch/entry_utils'], (worker_utils, entry_utils) =
 		entry_utils.load(site, qid, (loaded, total) => {
 			self.postMessage({
 				action: 'LOADING',
-				progress: loaded / total,
+				loaded,
+				total,
 			});
 		}).then((entries) => {
 			self.postMessage({
@@ -119,6 +120,9 @@ define(['core/worker_utils', 'fetch/entry_utils'], (worker_utils, entry_utils) =
 
 		switch(data.action) {
 		case 'LOAD_ENTRIES':
+			self.postMessage({
+				action: 'BEGIN_LOAD',
+			});
 			loadEntries(data.site, data.qid);
 			break;
 

@@ -16,3 +16,23 @@
 .game-board .mark {
 	position: absolute;
 }
+
+.loader .message:before {
+	content: "Loading ";
+}
+
+.loader .message:after {
+	content: "\2026";
+}
+
+.loader .bar {
+	position: relative;
+	overflow: hidden;
+}
+
+.loader .bar-filled {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+}

@@ -1,4 +1,14 @@
-define(['core/document_utils', 'core/EventObject', './Full2DBoard', './Full3DBoard'], (docutil, EventObject, Full2DBoard, Full3DBoard) => {
+define([
+	'core/document_utils',
+	'core/EventObject',
+	'./Full2DBoard',
+	'./Full3DBoard',
+], (
+	docutil,
+	EventObject,
+	Full2DBoard,
+	Full3DBoard,
+) => {
 	'use strict';
 
 	return class FullSwitchingBoard extends EventObject {

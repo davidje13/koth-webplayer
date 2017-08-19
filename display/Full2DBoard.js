@@ -1,4 +1,11 @@
-define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
+define([
+	'core/document_utils',
+	'core/EventObject',
+	'./style.css',
+], (
+	docutil,
+	EventObject,
+) => {
 	'use strict';
 
 	const EMPTY_MAP = new Map();

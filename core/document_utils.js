@@ -2,6 +2,8 @@ define(['document'], (document) => {
 	'use strict';
 
 	return {
+		body: document.body,
+
 		getMetaTagValue: (name, fallback = null) => {
 			const elements = document.getElementsByTagName('meta');
 			for(let i = 0; i < elements.length; ++ i) {
