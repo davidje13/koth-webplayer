@@ -38,10 +38,36 @@ define(['require', 'document', './EventObject', 'def:./EventObject', 'def:./sand
 	};
 
 	function make(fn) {
+		// Thanks, https://stackoverflow.com/a/23522755/1180785
+		const safari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+		// WORKAROUNDS:
+		// * Chrome doesn't allow relaxing script-src inside an iframe, so we
+		//   have to use blob: to load all scripts from outside (we can also
+		//   use this to eval competitor code where needed)
+		// * Safari considers blob: to be a non-https resource, so blocks it,
+		//   but it does allow relaxing script-src. So we allow content from
+		//   our detected domain and also allow unsafe-eval for competitor code
+		const protocol = self.rootProtocol || window.location.protocol;
+		const href = self.rootHref || window.location.href;
+		const needUnsafeEval = safari;
+		let remoteDomain = 'blob:';
+		let blockRequire = false;
+		if(safari && protocol !== 'file:') {
+			const p = href.indexOf('/', href.indexOf('//') + 2);
+			remoteDomain = (p !== -1) ? href.substr(0, p) : href;
+			blockRequire = true;
+		}
+
+		// WORKAROUND (Safari): web workers are totally unusable in non-origin
+		// environments since they block blob URLs and all non-self URLs. So
+		// for Safari we have to sacrafice some more security thanks to their
+		// insistence on security.
+		const needsSameOrigin = (safari && protocol === 'https:');
+
 		const iframe = document.createElement('iframe');
 		let state = STATE_LOADING;
 		const queueIn = [];
-		let blockRequire = false;
 
 		const postMessage = (message) => {
 			if(state === STATE_READY) {
@@ -80,7 +106,7 @@ define(['require', 'document', './EventObject', 'def:./EventObject', 'def:./sand
 
 		function messageListener(event) {
 			if(
-				event.origin !== 'null' ||
+				event.origin !== (needsSameOrigin ? remoteDomain : 'null') ||
 				event.source !== iframe.contentWindow
 			) {
 				return;
@@ -98,21 +124,10 @@ define(['require', 'document', './EventObject', 'def:./EventObject', 'def:./sand
 			invocation = '() => require([' + JSON.stringify(fn) + '])';
 		}
 
-		// Thanks, https://stackoverflow.com/a/23522755/1180785
-		const safari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-
-		// WORKAROUND: Safari fails to load blobs, so we give a special
-		// permission to run unsafe eval code & arbitrary https code as a
-		// workaround. For other browsers, we get to keep our stricter
-		// permissions.
-		const protocol = window.rootProtocol || window.location.protocol;
-		const href = window.rootHref || window.location.href;
-		const needUnsafeEval = safari && (protocol === 'https:' || protocol === 'file:');
-		const needUnsafeRemote = safari && (protocol === 'https:');
-
 		const src = (
-			'window.rootProtocol = ' + JSON.stringify(protocol) + ';\n' +
-			'window.rootHref = ' + JSON.stringify(href) + ';\n' +
+			'self.rootProtocol = ' + JSON.stringify(protocol) + ';\n' +
+			'self.rootHref = ' + JSON.stringify(href) + ';\n' +
+			'self.restrictedScriptSrc = ' + JSON.stringify(!blockRequire) + ';\n' +
 			'const require_factory = ' + require_factory.toString() + ';\n' +
 			'require_factory();\n' +
 			EventObject_def.code() + '\n' +
@@ -128,7 +143,8 @@ define(['require', 'document', './EventObject', 'def:./EventObject', 'def:./sand
 			'<head>\n' +
 			'<meta charset="utf-8">\n' +
 			'<meta http-equiv="content-security-policy" content="' +
-			"script-src 'nonce-" + nonce + "'" + (needUnsafeEval ? " 'unsafe-eval'" : '') + (needUnsafeRemote ? " https:" : '') + " blob:;" +
+			"script-src 'nonce-" + nonce + "' " + remoteDomain +
+			(needUnsafeEval ? " 'unsafe-eval'" : '') + ";" +
 			"style-src 'none';" +
 			'">\n' +
 			'<script nonce="' + nonce + '">' + src + '</script>\n' +
@@ -138,7 +154,11 @@ define(['require', 'document', './EventObject', 'def:./EventObject', 'def:./sand
 			'</html>\n'
 		);
 
-		iframe.setAttribute('sandbox', 'allow-scripts');
+		iframe.setAttribute(
+			'sandbox',
+			'allow-scripts' +
+			(needsSameOrigin ? ' allow-same-origin' : '')
+		);
 		iframe.style.display = 'none';
 		iframe.setAttribute('src', URL.createObjectURL(new Blob(
 			[html],

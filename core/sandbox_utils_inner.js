@@ -5,25 +5,18 @@ define(['require', 'document', './EventObject'], (require, document, EventObject
 
 	function handleScript(event) {
 		const src = event.data.require_script_src;
+		if(!self.restrictedScriptSrc) {
+			throw 'Unexpected script message for ' + src;
+		}
 		const done = awaiting.get(src);
 		if(!done) {
 			return;
 		}
-		const safari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 		const script = document.createElement('script');
-		if(safari && (window.rootProtocol || window.location.protocol) === 'https:') {
-			const href = window.rootHref || window.location.href;
-			// WORKAROUND: Safari considers blobs to be non-https, so blocks
-			// them. No idea why, so we load directly instead (but due to
-			// disallowing same-origin for the frame, we have to rely on
-			// allowing *any* https request - see sandbox_utils.
-			script.setAttribute('src', href.substr(0, href.lastIndexOf('/')) + '/' + src + '.js');
-		} else {
-			script.setAttribute('src', URL.createObjectURL(new Blob(
-				[event.data.require_script_blob],
-				{type: 'text/javascript'}
-			)));
-		}
+		script.setAttribute('src', URL.createObjectURL(new Blob(
+			[event.data.require_script_blob],
+			{type: 'text/javascript'}
+		)));
 		script.addEventListener('load', () => {
 			awaiting.delete(src);
 			done();
@@ -94,14 +87,25 @@ define(['require', 'document', './EventObject'], (require, document, EventObject
 		}
 	};
 
-	require.replaceLoader((src, done) => {
-		awaiting.set(src, done);
-		self.postMessage({require_script_src: src});
-	});
+	// Safari allows relaxing script-src rules inside iframes (Chrome doesn't)
+	if(self.restrictedScriptSrc) {
+		require.replaceLoader((src, done) => {
+			awaiting.set(src, done);
+			self.postMessage({require_script_src: src});
+		});
 
-	const originalShed = require.shed;
-	require.shed = () => {
-		self.postMessage({require_script_src: null});
-		originalShed();
-	};
+		const originalShed = require.shed;
+		require.shed = () => {
+			self.postMessage({require_script_src: null});
+			originalShed();
+		};
+	} else {
+		require.replaceLoader((src, done) => {
+			const script = document.createElement('script');
+			const href = self.rootHref || window.location.href;
+			script.setAttribute('src', href.substr(0, href.lastIndexOf('/') + 1) + src + '.js');
+			script.addEventListener('load', done, {once: true});
+			document.getElementsByTagName('head')[0].appendChild(script);
+		});
+	}
 });

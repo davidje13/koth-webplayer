@@ -51,7 +51,7 @@ define(['core/worker_utils'], (worker_utils) => {
 				fn = self.tempFn.bind({});
 				self.tempFn = null;
 			} catch(e) {
-				// WORKAROUND: Safari considers blobs inaccessible when run
+				// WORKAROUND (Safari): blobs inaccessible when run
 				// from the filesystem, so fall-back to a nasty eval
 				if(e.toString().includes('DOM Exception 19')) {
 					try {

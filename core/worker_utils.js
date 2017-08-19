@@ -16,7 +16,13 @@ define(['require', './EventObject', 'def:./EventObject', 'def:./worker_utils_inn
 			invocation = '() => require([' + JSON.stringify(fn) + '])';
 		}
 
+		const protocol = self.rootProtocol || window.location.protocol;
+		const href = self.rootHref || window.location.href;
+
 		const src = (
+			'self.rootProtocol = ' + JSON.stringify(protocol) + ';\n' +
+			'self.rootHref = ' + JSON.stringify(href) + ';\n' +
+			'self.restrictedScriptSrc = ' + JSON.stringify(self.restrictedScriptSrc || false) + ';\n' +
 			'const require_factory = ' + require_factory.toString() + ';\n' +
 			'require_factory();\n' +
 			EventObject_def.code() + '\n' +
@@ -26,15 +32,24 @@ define(['require', './EventObject', 'def:./EventObject', 'def:./worker_utils_inn
 			'.then(() => require.shed());\n'
 		);
 
-		const worker = new Worker(URL.createObjectURL(new Blob(
-			[src],
-			{type: 'text/javascript'}
-		)));
+		const safari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+		let worker = null;
+		if(safari && protocol === 'https:') {
+			worker = new Worker(href.substr(0, href.lastIndexOf('/') + 1) + 'core/worker_utils_loader.js');
+			worker.postMessage({src});
+		} else {
+			worker = new Worker(URL.createObjectURL(new Blob(
+				[src],
+				{type: 'text/javascript'}
+			)));
+		}
 
 		let blockRequire = false;
 
-		// WORKAROUND: Some browsers don't queue messages properly, so we have
+		// WORKAROUND (Safari): messages aren't queued properly, so we have
 		// to queue them ourselves until the worker declares itself ready
+		// (this also now ties in to the use of worker_utils_loader)
 		let ready = false;
 		const queueOut = [];
 
