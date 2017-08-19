@@ -27,6 +27,8 @@ define([
 ) => {
 	'use strict';
 
+	const FOOD_BIT = 0x08;
+
 	// TODO:
 	// * zoom window (follow ant / cursor)
 	// * optional highlight for latest moved ant
@@ -112,8 +114,12 @@ define([
 			this.visualOptions.addEventForwarding(this);
 
 			this.latestAnts = null;
+			this.latestBoard = null;
+			this.latestW = 0;
+			this.latestH = 0;
 			this.queenMarkerType = '';
 			this.workerMarkerType = '';
+			this.foodMarkerType = '';
 
 			this.markerTypes3D.registerPointer('queen-locator-ring', {
 				model: new ModelTorus({
@@ -151,6 +157,19 @@ define([
 					col: [0, 0.5, 1],
 				},
 			});
+			this.markerTypes3D.registerPointer('food-locator-pointer', {
+				model: new ModelPoint({
+					uv: false,
+					stride: 6,
+					radius: 0.005,
+					height: 0.01,
+				}),
+				params: {
+					shadowStr: 0.8,
+					shadowCol: [0.0, 0.02, 0.03],
+					col: [0.2, 0.2, 0.2],
+				},
+			});
 
 			this.root = docutil.make('section', {'class': 'game-container'}, [
 				this.options.dom(),
@@ -182,6 +201,8 @@ define([
 			this.renderer.updateGameConfig(config);
 			this.table.updateGameConfig(config);
 			this.errors.updateGameConfig(config);
+			this.latestW = config.width;
+			this.latestH = config.height;
 
 			this.board.repaint();
 		}
@@ -199,10 +220,12 @@ define([
 
 			if(
 				config.queenMarkerType !== this.queenMarkerType ||
-				config.workerMarkerType !== this.workerMarkerType
+				config.workerMarkerType !== this.workerMarkerType ||
+				config.foodMarkerType !== this.foodMarkerType
 			) {
 				this.queenMarkerType = config.queenMarkerType;
 				this.workerMarkerType = config.workerMarkerType;
+				this.foodMarkerType = config.foodMarkerType;
 				this.repositionMarkers();
 			}
 
@@ -217,6 +240,7 @@ define([
 			this.errors.updateState(state);
 
 			this.latestAnts = state.ants;
+			this.latestBoard = state.board;
 			this.repositionMarkers();
 
 			this.board.repaint();
@@ -225,30 +249,46 @@ define([
 		repositionMarkers() {
 			this.markers.clear();
 
-			if(!this.queenMarkerType && !this.workerMarkerType || !this.latestAnts) {
-				return;
-			}
-
-			for(let i = 0; i < this.latestAnts.length; ++ i) {
-				const ant = this.latestAnts[i];
-				let className = '';
-				if(ant.type === QUEEN) {
-					if(this.queenMarkerType) {
-						className = 'queen-locator-' + this.queenMarkerType;
-					}
-				} else {
-					if(this.workerMarkerType) {
-						className = 'worker-locator-' + this.workerMarkerType;
+			if(this.foodMarkerType && this.latestBoard) {
+				const ww = this.latestW;
+				const hh = this.latestH;
+				const board = this.latestBoard;
+				for(let y = 0; y < hh; ++ y) {
+					for(let x = 0; x < ww; ++ x) {
+						if(board[y * ww + x] & FOOD_BIT) {
+							this.markers.mark('food-' + x + '-' + y, {
+								x,
+								y,
+								className: 'food-locator-' + this.foodMarkerType,
+								wrap: false,
+								clip: false,
+							});
+						}
 					}
 				}
-				if(className) {
-					this.markers.mark('ant-' + ant.id, {
-						x: ant.x,
-						y: ant.y,
-						className,
-						wrap: false,
-						clip: false,
-					});
+			}
+			if((this.queenMarkerType || this.workerMarkerType) && this.latestAnts) {
+				for(let i = 0; i < this.latestAnts.length; ++ i) {
+					const ant = this.latestAnts[i];
+					let className = '';
+					if(ant.type === QUEEN) {
+						if(this.queenMarkerType) {
+							className = 'queen-locator-' + this.queenMarkerType;
+						}
+					} else {
+						if(this.workerMarkerType) {
+							className = 'worker-locator-' + this.workerMarkerType;
+						}
+					}
+					if(className) {
+						this.markers.mark('ant-' + ant.id, {
+							x: ant.x,
+							y: ant.y,
+							className,
+							wrap: false,
+							clip: false,
+						});
+					}
 				}
 			}
 		}

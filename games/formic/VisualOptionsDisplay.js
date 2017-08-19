@@ -59,6 +59,11 @@ define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
 				{value: 'pointer', label: 'Pointer'},
 			], 'workerMarkerType');
 
+			this.foodPicker = makeSelect(this, [
+				{value: '', label: 'None'},
+				{value: 'pointer', label: 'Pointer'},
+			], 'foodMarkerType');
+
 			this.bar = docutil.make('div', {'class': 'options'}, [
 				this.colourPicker.select,
 				this.dimPicker.select,
@@ -69,6 +74,10 @@ define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
 				docutil.make('label', {}, [
 					'Worker marker ',
 					this.workerPicker.select,
+				]),
+				docutil.make('label', {}, [
+					'Food marker ',
+					this.foodPicker.select,
 				]),
 			]);
 		}
@@ -95,6 +104,7 @@ define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
 			this.dimPicker.setFrom(config);
 			this.queenPicker.setFrom(config);
 			this.workerPicker.setFrom(config);
+			this.foodPicker.setFrom(config);
 		}
 
 		updateState(state) {
