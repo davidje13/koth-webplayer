@@ -12,11 +12,12 @@ define(['require', 'document', './EventObject'], (require, document, EventObject
 		const safari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 		const script = document.createElement('script');
 		if(safari && (window.rootProtocol || window.location.protocol) === 'https:') {
+			const href = window.rootHref || window.location.href;
 			// WORKAROUND: Safari considers blobs to be non-https, so blocks
 			// them. No idea why, so we load directly instead (but due to
 			// disallowing same-origin for the frame, we have to rely on
 			// allowing *any* https request - see sandbox_utils.
-			script.setAttribute('src', src + '.js');
+			script.setAttribute('src', href.substr(0, href.lastIndexOf('/')) + '/' + src + '.js');
 		} else {
 			script.setAttribute('src', URL.createObjectURL(new Blob(
 				[event.data.require_script_blob],

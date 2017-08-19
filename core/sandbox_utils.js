@@ -106,11 +106,13 @@ define(['require', 'document', './EventObject', 'def:./EventObject', 'def:./sand
 		// workaround. For other browsers, we get to keep our stricter
 		// permissions.
 		const protocol = window.rootProtocol || window.location.protocol;
+		const href = window.rootHref || window.location.href;
 		const needUnsafeEval = safari && (protocol === 'https:' || protocol === 'file:');
 		const needUnsafeRemote = safari && (protocol === 'https:');
 
 		const src = (
 			'window.rootProtocol = ' + JSON.stringify(protocol) + ';\n' +
+			'window.rootHref = ' + JSON.stringify(href) + ';\n' +
 			'const require_factory = ' + require_factory.toString() + ';\n' +
 			'require_factory();\n' +
 			EventObject_def.code() + '\n' +
