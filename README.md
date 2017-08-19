@@ -34,8 +34,8 @@ that's a good (or even remotely sensible) architectural choice, just that I felt
 APIs here are heavily inspired by such projects and may be vaguely familiar).
 
 Modern Javascript syntax and APIs are used throughout and no polyfils are included, so don't expect this to work in Internet
-Explorer. So far it's only been tested in Google Chrome, but in theory it should also work in Mozilla Firefox (perhaps with
-some minor fixes).
+Explorer. So far it's only been tested in Google Chrome & Safari (iOS), but in theory it should also work in Mozilla Firefox
+(perhaps with some minor fixes).
 
 Unit tests (few though they are) can be run by opening the `test.htm` file in the root
 (see the current test status on master at: https://davidje13.github.io/koth-webplayer/test.htm).
