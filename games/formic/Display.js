@@ -121,9 +121,9 @@ define([
 					stride: 6,
 					segsX: 16,
 					segsY: 8,
-					rad1: 0.015,
-					rad2A: 0.007,
-					rad2B: 0.007,
+					rad1: 0.012,
+					rad2A: 0.005,
+					rad2B: 0.005,
 				}),
 				params: {
 					shadowStr: 0.8,

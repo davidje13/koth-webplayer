@@ -21,6 +21,10 @@ define([
 	//   beyond provided data, causing a black mark at the wrap point
 	//   (and can't use non-PoT texture)
 
+	function blend(a, b, r) {
+		return a * (1 - r) + b * r;
+	}
+
 	return class Full3DBoard extends EventObject {
 		constructor({renderer, markerStore = null, markerTypes = null, width = 0, height = 0}) {
 			super();
@@ -31,7 +35,7 @@ define([
 			this.wireframe = false;
 			this.viewAngle = 0;
 			this.viewLift = Math.PI * 0.25;
-			this.viewDist = 3.5;
+			this.viewDist = 0;
 			this.frac3D = 1;
 
 			window.devicePixelRatio = 1;
@@ -168,6 +172,7 @@ define([
 
 			this._buildTorus();
 			this.resize(width, height);
+			this.setZoom(0);
 		}
 
 		resize(width, height) {
@@ -186,18 +191,18 @@ define([
 			const fullRad2A = 0.2;
 			const fullRad2B = 0.7;
 
-			const depth = this.frac3D;
-			const easeIn = depth * depth;
-			const easeOut = 1 - (1 - depth) * (1 - depth);
-			const animating = (depth > 0 && depth < 1);
+			const frac3D = this.frac3D;
+			const easeIn = frac3D * frac3D;
+			const easeOut = 1 - (1 - frac3D) * (1 - frac3D);
+			const animating = (frac3D > 0 && frac3D < 1);
 
 			const aspect = this.boardW ? (this.boardH / this.boardW) : 1;
 
-			const rad1 = 1 / Math.max(depth, 0.00001);
-			const loopX = 1 / ((rad1 * Math.PI) * aspect * (1 - depth) + depth);
-			const loopY = 0.5 + 0.5 * easeIn;
+			const rad1 = 1 / Math.max(frac3D, 0.00001);
+			const loopX = 1 / blend((rad1 * Math.PI) * aspect, 1, frac3D);
+			const loopY = blend(0.5, 1, easeIn);
 			const rad2A = fullRad2A * easeOut;
-			const rad2B = (1 - depth) + fullRad2B * depth;
+			const rad2B = blend(1, fullRad2B, frac3D);
 			const dim = animating ? 64 : 128;
 
 			this.meshTorus.setResolution(dim, dim);
@@ -206,7 +211,7 @@ define([
 
 			this.meshTorus.setAnimatingVertices(animating);
 
-			if(depth >= 1) {
+			if(frac3D >= 1) {
 				gl.enable(gl.CULL_FACE);
 			} else {
 				gl.disable(gl.CULL_FACE);
@@ -215,11 +220,15 @@ define([
 			this.torusDirty = false;
 		}
 
-		updateTorus(frac3D) {
+		set3DRatio(frac3D) {
 			if(this.frac3D !== frac3D) {
 				this.frac3D = frac3D;
 				this.torusDirty = true;
 			}
+		}
+
+		setZoom(zoom) {
+			this.viewDist = blend(2.5, 1.5, zoom);
 		}
 
 		setMarkerStore(markerStore) {
@@ -296,8 +305,8 @@ define([
 				marks.forEach((mark, key) => {
 					if(mark.className === className && (mark.w === null || mark.h === null)) {
 						const locn = board.find(
-							mark.x / this.boardW,
-							mark.y / this.boardH
+							(mark.x + 0.5) / this.boardW,
+							(mark.y + 0.5) / this.boardH
 						);
 						const matModelView = Mat4.lookObj(
 							locn.p,
@@ -335,10 +344,10 @@ define([
 
 			const frac3D = this.frac3D;
 			const lift = this.viewLift * frac3D * frac3D;
-			const dist = this.viewDist * frac3D + dist2D * (1 - frac3D);
+			const dist = blend(dist2D, this.viewDist, frac3D);
 			const aspect = this.canvas.width / this.canvas.height;
-			const fov = Math.atan((1.5 * frac3D + 1 * (1 - frac3D)) / dist);
-			const matProjection = Mat4.perspective(fov, aspect, 1.0, 10.0);
+			const fov = Math.atan(blend(1, 1.5, frac3D) / dist);
+			const matProjection = Mat4.perspective(fov, aspect, blend(1, 0.1, frac3D), 10.0);
 			let ang = this.viewAngle;
 			if(frac3D < 1) {
 				ang = (ang % (Math.PI * 2)) * frac3D;

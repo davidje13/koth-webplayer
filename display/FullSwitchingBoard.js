@@ -81,7 +81,7 @@ define(['core/document_utils', 'core/EventObject', './Full2DBoard', './Full3DBoa
 			if(is3D && this.drawnFrac !== this.currentFrac) {
 				this.drawnFrac = this.currentFrac;
 				const smoothedFrac = 0.5 - Math.cos(this.currentFrac * Math.PI) * 0.5;
-				this.board3D.updateTorus(smoothedFrac);
+				this.board3D.set3DRatio(smoothedFrac);
 				if(this.active === this.board3D) {
 					this.board3D.rerender();
 				}
