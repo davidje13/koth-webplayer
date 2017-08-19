@@ -1,21 +1,6 @@
 'use strict';
 
-define(['core/worker_utils', 'fetch/entry_utils'], (worker_utils, entry_utils) => {
-	function loadEntries(site, qid) {
-		entry_utils.load(site, qid, (loaded, total) => {
-			self.postMessage({
-				action: 'LOADING',
-				loaded,
-				total,
-			});
-		}).then((entries) => {
-			self.postMessage({
-				action: 'LOADED',
-				entries,
-			});
-		});
-	}
-
+define(['core/worker_utils'], (worker_utils) => {
 	class GameStepper {
 		constructor(token, gameType, playConfig, gameConfig) {
 			this.delay = playConfig.delay;
@@ -30,6 +15,7 @@ define(['core/worker_utils', 'fetch/entry_utils'], (worker_utils, entry_utils) =
 			this.gameWorker.addEventListener('message', this._handleMessage);
 
 			this.waiting = true;
+			this.lastStartStep = Date.now();
 			this.gameWorker.postMessage({
 				action: 'BEGIN',
 				config: gameConfig,
@@ -42,7 +28,7 @@ define(['core/worker_utils', 'fetch/entry_utils'], (worker_utils, entry_utils) =
 			case 'STEP_COMPLETE':
 				this.waiting = false;
 				if(!data.state.over) {
-					this._advanceDelayed();
+					this._advanceDelayed(true);
 				}
 				self.postMessage({
 					action: 'RENDER',
@@ -53,12 +39,16 @@ define(['core/worker_utils', 'fetch/entry_utils'], (worker_utils, entry_utils) =
 			}
 		}
 
-		_advanceDelayed() {
+		_advanceDelayed(subtractStepTime) {
 			clearTimeout(this.timeout);
 			this.timeout = null;
 			if(this.speed > 0) {
-				if(this.delay > 0) {
-					this.timeout = setTimeout(this._advance, this.delay);
+				let delay = this.delay;
+				if(subtractStepTime) {
+					delay -= (Date.now() - this.lastStartStep);
+				}
+				if(delay > 0) {
+					this.timeout = setTimeout(this._advance, delay);
 				} else {
 					this._advance();
 				}
@@ -68,6 +58,7 @@ define(['core/worker_utils', 'fetch/entry_utils'], (worker_utils, entry_utils) =
 		_advance(type = null, steps = null) {
 			this.timeout = null;
 			this.waiting = true;
+			this.lastStartStep = Date.now();
 			this.gameWorker.postMessage({
 				action: 'STEP',
 				type: type || '',
@@ -99,12 +90,13 @@ define(['core/worker_utils', 'fetch/entry_utils'], (worker_utils, entry_utils) =
 				this.delay = config.delay;
 				this.speed = config.speed;
 				if(!this.waiting) {
-					this._advanceDelayed();
+					this._advanceDelayed(false);
 				}
 			}
 		}
 
 		updateGameConfig(config) {
+			this.lastStartStep = Date.now();
 			this.gameWorker.postMessage({
 				action: 'UPDATE_CONFIG',
 				config,
@@ -119,13 +111,6 @@ define(['core/worker_utils', 'fetch/entry_utils'], (worker_utils, entry_utils) =
 		let game = runningGames.get(data.token);
 
 		switch(data.action) {
-		case 'LOAD_ENTRIES':
-			self.postMessage({
-				action: 'BEGIN_LOAD',
-			});
-			loadEntries(data.site, data.qid);
-			break;
-
 		case 'GAME':
 			if(game) {
 				game.terminate();

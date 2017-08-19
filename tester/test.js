@@ -2,6 +2,7 @@
 
 require(['document', 'tester/test.css'], (document) => {
 	const testedModules = [];
+	const originalTitle = document.title;
 
 	const elements = document.getElementsByTagName('meta');
 	for(let i = 0; i < elements.length; ++ i) {
@@ -46,6 +47,15 @@ require(['document', 'tester/test.css'], (document) => {
 		throw new Error(reason);
 	};
 
+	let running = false;
+	let skipping = false;
+	let count = 0;
+	let skipped = 0;
+	let failed = 0;
+	let totalCount = 0;
+	let totalSkipped = 0;
+	let totalFailed = 0;
+	const describeQueue = [];
 	const path = [];
 
 	function log(type, message, subMessage) {
@@ -83,25 +93,34 @@ require(['document', 'tester/test.css'], (document) => {
 		log('test-failure', path.join(' \u203A '), msg);
 	}
 
-	let running = false;
-	const describeQueue = [];
-
-	function invokeDescribe({object, fn}) {
+	function invokeDescribe({object, fn, skip}) {
+		const wasSkipping = skipping;
+		if(skip) {
+			skipping = skip;
+		}
 		path.push(object);
 		try {
 			fn();
 		} catch(e) {
 			logFailure(e);
-		} finally {
-			path.pop();
 		}
+		skipping = wasSkipping;
+		path.pop();
 	}
 
 	self.describe = (object, fn) => {
 		if(running) {
-			invokeDescribe({object, fn});
+			invokeDescribe({object, fn, skip: false});
 		} else {
-			describeQueue.push({object, fn});
+			describeQueue.push({object, fn, skip: false});
+		}
+	};
+
+	self.xdescribe = (object, fn) => {
+		if(running) {
+			invokeDescribe({object, fn, skip: true});
+		} else {
+			describeQueue.push({object, fn, skip: true});
 		}
 	};
 
@@ -109,14 +128,26 @@ require(['document', 'tester/test.css'], (document) => {
 		if(!running) {
 			throw 'it() must be inside describe()!';
 		}
+		if(skipping) {
+			++ skipped;
+			return;
+		}
 		path.push(behaviour);
+		++ count;
 		try {
 			fn();
 		} catch(e) {
 			logTestFailure(e);
-		} finally {
-			path.pop();
+			++ failed;
 		}
+		path.pop();
+	};
+
+	self.xit = (behaviour, fn) => {
+		if(!running) {
+			throw 'it() must be inside describe()!';
+		}
+		++ skipped;
 	};
 
 	self.addEventListener('error', (e) => {
@@ -132,24 +163,55 @@ require(['document', 'tester/test.css'], (document) => {
 		log('compile-failure', 'Compilation error', msg);
 	});
 
+	document.title = originalTitle + ' \u2014 Running\u2026';
 	Promise.all(testedModules.map((module) => require([module + '_test']).then(() => {
-		path.push(module + '_test');
 		log('module-begin', module + '_test');
-		if(describeQueue.length === 0) {
-			logFailure('No tests!');
-		} else {
-			running = true;
-			describeQueue.forEach((desc) => invokeDescribe(desc));
-			describeQueue.length = 0;
-			running = false;
-		}
-		log('module-done', module + '_test done');
+
+		path.push(module + '_test');
+		count = 0;
+		skipped = 0;
+		failed = 0;
+		running = true;
+		describeQueue.forEach((desc) => invokeDescribe(desc));
+		describeQueue.length = 0;
+		running = false;
 		path.pop();
+
+		totalCount += count;
+		totalSkipped += skipped;
+		totalFailed += failed;
+
+		if(count) {
+			let label = module + '_test done (' + count + ')';
+			if(failed) {
+				log('module-fail', label + '; skipped ' + skipped + '; failed ' + failed);
+			} else if(skipped) {
+				log('module-skip', label + '; skipped ' + skipped);
+			} else {
+				log('module-done', label);
+			}
+		} else {
+			if(skipped) {
+				log('module-skip', module + '_test skipped ' + skipped);
+			} else {
+				log('failure', module + ' has no tests!');
+			}
+		}
 	}).catch((e) => {
 		path.push(module + '_test');
 		logFailure(e);
 		path.pop();
 	}))).then(() => {
-		log('done', 'All done.');
+		const label = 'All done (' + totalCount + ')';
+		if(totalFailed) {
+			log('fail', label + '; skipped ' + totalSkipped + '; failed ' + totalFailed);
+			document.title = originalTitle + ' \u2014 Failed ' + totalFailed;
+		} else if(totalSkipped) {
+			log('skip', label + '; skipped ' + totalSkipped);
+			document.title = originalTitle + ' \u2014 Skipped ' + totalSkipped;
+		} else {
+			log('done', label + '.');
+			document.title = originalTitle + ' \u2014 Pass (' + totalCount + ')';
+		}
 	});
 });

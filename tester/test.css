@@ -18,8 +18,24 @@ body {
 	color: #CC0000;
 }
 
+.module-fail {
+	color: #880000;
+}
+
+.module-skip {
+	color: #888800;
+}
+
 .module-done {
 	color: #008800;
+}
+
+.fail {
+	color: #AA0000;
+}
+
+.skip {
+	color: #999900;
 }
 
 .done {

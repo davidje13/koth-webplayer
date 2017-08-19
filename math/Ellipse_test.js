@@ -35,6 +35,13 @@ define(['./Ellipse'], (Ellipse) => {
 			expect(actual, isNear(0.14296, 0.000005));
 		});
 
+		it('takes particular values at known locations', () => {
+			const ellipse = new Ellipse(5, 8);
+			expect(ellipse.fracFromTheta(0), isNear(0, 0.000005));
+			expect(ellipse.fracFromTheta(Math.PI), isNear(0.5, 0.000005));
+			expect(ellipse.fracFromTheta(Math.PI * 2), isNear(1, 0.000005));
+		});
+
 		it('reverses thetaFromFrac', () => {
 			const ellipse = new Ellipse(5, 8);
 			for(let i = -4; i < 6; i += 0.1) {

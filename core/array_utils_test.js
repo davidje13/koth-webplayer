@@ -17,6 +17,11 @@ define(['./array_utils'], (array_utils) => {
 				expect(list[i], equals(7));
 			}
 		});
+
+		it('can generate empty lists', () => {
+			const list = array_utils.makeList(0);
+			expect(list.length, equals(0));
+		});
 	});
 
 	describe('shuffleInPlace', () => {
@@ -45,6 +50,14 @@ define(['./array_utils'], (array_utils) => {
 					fail('Lost element ' + i + ' (' + original[i] + ')');
 				}
 			}
+		});
+
+		it('leaves empty lists unchanged', () => {
+			const list = [];
+
+			array_utils.shuffleInPlace(list, rnd);
+
+			expect(list.length, equals(0));
 		});
 	});
 });
