@@ -117,10 +117,10 @@ define(['core/webgl_utils', 'math/Mat4', 'math/Ellipse'], (webgl_utils, Mat4, El
 			const ySin = [];
 			const yCos = [];
 			const yFrac = [];
-			for(let y = 0; y <= this.segsY; ++ y) {
+			for(let y = 0; y <= segsY; ++ y) {
 				const a = (
 					yStartTheta +
-					(yEndTheta - yStartTheta) * (y / this.segsY)
+					(yEndTheta - yStartTheta) * (y / segsY)
 				);
 				ySin.push(Math.sin(a));
 				yCos.push(Math.cos(a));
@@ -132,18 +132,18 @@ define(['core/webgl_utils', 'math/Mat4', 'math/Ellipse'], (webgl_utils, Mat4, El
 
 			const uv0 = surfaceNormal ? 6 : 3;
 
-			for(let x = 0; x <= this.segsX; ++ x) {
-				const a0 = Math.PI * 2 * (x / this.segsX - 0.5) * loopX;
+			for(let x = 0; x <= segsX; ++ x) {
+				const a0 = Math.PI * 2 * (x / segsX - 0.5) * loopX;
 				const dx = -Math.sin(a0);
 				const dy = -Math.cos(a0);
-				const xf = x / this.segsX;
+				const xf = x / segsX;
 
-				for(let y = 0; y <= this.segsY; ++ y) {
+				for(let y = 0; y <= segsY; ++ y) {
 					const dr = yCos[y];
 					const dz = ySin[y];
 					const yf = yFrac[y];
 
-					const p = x * (this.segsY + 1) + y;
+					const p = x * (segsY + 1) + y;
 					vertNormUV[p * stride    ] = dx * (rad1 + dr * rad2A);
 					vertNormUV[p * stride + 1] = dy * (rad1 + dr * rad2A);
 					vertNormUV[p * stride + 2] = dz * rad2B;

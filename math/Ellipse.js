@@ -29,7 +29,8 @@ define(() => {
 
 		thetaFromFrac(f) {
 			const count = this.precision();
-			const l = (((f % 1) + 1) % 1) * this.circumference();
+			const base = Math.floor(f);
+			const l = (f - base) * this.circumference();
 			let r0 = 0;
 			let r1 = count;
 			while(r1 > r0 + 1) {
@@ -50,17 +51,23 @@ define(() => {
 			} else {
 				v = r0 + (l - v0) / (v1 - v0);
 			}
-			return PI2 * ((v / count) + Math.floor(f));
+			return PI2 * ((v / count) + base);
 		}
 
 		fracFromTheta(t) {
+			const precision = this.precision();
 			const nt = t * iPI2;
-			const p = (((nt % 1) + 1) % 1) * this.precision();
+			let base = Math.floor(nt);
+			let p = (nt - base) * precision;
+			if((p|0) === precision) {
+				p = 0;
+				++ base;
+			}
 			const v0 = this.cumulativeLengths[ p|0   ];
 			const v1 = this.cumulativeLengths[(p|0)+1];
 			return (
 				(v0 + (v1 - v0) * (p % 1)) / this.circumference() +
-				Math.floor(nt)
+				base
 			);
 		}
 

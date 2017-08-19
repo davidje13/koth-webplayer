@@ -119,7 +119,7 @@ define([
 				model: new ModelTorus({
 					uv: false,
 					stride: 6,
-					segsX: 8,
+					segsX: 16,
 					segsY: 8,
 					rad1: 0.015,
 					rad2A: 0.007,

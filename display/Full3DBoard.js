@@ -191,8 +191,10 @@ define([
 			const easeOut = 1 - (1 - depth) * (1 - depth);
 			const animating = (depth > 0 && depth < 1);
 
+			const aspect = this.boardW ? (this.boardH / this.boardW) : 1;
+
 			const rad1 = 1 / Math.max(depth, 0.00001);
-			const loopX = 1 / ((rad1 * Math.PI) * (1 - depth) + depth);
+			const loopX = 1 / ((rad1 * Math.PI) * aspect * (1 - depth) + depth);
 			const loopY = 0.5 + 0.5 * easeIn;
 			const rad2A = fullRad2A * easeOut;
 			const rad2B = (1 - depth) + fullRad2B * depth;
@@ -329,18 +331,25 @@ define([
 				this._buildTorus();
 			}
 
-			const depth = this.frac3D;
-			const aspect = this.canvas.width / this.canvas.height;
-			const fov = Math.PI * (0.125 * depth + 0.25 * (1 - depth));
-			const matProjection = Mat4.perspective(fov, aspect * depth + (1 - depth), 0.1, 10.0);
-			let ang = this.viewAngle;
-			if(depth < 1) {
-				ang = (ang % (Math.PI * 2)) * depth * depth * depth * depth;
-			}
-			const lift = this.viewLift * depth;
-			const dist = this.viewDist * depth + 1 * (1 - depth);
+			const dist2D = 5;
 
-			const torusFocus = new Mat4.Vec3(0, this.meshTorus.rad1 - depth, 0);
+			const frac3D = this.frac3D;
+			const lift = this.viewLift * frac3D * frac3D;
+			const dist = this.viewDist * frac3D + dist2D * (1 - frac3D);
+			const aspect = this.canvas.width / this.canvas.height;
+			const fov = Math.atan((1.5 * frac3D + 1 * (1 - frac3D)) / dist);
+			const matProjection = Mat4.perspective(fov, aspect, 1.0, 10.0);
+			let ang = this.viewAngle;
+			if(frac3D < 1) {
+				ang = (ang % (Math.PI * 2)) * frac3D;
+			}
+
+			const focusDist = this.meshTorus.rad1 - frac3D;
+			const torusFocus = new Mat4.Vec3(
+				focusDist * Math.sin(ang * frac3D),
+				focusDist * Math.cos(ang * frac3D),
+				0
+			);
 
 			const matView = Mat4.look(
 				torusFocus.add(new Mat4.Vec3(

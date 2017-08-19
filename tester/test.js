@@ -140,6 +140,7 @@ require(['document', 'tester/test.css'], (document) => {
 		} else {
 			running = true;
 			describeQueue.forEach((desc) => invokeDescribe(desc));
+			describeQueue.length = 0;
 			running = false;
 		}
 		log('module-done', module + '_test done');
