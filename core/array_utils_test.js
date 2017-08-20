@@ -60,4 +60,30 @@ define(['./array_utils'], (array_utils) => {
 			expect(list.length, equals(0));
 		});
 	});
+
+	describe('shuffle', () => {
+		it('shuffles a copy of the given list using the given random source', () => {
+			const list = [1, 2, 3, 4];
+
+			const list2 = array_utils.shuffle(list, {
+				next: () => 0,
+			});
+
+			const expected = [2, 3, 4, 1];
+			for(let i = 0; i < expected.length; ++ i) {
+				expect(list2[i], equals(expected[i]), 'index ' + i);
+			}
+		});
+
+		it('does not modify the input', () => {
+			const list = [1, 2, 3, 4];
+
+			array_utils.shuffle(list, rnd);
+
+			expect(list.length, equals(4));
+			for(let i = 0; i < 4; ++ i) {
+				expect(list[i], equals(i + 1), 'index ' + i);
+			}
+		});
+	});
 });

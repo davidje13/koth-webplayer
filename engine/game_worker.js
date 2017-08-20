@@ -31,7 +31,7 @@ define(['math/Random'], (Random) => {
 
 			case 'STEP':
 				const limit = data.maxTime ? (Date.now() + data.maxTime) : 0;
-				for(let i = 0; i < data.steps && !game.isOver(); ++ i) {
+				for(let i = 0; (data.steps < 0 || i < data.steps) && !game.isOver(); ++ i) {
 					game.step(data.type);
 					if(limit && Date.now() >= limit) {
 						break;

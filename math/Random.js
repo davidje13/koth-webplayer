@@ -31,7 +31,9 @@ define(() => {
 		}
 
 		seed(seed) {
-			if((typeof seed) !== 'string') {
+			if(typeof seed === 'object') {
+				seed = seed.makeRandomSeed('');
+			} else if((typeof seed) !== 'string') {
 				seed = seed.toString();
 			} else {
 				seed = seed.substr(1); // trim identifier letter

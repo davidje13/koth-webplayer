@@ -11,7 +11,7 @@ define(['core/EventObject', 'display/document_utils', '../GameScorer'], (EventOb
 			this.lastRowOrder = null;
 
 			this.tbody = docutil.make('tbody');
-			this.tableEntries = [];
+			this.tableEntries = new Map();
 			this.seedLabel = docutil.text();
 
 			const workerLabels = [];
@@ -50,15 +50,9 @@ define(['core/EventObject', 'display/document_utils', '../GameScorer'], (EventOb
 			}
 
 			this.entries = entries;
-			for(let i = 0; i < this.tableEntries.length; ++ i) {
-				this.tbody.removeChild(this.tableEntries[i].tr);
-			}
-			this.tableEntries.length = 0;
-			for(let id in this.entries) {
-				if(!entries.hasOwnProperty(id)) {
-					continue;
-				}
-				const entry = this.entries[id];
+			this.tableEntries.forEach((entry) => this.tbody.removeChild(entry.tr));
+			this.tableEntries.clear();
+			entries.forEach((entry) => {
 				const food = docutil.text();
 				const workers = [];
 				const workerCells = [];
@@ -70,7 +64,7 @@ define(['core/EventObject', 'display/document_utils', '../GameScorer'], (EventOb
 				const thinkingTime = docutil.text();
 				const score = docutil.text();
 				const tdScore = docutil.make('td', {'class': 'result'}, [score]);
-				const tr = docutil.make('tr', {'class': 'team-' + id}, [
+				const tr = docutil.make('tr', {'class': 'team-' + entry.id}, [
 					docutil.make('td', {
 						'class': 'player',
 						'title': entry.title,
@@ -80,7 +74,7 @@ define(['core/EventObject', 'display/document_utils', '../GameScorer'], (EventOb
 					docutil.make('td', {}, [thinkingTime]),
 					tdScore,
 				]);
-				this.tableEntries.push({
+				this.tableEntries.set(entry.id, {
 					tr,
 					food,
 					workers,
@@ -89,7 +83,7 @@ define(['core/EventObject', 'display/document_utils', '../GameScorer'], (EventOb
 					tdScore,
 				});
 				this.tbody.appendChild(tr);
-			}
+			});
 		}
 
 		clear() {
@@ -104,9 +98,8 @@ define(['core/EventObject', 'display/document_utils', '../GameScorer'], (EventOb
 		}
 
 		updateState(state) {
-			for(let i = 0; i < state.entries.length; ++ i) {
-				const entry = state.entries[i];
-				const display = this.tableEntries[entry.id];
+			state.entries.forEach((entry) => {
+				const display = this.tableEntries.get(entry.id);
 				docutil.update_text(display.food, entry.food);
 				for(let j = 0; j < WORKER_COUNT; ++ j) {
 					docutil.update_text(display.workers[j], entry.workers[j]);
@@ -122,7 +115,7 @@ define(['core/EventObject', 'display/document_utils', '../GameScorer'], (EventOb
 					avg = (entry.elapsedTime / entry.antSteps).toFixed(3) + 'ms';
 				}
 				docutil.update_text(display.thinkingTime, avg);
-			}
+			});
 
 			const scoreBoard = GameScorer.score(null, state);
 			const changed = (
@@ -140,7 +133,7 @@ define(['core/EventObject', 'display/document_utils', '../GameScorer'], (EventOb
 				}
 				for(let i = 0; i < scoreBoard.length; ++ i) {
 					const place = scoreBoard[i];
-					const display = this.tableEntries[place.id];
+					const display = this.tableEntries.get(place.id);
 					docutil.update_attrs(display.tdScore, {
 						'class': 'result' + ((place.winner) ? ' win' : '')
 					});

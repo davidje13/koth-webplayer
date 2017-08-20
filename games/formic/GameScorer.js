@@ -22,12 +22,9 @@ define(() => {
 	return {
 		score: (config, state) => {
 			const scores = [];
-			for(let i = 0; i < state.entries.length; ++ i) {
-				const entry = state.entries[i];
+			state.entries.forEach((entry) => {
 				let totalWorkers = 0;
-				for(let j = 0; j < entry.workers.length; ++ j) {
-					totalWorkers += entry.workers[j];
-				}
+				entry.workers.forEach((count) => totalWorkers += count);
 				scores.push({
 					id: entry.id,
 					food: entry.food,
@@ -36,7 +33,7 @@ define(() => {
 					winner: false,
 					score: 0,
 				});
-			}
+			});
 			scores.sort((a, b) => {
 				if(a.active !== b.active) {
 					return a.active ? -1 : 1;

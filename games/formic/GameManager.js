@@ -176,22 +176,16 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			this.simulationTime = 0;
 			this.board = new Uint8Array(area);
 			this.antGrid = array_utils.makeList(area, null);
-			this.entries = [];
+			this.entryLookup = new Map();
 			this.ants = [];
 			this.nextAntID = 0;
 
 			const foodCount = (area * foodRatio)|0;
-			let queenCount = 0;
-			for(let entryID in entries) {
-				if(entries.hasOwnProperty(entryID)) {
-					++ queenCount;
-				}
-			}
 
 			// Randomly position all food & queens without overlaps
 			// (inefficient, but predictable performance regardless of coverage)
 			const positions = [];
-			let remaining = foodCount + queenCount;
+			let remaining = foodCount + entries.length;
 			for(let i = 0; i < area; ++ i) {
 				if(this.random.next(area - i) < remaining) {
 					positions.push(i);
@@ -199,26 +193,23 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 				}
 			}
 
-			// Take queenCount positions for queens; the rest will be food
-			for(let entryID in entries) {
-				if(!entries.hasOwnProperty(entryID)) {
-					continue;
-				}
+			// Take one position for each queen; the rest will be food
+			entries.forEach((entry) => {
 				const positionIndex = this.random.next(positions.length);
 				const startIndex = positions.splice(positionIndex, 1)[0];
 
-				const code = entry_utils.compile(entries[entryID].code, ['view']);
+				const code = entry_utils.compile(entry.code, ['view']);
 				const queen = {
 					id: (this.nextAntID ++),
-					team: entryID,
+					team: entry.id,
 					type: QUEEN,
 					x: startIndex % this.width,
 					y: (startIndex / this.width)|0,
 					i: startIndex,
 					food: 0,
 				};
-				this.entries.push({
-					id: entryID,
+				this.entryLookup.set(entry.id, {
+					id: entry.id,
 					fn: code.fn,
 					cacheView: array_utils.makeList(CACHE_SIZE, null),
 					cacheAct: array_utils.makeList(CACHE_SIZE, null),
@@ -233,7 +224,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 				});
 				this.ants.push(queen);
 				this.antGrid[queen.i] = queen;
-			}
+			});
 
 			// Ensure random competitor order
 			array_utils.shuffleInPlace(this.ants, this.random);
@@ -298,7 +289,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					i: p.i,
 					food: 0,
 				};
-				++ this.entries[newAnt.team].workerCounts[newAnt.type - 1];
+				++ this.entryLookup.get(newAnt.team).workerCounts[newAnt.type - 1];
 				this.ants.splice(index + 1, 0, newAnt);
 				this.antGrid[newAnt.i] = newAnt;
 				-- ant.food;
@@ -348,7 +339,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 
 		stepAnt(index) {
 			const ant = this.ants[index];
-			const team = this.entries[ant.team];
+			const team = this.entryLookup.get(ant.team);
 			if(!team.active) {
 				return;
 			}
@@ -430,27 +421,30 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 		}
 
 		getState() {
+			const entries = [];
+			this.entryLookup.forEach((entry) => entries.push({
+				id: entry.id,
+				food: entry.queen.food,
+				queen: this.ants.indexOf(entry.queen),
+				workers: entry.workerCounts,
+				antSteps: entry.antSteps,
+				elapsedTime: entry.elapsedTime,
+				active: entry.active,
+				error: entry.error,
+				errorInput: entry.errorInput,
+				errorOutput: entry.errorOutput,
+			}));
+
 			return {
 				frame: this.frame,
 				over: this.isOver(),
 				currentAnt: this.currentAnt,
 				simulationTime: this.simulationTime,
 				board: this.board,
-				entries: this.entries.map((entry) => ({
-					id: entry.id,
-					food: entry.queen.food,
-					queen: this.ants.indexOf(entry.queen),
-					workers: entry.workerCounts,
-					antSteps: entry.antSteps,
-					elapsedTime: entry.elapsedTime,
-					active: entry.active,
-					error: entry.error,
-					errorInput: entry.errorInput,
-					errorOutput: entry.errorOutput,
-				})),
+				entries,
 				ants: this.ants.map((ant) => ({
 					id: ant.id,
-					team: ant.team.id,
+					team: ant.team,
 					type: ant.type,
 					x: ant.x,
 					y: ant.y,

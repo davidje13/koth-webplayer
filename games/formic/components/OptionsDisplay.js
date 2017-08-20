@@ -70,7 +70,7 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 			label: '\u25B6!',
 			title: 'Fastest Possible',
 			event: 'changeplay',
-			params: [{delay: 0, speed: 100000}],
+			params: [{delay: 0, speed: -1}],
 		},
 	];
 
@@ -200,9 +200,7 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 
 		updateState(state) {
 			let simTime = state.simulationTime;
-			for(let i = 0; i < state.entries.length; ++ i) {
-				simTime -= state.entries[i].elapsedTime;
-			}
+			state.entries.forEach((entry) => simTime -= entry.elapsedTime);
 
 			docutil.update_text(this.frame, state.frame);
 			docutil.update_text(this.stepTime, (state.simulationTime / state.frame).toFixed(3));

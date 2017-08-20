@@ -44,7 +44,7 @@ define(['core/worker_utils', 'path:./game_worker'], (worker_utils, game_worker_p
 		_advanceDelayed(subtractStepTime) {
 			clearTimeout(this.timeout);
 			this.timeout = null;
-			if(this.playConfig.speed > 0) {
+			if(this.playConfig.speed) {
 				let delay = this.playConfig.delay;
 				if(subtractStepTime) {
 					delay -= (Date.now() - this.lastStartStep);

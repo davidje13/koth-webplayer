@@ -22,6 +22,7 @@ require([
 	const gameType = docutil.getMetaTagValue('game-type');
 	const baseGameConfig = JSON.parse(docutil.getMetaTagValue('game-config', '{}'));
 	const basePlayConfig = JSON.parse(docutil.getMetaTagValue('play-config', '{}'));
+	const basePlayHiddenConfig = JSON.parse(docutil.getMetaTagValue('play-hidden-config', '{"speed": -1, "maxTime": 500}'));
 	const baseDisplayConfig = JSON.parse(docutil.getMetaTagValue('display-config', '{}'));
 	const site = docutil.getMetaTagValue('stack-exchange-site');
 	const qid = docutil.getMetaTagValue('stack-exchange-qid');
@@ -60,34 +61,47 @@ require([
 
 		const tournament = new Tournament();
 		tournament.setMatchHandler((seed, entries) => {
+			console.log('Starting match', seed, entries);
 			const match = new Match();
 			match.setGameHandler((seed, entries) => {
+				console.log('Starting game', seed, entries);
 				const game = games.make({
 					baseGameConfig,
-					basePlayConfig,
+					basePlayConfig: basePlayHiddenConfig,
 					baseDisplayConfig,
 				});
 				return new Promise((resolve, reject) => {
 					game.addEventListener('update', (state) => {
 						const config = game.getGameConfig();
+						console.log('Game progress');
 						// TODO: update match display (progress bar, maybe mini visualisation)
 					});
 					game.addEventListener('complete', (state) => {
 						const config = game.getGameConfig();
 						game.terminate();
-						resolve(GameScorer.score(config, state));
+						const score = GameScorer.score(config, state);
+						console.log('Game complete', score);
+						resolve(score);
 					});
 					game.begin({seed, entries});
 				});
 			});
 			return new Promise((resolve, reject) => {
 				match.addEventListener('complete', (matchScores) => {
-					resolve(scores); // TODO: aggregate scores
+					const scores = {};
+					matchScores.forEach((matchScore) => {
+						matchScore.forEach((result) => {
+							scores[result.id] = (scores[result.id] || 0) + result.score;
+						});
+					});
+					console.log('Match complete', matchScores, scores);
+					resolve(scores);
 				});
 				match.begin({seed, entries});
 			});
 		});
 		tournament.addEventListener('complete', (finalScores) => {
+			console.log('Tournament complete', finalScores);
 			// TODO
 		});
 

@@ -5,7 +5,7 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 		constructor() {
 			super();
 
-			this.entries = null;
+			this.entryLookup = new Map();
 			this.lastRows = null;
 
 			this.tbody = docutil.make('tbody');
@@ -24,7 +24,8 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 		}
 
 		updateGameConfig({entries}) {
-			this.entries = entries;
+			this.entryLookup.clear();
+			entries.forEach((entry) => this.entryLookup.set(entry.id, entry));
 		}
 
 		updateDisplayConfig() {
@@ -60,7 +61,7 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 				for(let i = 0; i < rows.length; ++ i) {
 					const row = rows[i];
 					this.tbody.appendChild(docutil.make('tr', {}, [
-						docutil.make('td', {}, [this.entries[row.id].title]),
+						docutil.make('td', {}, [this.entryLookup.get(row.id).title]),
 						docutil.make('td', {'class': 'foul-reason'}, [
 							row.error +
 							(row.input

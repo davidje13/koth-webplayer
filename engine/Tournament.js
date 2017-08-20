@@ -4,15 +4,26 @@ define(['core/EventObject', 'math/Random'], (EventObject, Random) => {
 	return class Tournament extends EventObject {
 		constructor() {
 			super();
+
+			this.matchHandler = null;
 		}
 
 		setMatchHandler(handler) {
-			// TODO
+			this.matchHandler = handler;
 		}
 
 		begin({seed = null, entries}) {
 			this.seed = Random.makeRandomSeedFrom(seed, 'T');
-			// TODO
+
+			const random = new Random(this.seed);
+
+			// TODO: abstractions
+
+			const match1 = this.matchHandler(
+				random.makeRandomSeed('M'),
+				entries
+			);
+			match1.then((scores) => this.trigger('complete', [scores]));
 		}
 	};
 });

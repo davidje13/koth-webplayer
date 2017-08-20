@@ -9,8 +9,9 @@ define(['core/worker_utils', 'path:./loader_worker'], (worker_utils, loader_work
 		return o.value;
 	};
 
-	function parseEntry(entry) {
+	function parseEntry(entry, index) {
 		return {
+			id: 'E' + index,
 			user_name: entry.user_name,
 			user_id: entry.user_id,
 			title: unescapeHTML(entry.title),
