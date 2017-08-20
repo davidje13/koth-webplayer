@@ -1,18 +1,18 @@
 define([
-	'core/document_utils',
-	'core/webgl_utils',
+	'3d/webgl_utils',
 	'3d/ModelPoint',
 	'3d/ModelTorus',
 	'core/EventObject',
 	'math/Mat4',
+	'./document_utils',
 	'./style.css',
 ], (
-	docutil,
 	webgl_utils,
 	ModelPoint,
 	ModelTorus,
 	EventObject,
 	Mat4,
+	docutil,
 ) => {
 	'use strict';
 

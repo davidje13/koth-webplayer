@@ -1,11 +1,11 @@
 define([
-	'core/document_utils',
 	'core/EventObject',
+	'./document_utils',
 	'./Full2DBoard',
 	'./Full3DBoard',
 ], (
-	docutil,
 	EventObject,
+	docutil,
 	Full2DBoard,
 	Full3DBoard,
 ) => {

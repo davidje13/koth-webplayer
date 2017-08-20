@@ -10,7 +10,7 @@
 // * team management
 
 require([
-	'core/document_utils',
+	'display/document_utils',
 	'display/Loader',
 	'path:engine/sandboxed_loader',
 	'style.css',

@@ -1,8 +1,8 @@
 define([
-	'core/document_utils',
 	'core/EventObject',
 	'3d/ModelPoint',
 	'3d/ModelTorus',
+	'display/document_utils',
 	'display/MarkerStore',
 	'display/MarkerTypes3D',
 	'display/FullSwitchingBoard',
@@ -12,10 +12,10 @@ define([
 	'./components/LeaderboardDisplay',
 	'./components/DisqualificationsDisplay',
 ], (
-	docutil,
 	EventObject,
 	ModelPoint,
 	ModelTorus,
+	docutil,
 	MarkerStore,
 	MarkerTypes3D,
 	FullSwitchingBoard,

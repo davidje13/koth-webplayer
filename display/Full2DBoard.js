@@ -1,10 +1,10 @@
 define([
-	'core/document_utils',
 	'core/EventObject',
+	'./document_utils',
 	'./style.css',
 ], (
-	docutil,
 	EventObject,
+	docutil,
 ) => {
 	'use strict';
 

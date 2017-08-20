@@ -1,4 +1,4 @@
-define(['core/webgl_utils', 'math/Mat4'], (webgl_utils, Mat4) => {
+define(['./webgl_utils', 'math/Mat4'], (webgl_utils, Mat4) => {
 	'use strict';
 
 	return class ModelPoint extends webgl_utils.ModelData {
