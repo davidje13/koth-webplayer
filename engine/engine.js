@@ -12,10 +12,12 @@
 require([
 	'core/document_utils',
 	'display/Loader',
+	'path:engine/sandboxed_loader',
 	'style.css',
 ], (
 	docutil,
 	Loader,
+	sandboxed_loader_path,
 ) => {
 	const gameType = docutil.getMetaTagValue('game-type');
 	const baseGame = JSON.parse(docutil.getMetaTagValue('game-config', '{}'));
@@ -24,6 +26,8 @@ require([
 	const site = docutil.getMetaTagValue('stack-exchange-site');
 	const qid = docutil.getMetaTagValue('stack-exchange-qid');
 
+	const gameDir = 'games/' + gameType;
+
 	const loader = new Loader('initial-load', 'user interface', 0);
 	docutil.body.appendChild(loader.dom());
 
@@ -31,19 +35,21 @@ require([
 		'math/Random',
 		'engine/GameOrchestrator',
 		'core/sandbox_utils',
-		'games/' + gameType + '/Display',
-		'games/' + gameType + '/style.css',
+		'path:' + gameDir + '/GameManager',
+		gameDir + '/Display',
+		gameDir + '/style.css',
 	], (
 		Random,
 		GameOrchestrator,
 		sandbox_utils,
+		GameManager_path,
 		Display,
 	) => {
 		loader.setState('game engine', 0.2);
-		const sandbox = sandbox_utils.make('engine/sandboxed_loader');
-		const games = new GameOrchestrator(gameType);
+		const sandbox = sandbox_utils.make(sandboxed_loader_path);
+		const games = new GameOrchestrator(GameManager_path);
 
-		const GAME_COUNT = 1;//Math.max(1, Math.min(4, navigator.hardwareConcurrency - 2));
+		const CONCURRENCY = Math.max(1, Math.min(4, navigator.hardwareConcurrency - 2));
 
 		sandbox.addEventListener('message', (event) => {
 			const data = event.data;
@@ -62,18 +68,17 @@ require([
 			case 'LOADED':
 				docutil.body.removeChild(loader.dom());
 
-				for(let i = 0; i < GAME_COUNT; ++ i) {
+//				for(let i = 0; i < CONCURRENCY; ++ i) {
 					const display = new Display();
 					const game = games.makeGame({
-						entries: data.entries,
 						display,
 						baseGame,
 						basePlay,
 						baseDisplay,
 					});
-					game.begin();
+					game.begin({entries: data.entries});
 					docutil.body.appendChild(display.dom());
-				}
+//				}
 				break;
 			}
 		});

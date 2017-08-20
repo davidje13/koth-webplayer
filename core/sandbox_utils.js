@@ -37,7 +37,15 @@ define(['require', 'document', './EventObject', 'def:./EventObject', 'def:./sand
 		}
 	};
 
-	function make(fn) {
+	function make(dependencies, fn) {
+		if(typeof dependencies === 'function') {
+			fn = dependencies;
+			dependencies = [];
+		}
+		if(typeof dependencies === 'string') {
+			dependencies = [dependencies];
+		}
+
 		// Thanks, https://stackoverflow.com/a/23522755/1180785
 		const safari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
@@ -118,10 +126,12 @@ define(['require', 'document', './EventObject', 'def:./EventObject', 'def:./sand
 		}
 
 		let invocation;
-		if(typeof fn === 'function') {
+		if(fn && dependencies.length > 0) {
+			invocation = '() => require(' + JSON.stringify(dependencies) + ', ' + fn.toString() + ')';
+		} else if(fn) {
 			invocation = fn.toString();
 		} else {
-			invocation = '() => require([' + JSON.stringify(fn) + '])';
+			invocation = '() => require(' + JSON.stringify(dependencies) + ')';
 		}
 
 		const src = (

@@ -2,6 +2,7 @@ const require_factory = () => {
 	'use strict';
 
 	const DEFINITION_PREFIX = 'def:';
+	const ABSPATH_PREFIX = 'path:';
 
 	class SharedPromise {
 		constructor(promise) {
@@ -173,6 +174,10 @@ const require_factory = () => {
 		if(src.startsWith(DEFINITION_PREFIX)) {
 			const trueSrc = resolvePath(base, src.substr(DEFINITION_PREFIX.length));
 			return loadFactory(trueSrc).then(wrapDefinition);
+		}
+		if(src.startsWith(ABSPATH_PREFIX)) {
+			const trueSrc = resolvePath(base, src.substr(ABSPATH_PREFIX.length));
+			return Promise.resolve(trueSrc);
 		}
 
 		const trueSrc = resolvePath(base, src);

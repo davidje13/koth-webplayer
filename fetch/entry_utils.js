@@ -1,4 +1,4 @@
-define(['core/worker_utils'], (worker_utils) => {
+define(['core/worker_utils', 'path:./loader_worker'], (worker_utils, loader_worker_path) => {
 	'use strict';
 
 	function unescapeHTML(code) {
@@ -71,8 +71,7 @@ define(['core/worker_utils'], (worker_utils) => {
 		},
 
 		load: (site, qid, progressCallback) => {
-			// TODO: ideally should not require absolute path here
-			const loaderWorker = worker_utils.make('fetch/loader_worker');
+			const loaderWorker = worker_utils.make(loader_worker_path);
 
 			return new Promise((resolve, reject) => {
 				loaderWorker.addEventListener('message', (event) => {

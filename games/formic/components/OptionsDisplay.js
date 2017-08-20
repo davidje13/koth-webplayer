@@ -11,7 +11,7 @@ define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
 	const RANDOM_BUTTON = {
 		label: 'Random',
 		title: 'New Random Game',
-		event: 'new',
+		event: 'begin',
 		params: [],
 	};
 
@@ -30,7 +30,7 @@ define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
 			label: '>>',
 			title: 'Step',
 			event: 'step',
-			params: [undefined, 1],
+			params: [null, 1],
 		}, {
 			label: '\u215B',
 			title: 'Play 1/8 Speed',
@@ -124,7 +124,7 @@ define(['core/document_utils', 'core/EventObject'], (docutil, EventObject) => {
 			});
 
 			this.seedGo.addEventListener('click', () => {
-				this.trigger('new', [this.seedEntry.value]);
+				this.trigger('begin', [{seed: this.seedEntry.value}]);
 			});
 
 			this.buttons = makeButtons(SPEED_BUTTONS, this);

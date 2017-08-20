@@ -1,8 +1,8 @@
 'use strict';
 
-define(['core/worker_utils'], (worker_utils) => {
+define(['core/worker_utils', 'path:./game_worker'], (worker_utils, game_worker_path) => {
 	class GameStepper {
-		constructor(token, gameType, playConfig, gameConfig) {
+		constructor(token, gameManagerPath, playConfig, gameConfig) {
 			this.delay = playConfig.delay;
 			this.speed = playConfig.speed;
 			this.token = token;
@@ -11,7 +11,10 @@ define(['core/worker_utils'], (worker_utils) => {
 			this._advance = this._advance.bind(this);
 			this._handleMessage = this._handleMessage.bind(this);
 
-			this.gameWorker = worker_utils.make('games/' + gameType + '/game_worker');
+			this.gameWorker = worker_utils.make([
+				gameManagerPath,
+				game_worker_path,
+			], (GameManager, game_worker) => game_worker(GameManager));
 			this.gameWorker.addEventListener('message', this._handleMessage);
 
 			this.waiting = true;
@@ -117,7 +120,7 @@ define(['core/worker_utils'], (worker_utils) => {
 			}
 			runningGames.set(data.token, new GameStepper(
 				data.token,
-				data.gameType,
+				data.gameManagerPath,
 				data.playConfig,
 				data.gameConfig
 			));
