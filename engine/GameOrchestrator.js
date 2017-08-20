@@ -1,16 +1,20 @@
 define([
-	'math/Random',
+	'core/EventObject',
 	'core/sandbox_utils',
+	'math/Random',
 	'path:./sandboxed_games',
 ], (
-	Random,
+	EventObject,
 	sandbox_utils,
+	Random,
 	sandboxed_games_path,
 ) => {
 	'use strict';
 
-	class Game {
+	class Game extends EventObject {
 		constructor(parent, token, display, config, swapTokenFn) {
+			super();
+
 			this.parent = parent;
 			this.token = token;
 			this.display = null;
@@ -26,7 +30,7 @@ define([
 			this.updateGameConfig = this.updateGameConfig.bind(this);
 			this.updatePlayConfig = this.updatePlayConfig.bind(this);
 			this.updateDisplayConfig = this.updateDisplayConfig.bind(this);
-			this.debouncedUpdate = this.debouncedUpdate.bind(this);
+			this._updateState = this._updateState.bind(this);
 
 			this.swapDisplay(display);
 		}
@@ -58,8 +62,7 @@ define([
 				this.display.updatePlayConfig(this.config.play);
 				this.display.updateDisplayConfig(this.config.display);
 				if(this.latestState) {
-					clearTimeout(this.updateTm);
-					this.debouncedUpdate();
+					this._updateState();
 				}
 			}
 		}
@@ -121,6 +124,10 @@ define([
 			}
 		}
 
+		getGameConfig() {
+			return this.config.game;
+		}
+
 		replay() {
 			this.begin({seed: this.getSeed()});
 		}
@@ -132,10 +139,10 @@ define([
 					token: this.token,
 				});
 				this.token = this.swapTokenFn(this.token);
+				clearTimeout(this.updateTm);
+				this.updateTm = null;
 			}
-			clearTimeout(this.updateTm);
-			this.updateTm = null;
-			this.config.game.seed = (seed || Random.makeRandomSeed('G'));
+			this.config.game.seed = Random.makeRandomSeedFrom(seed, 'G');
 			if(entries) {
 				this.config.game.entries = entries;
 			}
@@ -155,18 +162,27 @@ define([
 			});
 		}
 
-		debouncedUpdate() {
+		_updateState() {
+			clearTimeout(this.updateTm);
 			this.updateTm = null;
 			if(this.display) {
 				this.display.updateState(this.latestState);
 			}
+			this.trigger('update', [this.latestState]);
 		}
 
 		updateState(state) {
 			this.latestState = state;
-			if(!this.updateTm) {
-				this.updateTm = setTimeout(this.debouncedUpdate, 0);
+			if(this.latestState.over) {
+				this._updateState();
+				this.trigger('complete', [this.latestState]);
+			} else if(!this.updateTm) {
+				this.updateTm = setTimeout(this._updateState, 0);
 			}
+		}
+
+		terminate() {
+			this.parent.terminate(this.token);
 		}
 	};
 
@@ -200,12 +216,12 @@ define([
 			return newToken;
 		}
 
-		makeGame({
+		make({
 			entries = [],
 			display = null,
-			baseGame = {},
-			basePlay = {},
-			baseDisplay = {}
+			baseGameConfig = {},
+			basePlayConfig = {},
+			baseDisplayConfig = {}
 		}) {
 			const token = (this.nextToken ++);
 
@@ -213,13 +229,14 @@ define([
 				game: Object.assign({
 					seed: null,
 					entries,
-				}, baseGame),
+				}, baseGameConfig),
 				play: Object.assign({
 					delay: 0,
 					speed: 0,
-				}, basePlay),
+					maxTime: 500,
+				}, basePlayConfig),
 				display: Object.assign({
-				}, baseDisplay),
+				}, baseDisplayConfig),
 			};
 
 			const game = new Game(
@@ -232,6 +249,16 @@ define([
 			this.games.set(token, game);
 
 			return game;
+		}
+
+		terminate(token) {
+			if(this.games.has(token)) {
+				this.sandbox.postMessage({
+					action: 'STOP',
+					token,
+				});
+				this.games.delete(token);
+			}
 		}
 	};
 });

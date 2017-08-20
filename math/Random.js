@@ -72,5 +72,15 @@ define(() => {
 			}
 			return s;
 		}
+
+		static makeRandomSeedFrom(seed = null, prefix = 'X') {
+			if(!seed) {
+				return Random.makeRandomSeed(prefix);
+			}
+			if(typeof seed === 'object') {
+				return seed.makeRandomSeed(prefix);
+			}
+			return seed;
+		}
 	}
 });

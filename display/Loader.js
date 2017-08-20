@@ -13,8 +13,8 @@ define(['display/document_utils', './style.css'], (docutil) => {
 			this.setState(message, progress);
 		}
 
-		setState(message, progress) {
-			if(typeof message === 'number' && progress === undefined) {
+		setState(message, progress = null) {
+			if(typeof message === 'number' && progress === null) {
 				progress = message;
 				message = this.lastMessage;
 			}

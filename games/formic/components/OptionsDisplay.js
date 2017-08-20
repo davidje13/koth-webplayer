@@ -66,6 +66,11 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 			title: 'Play Crazy Fast',
 			event: 'changeplay',
 			params: [{delay: 0, speed: 500}],
+		}, {
+			label: '\u25B6!',
+			title: 'Fastest Possible',
+			event: 'changeplay',
+			params: [{delay: 0, speed: 100000}],
 		},
 	];
 

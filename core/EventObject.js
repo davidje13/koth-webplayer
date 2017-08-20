@@ -51,7 +51,7 @@ define(() => {
 			this.forwards.clear();
 		}
 
-		trigger(type, params) {
+		trigger(type, params = []) {
 			(this.listeners.get(type) || []).forEach(
 				(listener) => listener.apply(null, params)
 			);

@@ -20,9 +20,9 @@ require([
 	sandboxed_loader_path,
 ) => {
 	const gameType = docutil.getMetaTagValue('game-type');
-	const baseGame = JSON.parse(docutil.getMetaTagValue('game-config', '{}'));
-	const basePlay = JSON.parse(docutil.getMetaTagValue('play-config', '{}'));
-	const baseDisplay = JSON.parse(docutil.getMetaTagValue('display-config', '{}'));
+	const baseGameConfig = JSON.parse(docutil.getMetaTagValue('game-config', '{}'));
+	const basePlayConfig = JSON.parse(docutil.getMetaTagValue('play-config', '{}'));
+	const baseDisplayConfig = JSON.parse(docutil.getMetaTagValue('display-config', '{}'));
 	const site = docutil.getMetaTagValue('stack-exchange-site');
 	const qid = docutil.getMetaTagValue('stack-exchange-qid');
 
@@ -34,22 +34,62 @@ require([
 	require([
 		'math/Random',
 		'engine/GameOrchestrator',
+		'engine/Match',
+		'engine/Tournament',
 		'core/sandbox_utils',
 		'path:' + gameDir + '/GameManager',
 		gameDir + '/Display',
+		gameDir + '/GameScorer',
 		gameDir + '/style.css',
 	], (
 		Random,
 		GameOrchestrator,
+		Match,
+		Tournament,
 		sandbox_utils,
 		GameManager_path,
 		Display,
+		GameScorer,
 	) => {
 		loader.setState('game engine', 0.2);
 		const sandbox = sandbox_utils.make(sandboxed_loader_path);
-		const games = new GameOrchestrator(GameManager_path);
+		const games = new GameOrchestrator(GameManager_path, {
+			// TODO: support maxConcurrency
+			maxConcurrency: Math.max(1, Math.min(4, navigator.hardwareConcurrency - 2)),
+		});
 
-		const CONCURRENCY = Math.max(1, Math.min(4, navigator.hardwareConcurrency - 2));
+		const tournament = new Tournament();
+		tournament.setMatchHandler((seed, entries) => {
+			const match = new Match();
+			match.setGameHandler((seed, entries) => {
+				const game = games.make({
+					baseGameConfig,
+					basePlayConfig,
+					baseDisplayConfig,
+				});
+				return new Promise((resolve, reject) => {
+					game.addEventListener('update', (state) => {
+						const config = game.getGameConfig();
+						// TODO: update match display (progress bar, maybe mini visualisation)
+					});
+					game.addEventListener('complete', (state) => {
+						const config = game.getGameConfig();
+						game.terminate();
+						resolve(GameScorer.score(config, state));
+					});
+					game.begin({seed, entries});
+				});
+			});
+			return new Promise((resolve, reject) => {
+				match.addEventListener('complete', (matchScores) => {
+					resolve(scores); // TODO: aggregate scores
+				});
+				match.begin({seed, entries});
+			});
+		});
+		tournament.addEventListener('complete', (finalScores) => {
+			// TODO
+		});
 
 		sandbox.addEventListener('message', (event) => {
 			const data = event.data;
@@ -68,17 +108,20 @@ require([
 			case 'LOADED':
 				docutil.body.removeChild(loader.dom());
 
-//				for(let i = 0; i < CONCURRENCY; ++ i) {
-					const display = new Display();
-					const game = games.makeGame({
-						display,
-						baseGame,
-						basePlay,
-						baseDisplay,
-					});
-					game.begin({entries: data.entries});
-					docutil.body.appendChild(display.dom());
-//				}
+				// TODO: button to begin tournament, button to begin one-off game
+
+//				tournament.begin({entries: data.entries});
+
+				const display = new Display();
+				const game = games.make({
+					display,
+					baseGameConfig,
+					basePlayConfig,
+					baseDisplayConfig,
+				});
+				game.begin({entries: data.entries});
+				docutil.body.appendChild(display.dom());
+
 				break;
 			}
 		});

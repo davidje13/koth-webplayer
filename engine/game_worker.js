@@ -6,7 +6,7 @@ define(['math/Random'], (Random) => {
 		let time0 = null;
 
 		function sendState() {
-			const now = performance.now();
+			const now = Date.now();
 			const state = game.getState();
 			self.postMessage({
 				action: 'STEP_COMPLETE',
@@ -24,14 +24,18 @@ define(['math/Random'], (Random) => {
 				if(game != null) {
 					throw 'Cannot re-use game worker';
 				}
-				time0 = performance.now();
+				time0 = Date.now();
 				game = new GameManager(new Random(data.config.seed), data.config);
 				sendState();
 				break;
 
 			case 'STEP':
-				for(let i = 0; i < data.steps; ++ i) {
+				const limit = data.maxTime ? (Date.now() + data.maxTime) : 0;
+				for(let i = 0; i < data.steps && !game.isOver(); ++ i) {
 					game.step(data.type);
+					if(limit && Date.now() >= limit) {
+						break;
+					}
 				}
 				sendState();
 				break;

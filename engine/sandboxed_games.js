@@ -3,8 +3,7 @@
 define(['core/worker_utils', 'path:./game_worker'], (worker_utils, game_worker_path) => {
 	class GameStepper {
 		constructor(token, gameManagerPath, playConfig, gameConfig) {
-			this.delay = playConfig.delay;
-			this.speed = playConfig.speed;
+			this.playConfig = playConfig;
 			this.token = token;
 			this.timeout = null;
 
@@ -45,8 +44,8 @@ define(['core/worker_utils', 'path:./game_worker'], (worker_utils, game_worker_p
 		_advanceDelayed(subtractStepTime) {
 			clearTimeout(this.timeout);
 			this.timeout = null;
-			if(this.speed > 0) {
-				let delay = this.delay;
+			if(this.playConfig.speed > 0) {
+				let delay = this.playConfig.delay;
 				if(subtractStepTime) {
 					delay -= (Date.now() - this.lastStartStep);
 				}
@@ -65,14 +64,14 @@ define(['core/worker_utils', 'path:./game_worker'], (worker_utils, game_worker_p
 			this.gameWorker.postMessage({
 				action: 'STEP',
 				type: type || '',
-				steps: steps || this.speed,
-				render: true,
+				steps: steps || this.playConfig.speed,
+				maxTime: (type !== null || steps !== null) ? 0 : this.playConfig.maxTime,
 			});
 		}
 
 		step(type, steps) {
-			this.delay = 0;
-			this.speed = 0;
+			this.playConfig.delay = 0;
+			this.playConfig.speed = 0;
 			clearTimeout(this.timeout);
 			this.timeout = null;
 			if(!this.waiting) {
@@ -81,17 +80,20 @@ define(['core/worker_utils', 'path:./game_worker'], (worker_utils, game_worker_p
 		}
 
 		terminate() {
-			this.delay = 0;
-			this.speed = 0;
+			this.playConfig.delay = 0;
+			this.playConfig.speed = 0;
 			clearTimeout(this.timeout);
 			this.timeout = null;
 			this.gameWorker.terminate();
 		}
 
 		updatePlayConfig(config) {
-			if(this.delay !== config.delay || this.speed !== config.speed) {
-				this.delay = config.delay;
-				this.speed = config.speed;
+			if(
+				this.playConfig.delay !== config.delay ||
+				this.playConfig.speed !== config.speed ||
+				this.playConfig.maxTime !== config.maxTime
+			) {
+				this.playConfig = config;
 				if(!this.waiting) {
 					this._advanceDelayed(false);
 				}

@@ -181,7 +181,12 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			this.nextAntID = 0;
 
 			const foodCount = (area * foodRatio)|0;
-			const queenCount = entries.length;
+			let queenCount = 0;
+			for(let entryID in entries) {
+				if(entries.hasOwnProperty(entryID)) {
+					++ queenCount;
+				}
+			}
 
 			// Randomly position all food & queens without overlaps
 			// (inefficient, but predictable performance regardless of coverage)
@@ -195,14 +200,17 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			}
 
 			// Take queenCount positions for queens; the rest will be food
-			for(let i = 0; i < queenCount; ++ i) {
+			for(let entryID in entries) {
+				if(!entries.hasOwnProperty(entryID)) {
+					continue;
+				}
 				const positionIndex = this.random.next(positions.length);
 				const startIndex = positions.splice(positionIndex, 1)[0];
 
-				const code = entry_utils.compile(entries[i].code, ['view']);
+				const code = entry_utils.compile(entries[entryID].code, ['view']);
 				const queen = {
 					id: (this.nextAntID ++),
-					team: i,
+					team: entryID,
 					type: QUEEN,
 					x: startIndex % this.width,
 					y: (startIndex / this.width)|0,
@@ -210,7 +218,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					food: 0,
 				};
 				this.entries.push({
-					id: i,
+					id: entryID,
 					fn: code.fn,
 					cacheView: array_utils.makeList(CACHE_SIZE, null),
 					cacheAct: array_utils.makeList(CACHE_SIZE, null),
@@ -417,10 +425,14 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			}
 		}
 
+		isOver() {
+			return this.frame >= this.maxFrame;
+		}
+
 		getState() {
 			return {
 				frame: this.frame,
-				over: this.frame >= this.maxFrame,
+				over: this.isOver(),
 				currentAnt: this.currentAnt,
 				simulationTime: this.simulationTime,
 				board: this.board,

@@ -1,24 +1,7 @@
-define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) => {
+define(['core/EventObject', 'display/document_utils', '../GameScorer'], (EventObject, docutil, GameScorer) => {
 	'use strict';
 
 	const WORKER_COUNT = 4;
-	const SCORING = [
-		15,
-		14,
-		13,
-		12,
-		11,
-		10,
-		9,
-		8,
-		7,
-		6,
-		5,
-		4,
-		3,
-		2,
-		1,
-	];
 
 	return class LeaderboardDisplay extends EventObject {
 		constructor() {
@@ -71,7 +54,11 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 				this.tbody.removeChild(this.tableEntries[i].tr);
 			}
 			this.tableEntries.length = 0;
-			for(let i = 0; i < this.entries.length; ++ i) {
+			for(let id in this.entries) {
+				if(!entries.hasOwnProperty(id)) {
+					continue;
+				}
+				const entry = this.entries[id];
 				const food = docutil.text();
 				const workers = [];
 				const workerCells = [];
@@ -83,25 +70,16 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 				const thinkingTime = docutil.text();
 				const score = docutil.text();
 				const tdScore = docutil.make('td', {'class': 'result'}, [score]);
-				const tr = docutil.make('tr', {'class': 'team-' + (i + 1)}, [
+				const tr = docutil.make('tr', {'class': 'team-' + id}, [
 					docutil.make('td', {
 						'class': 'player',
-						'title': this.entries[i].title,
-					}, [this.entries[i].title]),
+						'title': entry.title,
+					}, [entry.title]),
 					docutil.make('td', {}, [food]),
 					...workerCells,
 					docutil.make('td', {}, [thinkingTime]),
 					tdScore,
 				]);
-//				tr.addEventListener('mouseover', () => {
-//					this.hoveringTeam = i;
-//					this.latestHoverTeam = i;
-//				});
-//				tr.addEventListener('mouseout', () => {
-//					if(this.hoveringTeam === i) {
-//						this.hoveringTeam = null;
-//					}
-//				});
 				this.tableEntries.push({
 					tr,
 					food,
@@ -125,9 +103,9 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 		updateDisplayConfig() {
 		}
 
-		updateState({entries}) {
-			for(let i = 0; i < entries.length; ++ i) {
-				const entry = entries[i];
+		updateState(state) {
+			for(let i = 0; i < state.entries.length; ++ i) {
+				const entry = state.entries[i];
 				const display = this.tableEntries[entry.id];
 				docutil.update_text(display.food, entry.food);
 				for(let j = 0; j < WORKER_COUNT; ++ j) {
@@ -135,10 +113,8 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 				}
 				docutil.update_attrs(display.tr, {
 					'class': (
-						'team-' + (entry.id + 1) +
+						'team-' + entry.id +
 						(entry.active ? '' : ' disqualified')
-//						((this.hoveringTeam === entry.id) ? ' cur-hover' :
-//						(this.latestHoverTeam === entry.id) ? ' last-hover' : '')
 					)
 				});
 				let avg = '';
@@ -148,65 +124,30 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 				docutil.update_text(display.thinkingTime, avg);
 			}
 
-			const scoreBoard = [];
-			for(let i = 0; i < entries.length; ++ i) {
-				const entry = entries[i];
-				let totalWorkers = 0;
-				for(let j = 0; j < WORKER_COUNT; ++ j) {
-					totalWorkers += entry.workers[j];
-				}
-				scoreBoard.push({
-					index: i,
-					food: entry.food,
-					workers: totalWorkers,
-					active: entry.active,
-				});
-			}
-			scoreBoard.sort((a, b) => {
-				if(a.active !== b.active) {
-					return a.active ? -1 : 1;
-				}
-				if(a.food !== b.food) {
-					return b.food - a.food;
-				}
-				return b.workers - a.workers;
-			});
+			const scoreBoard = GameScorer.score(null, state);
 			const changed = (
 				this.lastRowOrder === null ||
 				this.lastRowOrder.length !== scoreBoard.length ||
-				scoreBoard.some((v, i) => (this.lastRowOrder[i].index !== v.index))
+				scoreBoard.some((v, i) => (
+					this.lastRowOrder[i].id !== v.id ||
+					this.lastRowOrder[i].score !== v.score
+				))
 			);
+
 			if(changed) {
 				while(this.tbody.lastChild) {
 					this.tbody.removeChild(this.tbody.lastChild);
 				}
 				for(let i = 0; i < scoreBoard.length; ++ i) {
 					const place = scoreBoard[i];
-					this.tbody.appendChild(this.tableEntries[place.index].tr);
+					const display = this.tableEntries[place.id];
+					docutil.update_attrs(display.tdScore, {
+						'class': 'result' + ((place.winner) ? ' win' : '')
+					});
+					docutil.update_text(display.score, place.score || '');
+					this.tbody.appendChild(display.tr);
 				}
 				this.lastRowOrder = scoreBoard;
-			}
-			let tiedPos = 0;
-			let tiedFood = 0;
-			for(let i = 0; i < scoreBoard.length; ++ i) {
-				const place = scoreBoard[i];
-				const record = this.tableEntries[place.index];
-				if(place.food !== tiedFood) {
-					tiedPos = i;
-					tiedFood = place.food;
-				}
-				let score = 0;
-				if(place.active && place.food > 0) {
-					docutil.update_attrs(record.tdScore, {
-						'class': 'result' + ((tiedPos === 0) ? ' win' : '')
-					});
-					docutil.update_text(record.score, SCORING[tiedPos]);
-				} else {
-					docutil.update_attrs(record.tdScore, {
-						'class': 'result'
-					});
-					docutil.update_text(record.score, '');
-				}
 			}
 		}
 
