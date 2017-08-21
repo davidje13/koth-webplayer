@@ -76,7 +76,6 @@ header p {
 
 .match {
 	margin: 20px;
-	border-collapse: collapse;
 	display: inline-block;
 }
 
@@ -95,19 +94,6 @@ header p {
 	font-size: 0.7em;
 }
 
-.match th.player {
-	padding: 0 0 5px;
-	min-width: 150px;
-}
-
-.match th.game {
-	padding: 0 0 2px;
-}
-
-.match th.result {
-	min-width: 40px;
-}
-
 .match tbody {
 	box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5);
 	color: #333333;
@@ -118,6 +104,19 @@ header p {
 	padding: 0 4px;
 	text-align: right;
 	font-size: 0.8em;
+}
+
+.match th.player {
+	padding: 0 0 5px;
+	min-width: 150px;
+}
+
+.match th.game {
+	padding: 0 2px 2px;
+}
+
+.match th.result {
+	min-width: 40px;
 }
 
 .match td.player {
@@ -131,13 +130,12 @@ header p {
 
 .match td.game {
 	text-align: center;
-	padding: 0;
+	padding: 0 10px;
 }
 
 .match td.result {
 	text-align: center;
 	padding: 0 16px;
-	border-left-width: 0;
 }
 
 .match .win {
@@ -147,37 +145,6 @@ header p {
 }
 
 .match .loss {
-}
-
-.match .game {
-	opacity: 0;
-	max-width: 0;
-	box-sizing: border-box;
-	white-space: nowrap;
-	border-left-width: 0;
-	border-right-width: 0;
-	transition: opacity 0.15s, padding 0.15s, max-width 0.2s;
-}
-
-.match:hover .game, .match.expanded .game {
-	opacity: 1;
-	max-width: 100px;
-	transition: opacity 0.3s ease, padding 0.2s ease, max-width 0.3s ease;
-}
-
-.match:hover th.game, .match.expanded th.game {
-	padding-left: 2px;
-	padding-right: 2px;
-}
-
-.match:hover td.game, .match.expanded td.game {
-	padding-left: 10px;
-	padding-right: 10px;
-	border-width: 1px;
-}
-
-.match:hover td.result, .match.expanded td.result {
-	border-left-width: 1px;
 }
 
 .match .disqualified .player {
@@ -192,13 +159,6 @@ header p {
 	background: #DDDDDD;
 }
 
-.match tbody tr.cur-hover {
-	background: #FFFFFF;
-}
-
-.match tbody tr.last-hover {
-	background: #EEEEEE;
-}
 
 
 .match .team-E0 {

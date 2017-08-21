@@ -7,7 +7,7 @@ define(() => {
 	const B64 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_';
 
 	function read64(s) {
-		var r = 0;
+		let r = 0;
 		for(let i = 0; i < s.length; ++ i) {
 			r = (r * 64) + B64.indexOf(s.substr(i, 1));
 		}
@@ -15,8 +15,8 @@ define(() => {
 	}
 
 	function make64(v, l) {
-		var r = '';
-		var x = v;
+		let r = '';
+		let x = v;
 		for(let i = 0; i < l; ++ i) {
 			r = B64[x % 64] + r;
 			x = (x / 64)|0;

@@ -20,9 +20,9 @@ define(['display/document_utils', './style.css'], (docutil) => {
 			}
 			if(this.lastMessage !== message) {
 				this.lastMessage = message;
-				docutil.update_text(this.label, message);
+				docutil.updateText(this.label, message);
 			}
-			docutil.update_style(this.bar, {'width': (progress * 100) + '%'});
+			docutil.updateStyle(this.bar, {'width': (progress * 100) + '%'});
 		}
 
 		dom() {

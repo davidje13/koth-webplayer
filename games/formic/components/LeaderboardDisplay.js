@@ -1,4 +1,14 @@
-define(['core/EventObject', 'display/document_utils', '../GameScorer'], (EventObject, docutil, GameScorer) => {
+define([
+	'core/EventObject',
+	'display/document_utils',
+	'display/ResultTable',
+	'../GameScorer',
+], (
+	EventObject,
+	docutil,
+	ResultTable,
+	GameScorer,
+) => {
 	'use strict';
 
 	const WORKER_COUNT = 4;
@@ -7,82 +17,58 @@ define(['core/EventObject', 'display/document_utils', '../GameScorer'], (EventOb
 		constructor() {
 			super();
 
-			this.entries = null;
-			this.lastRowOrder = null;
-
-			this.tbody = docutil.make('tbody');
-			this.tableEntries = new Map();
+			this.tableDataLookup = new Map();
 			this.seedLabel = docutil.text();
 
-			const workerLabels = [];
+			const workerColumns = [];
 			for(let i = 0; i < WORKER_COUNT; ++ i) {
-				workerLabels.push(docutil.make('th', {}, ['Type ' + (i + 1)]));
+				workerColumns.push({
+					title: 'Type ' + (i + 1),
+					attribute: 'type' + i,
+				});
 			}
 
-			this.table = docutil.make('table', {
-				'class': 'match expanded',
-			}, [
-				docutil.make('thead', {}, [
-					docutil.make('tr', {}, [
-						docutil.make('th', {
-							'class': 'player',
-							'rowspan': 2
-						}, [
-							docutil.make('header', {}, [
-								docutil.make('h3', {}, ['Game']),
-								docutil.make('p', {}, [this.seedLabel]),
-							]),
-						]),
-						docutil.make('th', {'rowspan': 2}, ['Food']),
-						docutil.make('th', {'colspan': 4}, ['Workers']),
-						docutil.make('th', {'rowspan': 2}, ['Thinking Time']),
-						docutil.make('th', {'class': 'result', 'rowspan': 2}, ['Score']),
+			this.table = new ResultTable({
+				className: 'match',
+				columns: [{
+					title: docutil.make('header', {}, [
+						docutil.make('h3', {}, ['Game']),
+						docutil.make('p', {}, [this.seedLabel]),
 					]),
-					docutil.make('tr', {}, workerLabels),
-				]),
-				this.tbody,
-			]);
+					className: 'player',
+					attribute: 'name',
+				}, {
+					title: 'Food',
+					attribute: 'food',
+				}, {
+					title: 'Workers',
+					nested: workerColumns
+				}, {
+					title: 'Thinking Time',
+					attribute: 'time',
+				}, {
+					title: 'Score',
+					attribute: 'score',
+					className: 'result',
+				}],
+			});
 		}
 
 		updateEntries(entries) {
-			if(this.entries === entries) {
-				return;
-			}
+			this.tableDataLookup.clear();
 
-			this.entries = entries;
-			this.tableEntries.forEach((entry) => this.tbody.removeChild(entry.tr));
-			this.tableEntries.clear();
 			entries.forEach((entry) => {
-				const food = docutil.text();
-				const workers = [];
-				const workerCells = [];
-				for(let i = 0; i < WORKER_COUNT; ++ i) {
-					const label = docutil.text();
-					workers.push(label);
-					workerCells.push(docutil.make('td', {}, [label]));
-				}
-				const thinkingTime = docutil.text();
-				const score = docutil.text();
-				const tdScore = docutil.make('td', {'class': 'result'}, [score]);
-				const tr = docutil.make('tr', {'class': 'team-' + entry.id}, [
-					docutil.make('td', {
-						'class': 'player',
-						'title': entry.title,
-					}, [entry.title]),
-					docutil.make('td', {}, [food]),
-					...workerCells,
-					docutil.make('td', {}, [thinkingTime]),
-					tdScore,
-				]);
-				this.tableEntries.set(entry.id, {
-					tr,
-					food,
-					workers,
-					thinkingTime,
-					score,
-					tdScore,
+				this.tableDataLookup.set(entry.id, {
+					key: entry.id,
+					baseClassName: 'team-' + entry.id,
+					name: {
+						value: entry.title,
+						title: entry.title,
+					},
+					food: 0,
+					time: '',
+					score: {value: '', className: ''},
 				});
-				this.tbody.appendChild(tr);
 			});
 		}
 
@@ -90,7 +76,7 @@ define(['core/EventObject', 'display/document_utils', '../GameScorer'], (EventOb
 		}
 
 		updateGameConfig({seed, entries}) {
-			docutil.update_text(this.seedLabel, seed);
+			docutil.updateText(this.seedLabel, seed);
 			this.updateEntries(entries);
 		}
 
@@ -99,53 +85,32 @@ define(['core/EventObject', 'display/document_utils', '../GameScorer'], (EventOb
 
 		updateState(state) {
 			state.entries.forEach((entry) => {
-				const display = this.tableEntries.get(entry.id);
-				docutil.update_text(display.food, entry.food);
-				for(let j = 0; j < WORKER_COUNT; ++ j) {
-					docutil.update_text(display.workers[j], entry.workers[j]);
-				}
-				docutil.update_attrs(display.tr, {
-					'class': (
-						'team-' + entry.id +
-						(entry.active ? '' : ' disqualified')
-					)
+				const data = this.tableDataLookup.get(entry.id);
+				data.food = entry.food;
+				entry.workers.forEach((count, index) => {
+					data['type' + index] = count;
 				});
-				let avg = '';
+				data.className = (
+					data.baseClassName +
+					(entry.active ? '' : ' disqualified')
+				);
 				if(entry.antSteps > 0) {
-					avg = (entry.elapsedTime / entry.antSteps).toFixed(3) + 'ms';
+					data.time = (entry.elapsedTime / entry.antSteps).toFixed(3) + 'ms';
+				} else {
+					data.time = '';
 				}
-				docutil.update_text(display.thinkingTime, avg);
 			});
 
-			const scoreBoard = GameScorer.score(null, state);
-			const changed = (
-				this.lastRowOrder === null ||
-				this.lastRowOrder.length !== scoreBoard.length ||
-				scoreBoard.some((v, i) => (
-					this.lastRowOrder[i].id !== v.id ||
-					this.lastRowOrder[i].score !== v.score
-				))
-			);
-
-			if(changed) {
-				while(this.tbody.lastChild) {
-					this.tbody.removeChild(this.tbody.lastChild);
-				}
-				for(let i = 0; i < scoreBoard.length; ++ i) {
-					const place = scoreBoard[i];
-					const display = this.tableEntries.get(place.id);
-					docutil.update_attrs(display.tdScore, {
-						'class': 'result' + ((place.winner) ? ' win' : '')
-					});
-					docutil.update_text(display.score, place.score || '');
-					this.tbody.appendChild(display.tr);
-				}
-				this.lastRowOrder = scoreBoard;
-			}
+			this.table.setData(GameScorer.score(null, state).map((place) => {
+				const data = this.tableDataLookup.get(place.id);
+				data.score.className = (place.winner ? 'win' : '');
+				data.score.value = place.score || '';
+				return data;
+			}));
 		}
 
 		dom() {
-			return this.table;
+			return this.table.dom();
 		}
 	}
 });

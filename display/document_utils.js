@@ -27,16 +27,23 @@ define(['document'], (document) => {
 				}
 			}
 			for(let i = 0; i < children.length; ++ i) {
-				var child = children[i];
-				if(!child) {
-					continue;
+				const child = children[i];
+				let obj = null;
+				if(typeof child === 'string') {
+					obj = document.createTextNode(child);
+				} else if(typeof child === 'number') {
+					obj = document.createTextNode(String(child));
+				} else {
+					obj = child;
 				}
-				o.appendChild((typeof child === 'string') ? document.createTextNode(child) : child);
+				if(obj) {
+					o.appendChild(obj);
+				}
 			}
 			return o;
 		},
 
-		update_attrs: (element, attrs) => {
+		updateAttrs: (element, attrs) => {
 			for(let k in attrs) {
 				if(attrs.hasOwnProperty(k)) {
 					if(element.getAttribute(k) !== attrs[k]) {
@@ -46,7 +53,7 @@ define(['document'], (document) => {
 			}
 		},
 
-		update_style: (element, style) => {
+		updateStyle: (element, style) => {
 			for(let k in style) {
 				if(style.hasOwnProperty(k)) {
 					if(element.style[k] !== style[k]) {
@@ -56,13 +63,13 @@ define(['document'], (document) => {
 			}
 		},
 
-		update_text: (textNode, text) => {
+		updateText: (textNode, text) => {
 			if(textNode.nodeValue !== text) {
 				textNode.nodeValue = text;
 			}
 		},
 
-		set_parent: (element, parent) => {
+		setParent: (element, parent) => {
 			if(!parent) {
 				if(element.parentNode) {
 					element.parentNode.removeChild(element);

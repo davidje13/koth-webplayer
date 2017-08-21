@@ -1,3 +1,5 @@
+/* Full2DBoard, Full3DBoard */
+
 .game-board, .game-board-3d {
 	position: relative;
 }
@@ -17,6 +19,8 @@
 	position: absolute;
 }
 
+/* Loader */
+
 .loader .message:before {
 	content: "Loading ";
 }
@@ -35,4 +39,34 @@
 	top: 0;
 	left: 0;
 	height: 100%;
+}
+
+/* ResultTable */
+
+.result-table {
+	border-collapse: collapse;
+}
+
+.result-table td:not(:first-child) {
+	border-left-width: 0;
+}
+
+.result-table .autohide {
+	box-sizing: border-box;
+	white-space: nowrap;
+	transition: opacity 0.15s, padding 0.15s, max-width 0.2s;
+}
+
+.result-table:not(:hover):not(.expanded) .autohide {
+	padding-left: 0;
+	padding-right: 0;
+	border-left-width: 0;
+	border-right-width: 0;
+	opacity: 0;
+	max-width: 0;
+}
+
+.result-table:hover .autohide, .result-table.expanded .autohide {
+	max-width: 100px;
+	transition: opacity 0.3s ease, padding 0.2s ease, max-width 0.3s ease;
 }

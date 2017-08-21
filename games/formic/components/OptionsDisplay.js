@@ -202,15 +202,15 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 			let simTime = state.simulationTime;
 			state.entries.forEach((entry) => simTime -= entry.elapsedTime);
 
-			docutil.update_text(this.frame, state.frame);
-			docutil.update_text(this.stepTime, (state.simulationTime / state.frame).toFixed(3));
-			docutil.update_text(this.engineTime, (simTime / state.frame).toFixed(3));
+			docutil.updateText(this.frame, state.frame);
+			docutil.updateText(this.stepTime, (state.simulationTime / state.frame).toFixed(3));
+			docutil.updateText(this.engineTime, (simTime / state.frame).toFixed(3));
 			if(this.renderPerf) {
-				docutil.update_text(this.renderTime, (this.renderPerf.renderTime / this.renderPerf.renderCount).toFixed(3));
+				docutil.updateText(this.renderTime, (this.renderPerf.renderTime / this.renderPerf.renderCount).toFixed(3));
 			} else {
-				docutil.update_text(this.renderTime, '-');
+				docutil.updateText(this.renderTime, '-');
 			}
-			docutil.update_text(this.worldTime, (state.realWorldTime * 0.001).toFixed(3));
+			docutil.updateText(this.worldTime, (state.realWorldTime * 0.001).toFixed(3));
 		}
 
 		dom() {

@@ -33,7 +33,7 @@ define([
 		}
 
 		_updateStyles() {
-			docutil.update_style(this.canvas, {
+			docutil.updateStyle(this.canvas, {
 				'width': (this.canvas.width * this.scaleX) + 'px',
 				'height': (this.canvas.height * this.scaleY) + 'px',
 //				'width': (this.canvas.width / 2) + 'px',
@@ -45,7 +45,7 @@ define([
 //				'marginRight': -((this.canvas.width * (1 - this.scaleX * 2) / 2)|0) + 'px',
 //				'marginBottom': -((this.canvas.height * (1 - this.scaleY * 2) / 2)|0) + 'px',
 			});
-			docutil.update_style(this.boardClip, {
+			docutil.updateStyle(this.boardClip, {
 				'width': ((this.canvas.width * this.scaleX)|0) + 'px',
 				'height': ((this.canvas.height * this.scaleY)|0) + 'px',
 			});
@@ -62,10 +62,10 @@ define([
 				}
 				const x1 = ((mark.x * this.scaleX)|0);
 				const y1 = ((mark.y * this.scaleY)|0);
-				docutil.update_attrs(dom.element, {
+				docutil.updateAttrs(dom.element, {
 					'class': 'mark ' + (mark.className || ''),
 				});
-				docutil.update_style(dom.element, {
+				docutil.updateStyle(dom.element, {
 					'left': x1 + 'px',
 					'top': y1 + 'px',
 				});
@@ -73,17 +73,17 @@ define([
 					// TODO: wrapping
 					const x2 = (((mark.x + mark.w) * this.scaleX)|0);
 					const y2 = (((mark.y + mark.h) * this.scaleY)|0);
-					docutil.update_style(dom.element, {
+					docutil.updateStyle(dom.element, {
 						'width': (x2 - x1) + 'px',
 						'height': (y2 - y1) + 'px',
 					});
 				}
-				docutil.set_parent(dom.element, mark.clip ? this.boardClip : this.board);
+				docutil.setParent(dom.element, mark.clip ? this.boardClip : this.board);
 			});
 
 			this.renderedMarks.forEach((dom, key) => {
 				if(!markers.has(key)) {
-					docutil.set_parent(dom.element, null);
+					docutil.setParent(dom.element, null);
 					this.renderedMarks.delete(key);
 				}
 			});
