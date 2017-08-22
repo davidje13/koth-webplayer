@@ -21,18 +21,17 @@ define(() => {
 
 	return {
 		score: (config, state) => {
-			const scores = [];
-			state.entries.forEach((entry) => {
+			const scores = state.entries.map((entry) => {
 				let totalWorkers = 0;
 				entry.workers.forEach((count) => totalWorkers += count);
-				scores.push({
+				return {
 					id: entry.id,
 					food: entry.food,
 					workers: totalWorkers,
 					active: entry.active,
 					winner: false,
 					score: 0,
-				});
+				};
 			});
 			scores.sort((a, b) => {
 				if(a.active !== b.active) {

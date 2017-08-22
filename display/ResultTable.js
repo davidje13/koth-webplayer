@@ -170,6 +170,7 @@ define(['display/document_utils', './style.css'], (docutil) => {
 			// - create any missing row entities and delete extras
 			//   - maybe use 'key' concept from react to reduce rerendering due to reordering
 			// - ensure rows are in correct order in table
+			//   - note that rowspan'd cells will need to be kept on the top-most row of the block
 			// - ensure data in rows is up to date
 
 			this.data.forEach((datum) => {

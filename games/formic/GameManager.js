@@ -436,8 +436,12 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			}));
 
 			return {
-				frame: this.frame,
+				// Framework data
 				over: this.isOver(),
+				progress: this.frame / this.maxFrame,
+
+				// Game specific data
+				frame: this.frame,
 				currentAnt: this.currentAnt,
 				simulationTime: this.simulationTime,
 				board: this.board,

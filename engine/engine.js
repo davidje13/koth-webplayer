@@ -48,9 +48,11 @@ require([
 		'engine/Match',
 		'engine/Tournament',
 		'core/sandbox_utils',
+		'display/MatchSummary', // TODO: game-customisable
 		'path:' + gameDir + '/GameManager',
 		gameDir + '/Display',
 		gameDir + '/GameScorer',
+		gameDir + '/MatchScorer',
 		gameDir + '/style.css',
 	], (
 		Random,
@@ -58,54 +60,89 @@ require([
 		Match,
 		Tournament,
 		sandbox_utils,
+		MatchSummary,
 		GameManager_path,
 		Display,
 		GameScorer,
+		MatchScorer,
 	) => {
 		loader.setState('game engine', 0.2);
 		const sandbox = sandbox_utils.make(sandboxed_loader_path);
 		const games = new GameOrchestrator(GameManager_path, {
 			// TODO: support maxConcurrency
+			// - will also need a way to mark the current visible game as having priority
 			maxConcurrency: Math.max(1, Math.min(4, navigator.hardwareConcurrency - 2)),
 		});
 
+		let singleGameDisplay = null;
+		let singleGame = null;
+
+		function showGame(seed, entries) {
+			if(!singleGameDisplay) {
+				singleGameDisplay = new Display();
+				docutil.body.appendChild(docutil.make('div', {'class': 'popup'}, [
+					singleGameDisplay.dom()
+				]));
+			}
+			if(singleGame) {
+				singleGame.terminate();
+			}
+			singleGame = games.make({
+				display: singleGameDisplay,
+				baseGameConfig,
+				basePlayConfig,
+				baseDisplayConfig,
+			});
+			singleGame.begin({seed, entries});
+		}
+
+		// TODO: extract all of this & improve separation / APIs
 		const tournament = new Tournament();
 		tournament.setMatchHandler((seed, entries) => {
-			console.log('Starting match', seed, entries);
 			const match = new Match();
+			const matchDisplay = new MatchSummary({
+				name: 'Match 1',
+				seed,
+				entries,
+				scorer: MatchScorer
+			});
+			docutil.body.appendChild(docutil.make('section', {'class': 'tournament'}, [
+				docutil.make('header', {}, [
+					docutil.make('h2', {}, 'Tournament'),
+					docutil.make('p', {}, tournament.seed),
+				]),
+				matchDisplay.dom()
+			]));
 			match.setGameHandler((seed, entries) => {
-				console.log('Starting game', seed, entries);
 				const game = games.make({
 					baseGameConfig,
 					basePlayConfig: basePlayHiddenConfig,
 					baseDisplayConfig,
 				});
+				const gameDisplayToken = matchDisplay.addGame(seed);
+				// TODO: better API for this
+				matchDisplay.addEventListener('gametitleclick', (token) => {
+					if(token === gameDisplayToken) {
+						showGame(seed, entries);
+					}
+				});
 				return new Promise((resolve, reject) => {
 					game.addEventListener('update', (state) => {
 						const config = game.getGameConfig();
-						console.log('Game progress');
-						// TODO: update match display (progress bar, maybe mini visualisation)
+						const score = GameScorer.score(config, state);
+						matchDisplay.updateGameScores(gameDisplayToken, score);
 					});
 					game.addEventListener('complete', (state) => {
 						const config = game.getGameConfig();
 						game.terminate();
-						const score = GameScorer.score(config, state);
-						console.log('Game complete', score);
-						resolve(score);
+						resolve(GameScorer.score(config, state));
 					});
 					game.begin({seed, entries});
 				});
 			});
 			return new Promise((resolve, reject) => {
 				match.addEventListener('complete', (matchScores) => {
-					const scores = {};
-					matchScores.forEach((matchScore) => {
-						matchScore.forEach((result) => {
-							scores[result.id] = (scores[result.id] || 0) + result.score;
-						});
-					});
-					console.log('Match complete', matchScores, scores);
-					resolve(scores);
+					resolve(MatchScorer.score(entries, matchScores));
 				});
 				match.begin({seed, entries});
 			});
@@ -132,19 +169,23 @@ require([
 			case 'LOADED':
 				docutil.body.removeChild(loader.dom());
 
-				// TODO: button to begin tournament, button to begin one-off game
+				let initialOptions = null;
 
-//				tournament.begin({entries: data.entries});
-
-				const display = new Display();
-				const game = games.make({
-					display,
-					baseGameConfig,
-					basePlayConfig,
-					baseDisplayConfig,
+				const btnTournament = docutil.make('button', {}, 'Tournament (work-in-progress!)');
+				btnTournament.addEventListener('click', () => {
+					docutil.body.removeChild(initialOptions);
+					tournament.begin({entries: data.entries});
 				});
-				game.begin({entries: data.entries});
-				docutil.body.appendChild(display.dom());
+
+				const btnGame = docutil.make('button', {}, 'Game');
+				btnGame.addEventListener('click', () => {
+					docutil.body.removeChild(initialOptions);
+					showGame(null, data.entries);
+				});
+
+				initialOptions = docutil.make('div', {'class': 'initial-options'}, [btnTournament, btnGame]);
+
+				docutil.body.appendChild(initialOptions);
 
 				break;
 			}
