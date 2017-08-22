@@ -19,6 +19,7 @@ require([
 	Loader,
 	sandboxed_loader_path,
 ) => {
+	const title = docutil.getTitle();
 	const gameType = docutil.getMetaTagValue('game-type');
 	const baseGameConfig = JSON.parse(docutil.getMetaTagValue('game-config', '{}'));
 	const basePlayConfig = JSON.parse(docutil.getMetaTagValue('play-config', '{}'));
@@ -26,8 +27,17 @@ require([
 	const baseDisplayConfig = JSON.parse(docutil.getMetaTagValue('display-config', '{}'));
 	const site = docutil.getMetaTagValue('stack-exchange-site');
 	const qid = docutil.getMetaTagValue('stack-exchange-qid');
+	const questionURL = docutil.getMetaTagValue(
+		'stack-exchange-question-url',
+		'https://' + site + '.stackexchange.com/questions/' + qid
+	);
 
 	const gameDir = 'games/' + gameType;
+
+	docutil.body.appendChild(docutil.make('h1', {}, [docutil.make('a', {
+		'href': questionURL,
+		'target': '_blank',
+	}, [title])]));
 
 	const loader = new Loader('initial-load', 'user interface', 0);
 	docutil.body.appendChild(loader.dom());

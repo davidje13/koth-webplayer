@@ -15,6 +15,14 @@ define(['document'], (document) => {
 			return fallback;
 		},
 
+		getTitle: () => {
+			const elements = document.getElementsByTagName('title');
+			if(elements.length > 0) {
+				return elements[0].innerText;
+			}
+			return fallback;
+		},
+
 		text: (text = '') => {
 			return document.createTextNode(text);
 		},
