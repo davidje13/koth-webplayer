@@ -2,8 +2,10 @@ define(['core/EventObject', 'core/array_utils', 'math/Random'], (EventObject, ar
 	'use strict';
 
 	return class Match extends EventObject {
-		constructor() {
+		constructor(gameCount) {
 			super();
+
+			this.gameCount = gameCount;
 
 			this.gameHandler = null;
 		}
@@ -17,11 +19,12 @@ define(['core/EventObject', 'core/array_utils', 'math/Random'], (EventObject, ar
 
 			const random = new Random(this.seed);
 
-			// TODO: abstractions
+			// TODO:
+			// * abstractions (alternative match types)
+			// * support creation of games without all competitors
 
-			const gameCount = 4;
 			const games = [];
-			for(let i = 0; i < gameCount; ++ i) {
+			for(let i = 0; i < this.gameCount; ++ i) {
 				const gameSeed = random.makeRandomSeed('G');
 				const randomShuffle = new Random(random);
 				games.push(this.gameHandler(

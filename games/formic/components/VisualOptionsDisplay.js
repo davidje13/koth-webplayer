@@ -12,9 +12,7 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 		const replace = (opts) => {
 			lookup.clear();
 			rlookup.clear();
-			while(select.lastChild) {
-				select.removeChild(select.lastChild);
-			}
+			docutil.empty(select);
 			let uniqueValue = 0;
 			for(let i = 0; i < opts.length; ++ i) {
 				const option = opts[i];

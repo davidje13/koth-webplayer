@@ -2,24 +2,26 @@ define([
 	'core/EventObject',
 	'./document_utils',
 	'./ResultTable',
+	'./Loader',
 	'./style.css',
 ], (
 	EventObject,
 	docutil,
 	ResultTable,
+	Loader,
 ) => {
 	'use strict';
 
 	return class MatchSummary extends EventObject {
-		constructor({name = 'Match', seed = '', entries, scorer}) {
+		constructor({name = 'Match', seed = '', entries, matchScorer}) {
 			super();
 
 			this.name = name;
 			this.matchSeed = seed;
 			this.entries = entries;
-			this.scorer = scorer;
+			this.matchScorer = matchScorer;
 			this.allScores = [];
-			this.gameSeeds = [];
+			this.games = [];
 			this.entryDataLookup = new Map();
 			entries.forEach((entry) => {
 				this.entryDataLookup.set(entry.id, {
@@ -33,27 +35,16 @@ define([
 				});
 			});
 
-			this.table = new ResultTable({className: 'match'});
+			this.table = new ResultTable({className: 'match expanded'});
 			this.updateColumns(0);
 		}
 
 		updateColumns() {
-			const gameCols = this.gameSeeds.map((gameSeed, index) => {
-				const link = docutil.make('a', {'href': '#'}, ['Game ' + (index + 1)]);
-				// TODO: is this a DOM/JS memory leak? Are dangling event handlers still an issue?
-				link.addEventListener('click', (e) => {
-					e.preventDefault();
-					this.trigger('gametitleclick', [index]);
-				});
-				return {
-					title: docutil.make('header', {}, [
-						docutil.make('h4', {}, [link]),
-//						docutil.make('p', {}, [gameSeed]),
-					]),
-					attribute: 'game' + index,
-					autohide: true,
-				};
-			});
+			const gameCols = this.games.map((game, index) => ({
+				title: game.title,
+				attribute: 'game' + index,
+				autohide: true,
+			}));
 
 			this.table.setColumns([{
 				title: docutil.make('header', {}, [
@@ -70,14 +61,32 @@ define([
 		}
 
 		addGame(seed) {
-			const index = this.gameSeeds.length;
-			this.gameSeeds.push(seed);
+			const index = this.games.length;
+			const link = docutil.make('a', {'href': '#'}, ['G' + (index + 1)]);
+			link.addEventListener('click', (e) => {
+				e.preventDefault();
+				this.trigger('gametitleclick', [index]);
+			});
+			const progress = new Loader('', null);
+			this.games.push({
+				seed,
+				link,
+				progress,
+				title: docutil.make('header', {}, [
+					docutil.make('h4', {}, [link]),
+					progress.dom(),
+//					docutil.make('p', {}, [seed]),
+				]),
+			});
 			this.allScores.push([]);
 			this.updateColumns();
 			return index;
 		}
 
-		updateGameScores(token, scores) {
+		updateGameState(token, progress, scores) {
+			const game = this.games[token];
+			game.progress.setState(progress);
+
 			this.allScores[token] = scores;
 			scores.forEach((result) => {
 				this.entryDataLookup.get(result.id)['game' + token] = {
@@ -86,7 +95,7 @@ define([
 				};
 			});
 
-			const aggScores = this.scorer.score(this.entries, this.allScores);
+			const aggScores = this.matchScorer.score(this.entries, this.allScores);
 			this.table.setData(aggScores.map((result) => {
 				const line = this.entryDataLookup.get(result.id);
 				line.score.value = result.score || '';

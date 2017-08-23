@@ -76,7 +76,7 @@ h4 a:active, h4 a:hover {
 	margin-bottom: 5px;
 }
 
-.initial-load .bar {
+.initial-load .bar-back {
 	height: 6px;
 	background: rgba(0, 0, 0, 0.5);
 	border-radius: 3px;
@@ -93,6 +93,42 @@ h4 a:active, h4 a:hover {
 
 .initial-options button {
 	margin: 5px;
+}
+
+.overlay-shade {
+	background: rgba(0, 0, 0, 0.7);
+}
+
+.overlay-dismiss {
+	top: 10px;
+	right: 10px;
+	width: 30px;
+	height: 30px;
+	line-height: 30px;
+	text-align: center;
+	border-radius: 100%;
+	background: #000000;
+	color: #CCCCCC;
+}
+
+.overlay-dismiss:before {
+	content: "\2716";
+}
+
+header .bar-back {
+	height: 4px;
+	background: rgba(0, 0, 0, 0.5);
+	border-radius: 2px;
+}
+
+header .bar-filled {
+	background: #FFFFFF;
+}
+
+header .bar-done {
+	opacity: 0;
+	margin-bottom: -4px;
+	transition: opacity 0.3s ease, margin-bottom 0.3s ease;
 }
 
 .tournament {

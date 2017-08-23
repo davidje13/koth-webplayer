@@ -20,6 +20,7 @@ define([
 			this.display = null;
 			this.config = config;
 			this.swapTokenFn = swapTokenFn;
+			this.gameStarted = false;
 			this.gameActive = false;
 			this.updateTm = null;
 			this.latestState = null;
@@ -79,13 +80,20 @@ define([
 			if(this.display) {
 				this.display.updatePlayConfig(this.config.play);
 			}
-			if(this.gameActive) {
-				this.parent.sandbox.postMessage({
-					action: 'STEP',
-					token: this.token,
-					type,
-					steps,
-				});
+			if(this.gameStarted) {
+				const currentToken = this.token;
+				this.parent.awaitCapacity(() => {
+					if(this.token !== currentToken) {
+						return;
+					}
+					this.gameActive = true;
+					this.parent.sandbox.postMessage({
+						action: 'STEP',
+						token: this.token,
+						type,
+						steps,
+					});
+				}, this.gameActive);
 			}
 		}
 
@@ -94,7 +102,7 @@ define([
 			if(this.display) {
 				this.display.updateGameConfig(this.config.game);
 			}
-			if(this.gameActive) {
+			if(this.gameStarted) {
 				this.parent.sandbox.postMessage({
 					action: 'UPDATE_GAME_CONFIG',
 					token: this.token,
@@ -108,7 +116,7 @@ define([
 			if(this.display) {
 				this.display.updatePlayConfig(this.config.play);
 			}
-			if(this.gameActive) {
+			if(this.gameStarted) {
 				this.parent.sandbox.postMessage({
 					action: 'UPDATE_PLAY_CONFIG',
 					token: this.token,
@@ -133,7 +141,8 @@ define([
 		}
 
 		begin({seed = null, entries = null} = {}) {
-			if(this.gameActive) {
+			const wasActive = this.gameActive;
+			if(this.gameStarted) {
 				this.parent.sandbox.postMessage({
 					action: 'STOP',
 					token: this.token,
@@ -141,6 +150,8 @@ define([
 				this.token = this.swapTokenFn(this.token);
 				clearTimeout(this.updateTm);
 				this.updateTm = null;
+				this.gameStarted = false;
+				this.gameActive = false;
 			}
 			this.config.game.seed = Random.makeRandomSeedFrom(seed, 'G');
 			if(entries) {
@@ -152,14 +163,21 @@ define([
 				this.display.updateGameConfig(this.config.game);
 				this.display.updateDisplayConfig(this.config.display);
 			}
-			this.gameActive = true;
-			this.parent.sandbox.postMessage({
-				action: 'GAME',
-				token: this.token,
-				gameManagerPath: this.parent.gameManagerPath,
-				gameConfig: this.config.game,
-				playConfig: this.config.play,
-			});
+			const currentToken = this.token;
+			this.parent.awaitCapacity(() => {
+				if(this.token !== currentToken) {
+					return;
+				}
+				this.gameStarted = true;
+				this.gameActive = true;
+				this.parent.sandbox.postMessage({
+					action: 'GAME',
+					token: this.token,
+					gameManagerPath: this.parent.gameManagerPath,
+					gameConfig: this.config.game,
+					playConfig: this.config.play,
+				});
+			}, wasActive);
 		}
 
 		_updateState() {
@@ -174,8 +192,10 @@ define([
 		updateState(state) {
 			this.latestState = state;
 			if(this.latestState.over) {
+				this.gameActive = false;
 				this._updateState();
 				this.trigger('complete', [this.latestState]);
+				this.parent.checkCapacity();
 			} else if(!this.updateTm) {
 				this.updateTm = setTimeout(this._updateState, 0);
 			}
@@ -187,8 +207,10 @@ define([
 	};
 
 	return class GameOrchestrator {
-		constructor(gameManagerPath) {
+		constructor(gameManagerPath, {maxConcurrency = 1} = {}) {
 			this.gameManagerPath = gameManagerPath;
+			this.maxConcurrency = maxConcurrency;
+			this.awaitingCapacity = [];
 			this.sandbox = sandbox_utils.make(sandboxed_games_path);
 			this.games = new Map();
 			this.nextToken = 0;
@@ -214,6 +236,27 @@ define([
 			const newToken = (this.nextToken ++);
 			this.games.set(newToken, game);
 			return newToken;
+		}
+
+		awaitCapacity(fn, immediate = false) {
+			if(immediate) {
+				fn();
+			} else {
+				this.awaitingCapacity.push(fn);
+				this.checkCapacity();
+			}
+		}
+
+		checkCapacity() {
+			while(this.awaitingCapacity.length > 0) {
+				let used = 0;
+				this.games.forEach((game) => used += game.gameActive ? 1 : 0);
+				if(used >= this.maxConcurrency) {
+					break;
+				}
+				const fn = this.awaitingCapacity.shift();
+				fn();
+			}
 		}
 
 		make({
@@ -258,6 +301,7 @@ define([
 					token,
 				});
 				this.games.delete(token);
+				this.checkCapacity();
 			}
 		}
 	};

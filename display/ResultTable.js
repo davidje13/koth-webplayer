@@ -143,9 +143,7 @@ define(['display/document_utils', './style.css'], (docutil) => {
 		}
 
 		redrawColumns() {
-			while(this.thead.lastChild) {
-				this.thead.removeChild(this.thead.lastChild);
-			}
+			docutil.empty(this.thead);
 
 			const headerCount = countNesting(this.columns);
 			const headerRows = [];
@@ -160,9 +158,7 @@ define(['display/document_utils', './style.css'], (docutil) => {
 		}
 
 		redrawRows() {
-			while(this.tbody.lastChild) {
-				this.tbody.removeChild(this.tbody.lastChild);
-			}
+			docutil.empty(this.tbody);
 
 			// TODO: only redraw changed values
 			// - each result has an associated row

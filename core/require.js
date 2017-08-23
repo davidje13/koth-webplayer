@@ -51,6 +51,7 @@ const require_factory = () => {
 	}
 
 	const states = new Map();
+	const loadedStyles = new Set();
 	const hooks = {};
 	let unnamedDef = null;
 	let blocked = false;
@@ -114,7 +115,12 @@ const require_factory = () => {
 	}
 
 	function loadStyle(src) {
+		if(loadedStyles.has(src)) {
+			return Promise.resolve();
+		}
+
 		return new Promise((resolve, reject) => {
+			loadedStyles.add(src);
 			const link = document.createElement('link');
 			link.setAttribute('rel', 'stylesheet');
 			link.setAttribute('href', src);

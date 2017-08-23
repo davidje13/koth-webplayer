@@ -90,6 +90,12 @@ define(['document'], (document) => {
 			}
 		},
 
+		empty: (element) => {
+			while(element.lastChild) {
+				element.removeChild(element.lastChild);
+			}
+		},
+
 		addDragHandler: (element, handler) => {
 			let dragX = null;
 			let dragY = null;

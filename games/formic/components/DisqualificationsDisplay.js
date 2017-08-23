@@ -55,9 +55,7 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 				))
 			);
 			if(changed) {
-				while(this.tbody.lastChild) {
-					this.tbody.removeChild(this.tbody.lastChild);
-				}
+				docutil.empty(this.tbody);
 				for(let i = 0; i < rows.length; ++ i) {
 					const row = rows[i];
 					this.tbody.appendChild(docutil.make('tr', {}, [

@@ -17,7 +17,9 @@ define(['core/EventObject', 'math/Random'], (EventObject, Random) => {
 
 			const random = new Random(this.seed);
 
-			// TODO: abstractions
+			// TODO:
+			// * abstractions
+			// * multi-match tournaments (e.g. winner advances)
 
 			const match1 = this.matchHandler(
 				random.makeRandomSeed('M'),
