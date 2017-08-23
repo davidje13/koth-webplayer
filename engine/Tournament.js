@@ -6,10 +6,15 @@ define(['core/EventObject', 'math/Random'], (EventObject, Random) => {
 			super();
 
 			this.matchHandler = null;
+			this.seed = null;
 		}
 
 		setMatchHandler(handler) {
 			this.matchHandler = handler;
+		}
+
+		getSeed() {
+			return this.seed;
 		}
 
 		begin({seed = null, entries}) {

@@ -95,6 +95,27 @@ h4 a:active, h4 a:hover {
 	margin: 5px;
 }
 
+.linker {
+	position: fixed;
+	top: 5px;
+	right: 40px;
+	z-index: 101;
+}
+
+.linker:link, .linker:visited {
+	color: inherit;
+	text-decoration: none;
+}
+
+.linker:active, .linker:hover {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.linker:after {
+	content: "\01F517";
+}
+
 .overlay-shade {
 	background: rgba(0, 0, 0, 0.7);
 }

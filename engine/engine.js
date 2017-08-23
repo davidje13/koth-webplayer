@@ -2,7 +2,6 @@
 
 // TODO:
 // * tournament management
-// * linkable URLs (seed hashes)
 // * enable/disable/edit entries
 // * add new entry
 // * remember display config in local storage / cookies
@@ -84,7 +83,10 @@ require([
 		let singleGame = null;
 
 		function showGame(seed, entries, dismissable) {
-			singleGameOverlay.show(singleGameDisplay.dom(), dismissable);
+			singleGameOverlay.show(singleGameDisplay.dom(), {
+				dismissable,
+				inline: !dismissable
+			});
 
 			if(singleGame) {
 				singleGame.terminate();
@@ -97,6 +99,13 @@ require([
 			});
 			singleGame.begin({seed, entries});
 		}
+
+		singleGameOverlay.addEventListener('dismissed', () => {
+			if(singleGame) {
+				singleGame.terminate();
+			}
+			singleGame = null;
+		});
 
 		// TODO: extract all of this & improve separation / APIs
 		const tournament = new Tournament();
@@ -154,6 +163,58 @@ require([
 			// TODO
 		});
 
+		window.addEventListener('hashchange', () => {
+			console.log(window.location.hash);
+			// TODO
+		});
+
+		const linker = docutil.make('a', {'href': '#', 'class': 'linker', 'title': 'Permalink'});
+		linker.addEventListener('click', (e) => {
+			e.preventDefault();
+			if(singleGame && singleGameOverlay.visible) {
+				document.location.hash = '#' + singleGame.getSeed();
+			} else if(tournament.seed) {
+				document.location.hash = '#' + tournament.getSeed();
+			} else {
+				document.location.hash = '';
+			}
+		});
+		docutil.body.appendChild(linker);
+
+		function begin(entries) {
+			const hash = (window.location.hash || '#').substr(1);
+			if(hash.startsWith('T')) {
+				tournament.begin({entries: entries, seed: hash});
+				return;
+			}
+			if(hash.startsWith('M')) {
+				// TODO
+//				return;
+			}
+			if(hash.startsWith('G')) {
+				showGame(hash, entries, false);
+				return;
+			}
+
+			let initialOptions = null;
+
+			const btnTournament = docutil.make('button', {}, 'Tournament (work-in-progress!)');
+			btnTournament.addEventListener('click', () => {
+				docutil.body.removeChild(initialOptions);
+				tournament.begin({entries: entries});
+			});
+
+			const btnGame = docutil.make('button', {}, 'Game');
+			btnGame.addEventListener('click', () => {
+				docutil.body.removeChild(initialOptions);
+				showGame(null, entries, false);
+			});
+
+			initialOptions = docutil.make('div', {'class': 'initial-options'}, [btnTournament, btnGame]);
+
+			docutil.body.appendChild(initialOptions);
+		}
+
 		sandbox.addEventListener('message', (event) => {
 			const data = event.data;
 			switch(data.action) {
@@ -171,23 +232,7 @@ require([
 			case 'LOADED':
 				docutil.body.removeChild(loader.dom());
 
-				let initialOptions = null;
-
-				const btnTournament = docutil.make('button', {}, 'Tournament (work-in-progress!)');
-				btnTournament.addEventListener('click', () => {
-					docutil.body.removeChild(initialOptions);
-					tournament.begin({entries: data.entries});
-				});
-
-				const btnGame = docutil.make('button', {}, 'Game');
-				btnGame.addEventListener('click', () => {
-					docutil.body.removeChild(initialOptions);
-					showGame(null, data.entries, false);
-				});
-
-				initialOptions = docutil.make('div', {'class': 'initial-options'}, [btnTournament, btnGame]);
-
-				docutil.body.appendChild(initialOptions);
+				begin(data.entries);
 
 				break;
 			}

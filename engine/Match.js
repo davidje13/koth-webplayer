@@ -8,10 +8,15 @@ define(['core/EventObject', 'core/array_utils', 'math/Random'], (EventObject, ar
 			this.gameCount = gameCount;
 
 			this.gameHandler = null;
+			this.seed = null;
 		}
 
 		setGameHandler(handler) {
 			this.gameHandler = handler;
+		}
+
+		getSeed() {
+			return this.seed;
 		}
 
 		begin({seed = null, entries}) {

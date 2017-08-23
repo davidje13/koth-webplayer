@@ -62,7 +62,7 @@ define([
 
 		addGame(seed) {
 			const index = this.games.length;
-			const link = docutil.make('a', {'href': '#'}, ['G' + (index + 1)]);
+			const link = docutil.make('a', {'href': '#' + seed}, ['G' + (index + 1)]);
 			link.addEventListener('click', (e) => {
 				e.preventDefault();
 				this.trigger('gametitleclick', [index]);
