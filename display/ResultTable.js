@@ -82,7 +82,7 @@ define(['display/document_utils', './style.css'], (docutil) => {
 			let v = datum[attribute];
 			let className = columnClass;
 			let title = '';
-			if(v && typeof v === 'object' && v.value !== undefined) {
+			if(v && typeof v === 'object' && v.hasOwnProperty('value')) {
 				if(v.className) {
 					className += ' ' + v.className;
 				}
