@@ -22,6 +22,7 @@ define([
 			this.swapTokenFn = swapTokenFn;
 			this.gameStarted = false;
 			this.gameActive = false;
+			this.dead = false;
 			this.updateTm = null;
 			this.latestState = null;
 
@@ -36,7 +37,15 @@ define([
 			this.swapDisplay(display);
 		}
 
+		_markDead() {
+			this.swapDisplay(null);
+			this.dead = true;
+		}
+
 		swapDisplay(display) {
+			if(this.dead) {
+				throw 'Attempt to use terminated game';
+			}
 			if(this.display === display) {
 				return;
 			}
@@ -73,6 +82,9 @@ define([
 		}
 
 		step(type = null, steps = null) {
+			if(this.dead) {
+				throw 'Attempt to use terminated game';
+			}
 			Object.assign(this.config.play, {
 				delta: 0,
 				speed: 0,
@@ -98,6 +110,9 @@ define([
 		}
 
 		updateGameConfig(delta) {
+			if(this.dead) {
+				throw 'Attempt to use terminated game';
+			}
 			Object.assign(this.config.game, delta);
 			if(this.display) {
 				this.display.updateGameConfig(this.config.game);
@@ -112,6 +127,9 @@ define([
 		}
 
 		updatePlayConfig(delta) {
+			if(this.dead) {
+				throw 'Attempt to use terminated game';
+			}
 			Object.assign(this.config.play, delta);
 			if(this.display) {
 				this.display.updatePlayConfig(this.config.play);
@@ -126,6 +144,9 @@ define([
 		}
 
 		updateDisplayConfig(delta) {
+			if(this.dead) {
+				throw 'Attempt to use terminated game';
+			}
 			Object.assign(this.config.display, delta);
 			if(this.display) {
 				this.display.updateDisplayConfig(this.config.display);
@@ -141,6 +162,9 @@ define([
 		}
 
 		begin({seed = null, entries = null} = {}) {
+			if(this.dead) {
+				throw 'Attempt to use terminated game';
+			}
 			const wasActive = this.gameActive;
 			if(this.gameStarted) {
 				this.parent.sandbox.postMessage({
@@ -181,6 +205,9 @@ define([
 		}
 
 		_updateState() {
+			if(this.dead) {
+				return;
+			}
 			clearTimeout(this.updateTm);
 			this.updateTm = null;
 			if(this.display) {
@@ -190,6 +217,9 @@ define([
 		}
 
 		updateState(state) {
+			if(this.dead) {
+				throw 'Attempt to use terminated game';
+			}
 			this.latestState = state;
 			if(this.latestState.over) {
 				this.gameActive = false;
@@ -232,6 +262,9 @@ define([
 
 		_swapTokenFn(token) {
 			const game = this.games.get(token);
+			if(!game) {
+				throw 'Game not found for token ' + token;
+			}
 			this.games.delete(token);
 			const newToken = (this.nextToken ++);
 			this.games.set(newToken, game);
@@ -295,7 +328,9 @@ define([
 		}
 
 		terminate(token) {
-			if(this.games.has(token)) {
+			const game = this.games.get(token);
+			if(game) {
+				game._markDead();
 				this.sandbox.postMessage({
 					action: 'STOP',
 					token,
