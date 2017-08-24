@@ -20,8 +20,8 @@ define(() => {
 	];
 
 	const scoreSorter = (a, b) => {
-		if(a.active !== b.active) {
-			return a.active ? -1 : 1;
+		if(a.disqualified !== b.disqualified) {
+			return a.disqualified ? 1 : -1;
 		}
 		if(a.food !== b.food) {
 			return b.food - a.food;
@@ -34,21 +34,21 @@ define(() => {
 			const gameTeamScores = teams.map((team) => {
 				let teamWorkers = 0;
 				let food = 0;
-				let active = false;
+				let disqualified = true;
 				const entries = [];
 				team.entries.forEach((entry) => {
 					let entryWorkers = 0;
 					entry.workers.forEach((count) => entryWorkers += count);
 					teamWorkers += entryWorkers;
 					food += entry.food;
-					if(entry.active) {
-						active = true;
+					if(!entry.disqualified) {
+						disqualified = false;
 					}
 					entries.push({
 						id: entry.id,
 						food: entry.food,
 						workers: entryWorkers,
-						active: entry.active,
+						disqualified: entry.disqualified,
 					});
 				});
 				entries.sort(scoreSorter);
@@ -56,7 +56,7 @@ define(() => {
 					id: team.id,
 					food,
 					workers: teamWorkers,
-					active,
+					disqualified,
 					winner: false,
 					score: 0,
 					entries,
@@ -73,7 +73,7 @@ define(() => {
 					tiedFood = place.food;
 				}
 				let score = 0;
-				if(place.active && place.food > 0) {
+				if(!place.disqualified && place.food > 0) {
 					place.winner = (tiedPos === 0);
 					place.score = SCORING[tiedPos];
 				}

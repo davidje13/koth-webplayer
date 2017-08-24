@@ -50,8 +50,8 @@ define(['core/EventObject', './document_utils'], (EventObject, docutil) => {
 			});
 		}
 
-		updateDisplayConfig(config) {
-			this.optPickers.forEach((optPicker) => optPicker.setFrom(config));
+		updateAttributes(attrs) {
+			this.optPickers.forEach((optPicker) => optPicker.setFrom(attrs));
 		}
 
 		dom() {

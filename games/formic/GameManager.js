@@ -217,7 +217,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					fn: code.fn,
 					cacheView: array_utils.makeList(CACHE_SIZE, null),
 					cacheAct: array_utils.makeList(CACHE_SIZE, null),
-					active: !code.compileError,
+					disqualified: Boolean(code.compileError),
 					error: code.compileError,
 					errorInput: null,
 					errorOutput: null,
@@ -344,7 +344,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 		stepAnt(index) {
 			const ant = this.ants[index];
 			const entry = this.entryLookup.get(ant.entry);
-			if(!entry.active) {
+			if(entry.disqualified) {
 				return;
 			}
 			const view = SHARED_VIEW;
@@ -364,10 +364,13 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					error = e.toString();
 				}
 				if(error) {
-					entry.active = false;
-					entry.error = error;
+					entry.disqualified = true;
 					entry.errorInput = JSON.stringify(viewToAPI(view));
 					entry.errorOutput = JSON.stringify(action);
+					entry.error = (
+						error + ' (gave ' + entry.errorOutput +
+						' for ' + entry.errorInput + ')'
+					);
 					return;
 				}
 				const viewCopy = [];
@@ -446,7 +449,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 							workers: entryState.workerCounts,
 							antSteps: entryState.antSteps,
 							elapsedTime: entryState.elapsedTime,
-							active: entryState.active,
+							disqualified: entryState.disqualified,
 							error: entryState.error,
 							errorInput: entryState.errorInput,
 							errorOutput: entryState.errorOutput,

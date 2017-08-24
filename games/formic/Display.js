@@ -6,11 +6,11 @@ define([
 	'display/MarkerStore',
 	'display/MarkerTypes3D',
 	'display/FullSwitchingBoard',
-	'display/StepperOptions',
 	'display/OptionsBar',
+	'games/common/components/StepperOptions',
+	'games/common/components/DisqualificationsDisplay',
 	'./components/BoardRenderer',
 	'./components/LeaderboardDisplay',
-	'./components/DisqualificationsDisplay',
 ], (
 	EventObject,
 	ModelPoint,
@@ -19,11 +19,11 @@ define([
 	MarkerStore,
 	MarkerTypes3D,
 	FullSwitchingBoard,
-	StepperOptions,
 	OptionsBar,
+	StepperOptions,
+	DisqualificationsDisplay,
 	BoardRenderer,
 	LeaderboardDisplay,
-	DisqualificationsDisplay,
 ) => {
 	'use strict';
 
@@ -207,7 +207,6 @@ define([
 		}
 
 		clear() {
-			this.options.clear();
 			this.renderer.clear();
 			this.table.clear();
 			this.errors.clear();
@@ -232,11 +231,9 @@ define([
 		}
 
 		updateDisplayConfig(config) {
-			this.options.updateDisplayConfig(config);
-			this.visualOptions.updateDisplayConfig(config);
+			this.visualOptions.updateAttributes(config);
 			this.renderer.updateDisplayConfig(config);
 			this.table.updateDisplayConfig(config);
-			this.errors.updateDisplayConfig(config);
 
 			this.board.setScale(config.scale);
 			this.board.setWireframe(config.wireframe);

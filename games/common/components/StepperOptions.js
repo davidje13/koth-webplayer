@@ -1,4 +1,4 @@
-define(['core/EventObject', './document_utils'], (EventObject, docutil) => {
+define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) => {
 	'use strict';
 
 	const REPLAY_BUTTON = {
@@ -173,9 +173,6 @@ define(['core/EventObject', './document_utils'], (EventObject, docutil) => {
 			this.renderPerf = renderer;
 		}
 
-		clear() {
-		}
-
 		updatePlayConfig(config) {
 			this.buttons.forEach((button) => {
 				const bc = button.config;
@@ -193,9 +190,6 @@ define(['core/EventObject', './document_utils'], (EventObject, docutil) => {
 				this.currentSeed = config.seed;
 				this.seedEntry.value = this.currentSeed;
 			}
-		}
-
-		updateDisplayConfig(config) {
 		}
 
 		updateState(state) {

@@ -97,7 +97,7 @@ define([
 				entry.workers.forEach((count, index) => {
 					tableEntry['type' + index] = count;
 				});
-				tableEntry.className = (entry.active ? '' : 'disqualified');
+				tableEntry.className = (entry.disqualified ? 'disqualified' : '');
 				if(entry.antSteps > 0) {
 					tableEntry.time = (entry.elapsedTime / entry.antSteps).toFixed(3) + 'ms';
 				} else {

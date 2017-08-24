@@ -21,6 +21,8 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 		}
 
 		clear() {
+			docutil.empty(this.tbody);
+			this.lastRows = [];
 		}
 
 		updateGameConfig({teams}) {
@@ -28,18 +30,13 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 			teams.forEach((team) => team.entries.forEach((entry) => this.entryLookup.set(entry.id, entry)));
 		}
 
-		updateDisplayConfig() {
-		}
-
 		updateState({teams}) {
 			const rows = [];
 			teams.forEach((team) => team.entries.forEach((entry) => {
-				if(!entry.active) {
+				if(entry.disqualified) {
 					rows.push({
 						id: entry.id,
 						error: entry.error,
-						input: entry.errorInput,
-						output: entry.errorOutput,
 					});
 				}
 			}));
@@ -60,13 +57,7 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 					const row = rows[i];
 					this.tbody.appendChild(docutil.make('tr', {}, [
 						docutil.make('td', {}, [this.entryLookup.get(row.id).title]),
-						docutil.make('td', {'class': 'foul-reason'}, [
-							row.error +
-							(row.input
-								? ' (gave ' + row.output + ' for ' + row.input + ')'
-								: ''
-							)
-						]),
+						docutil.make('td', {'class': 'foul-reason'}, [row.error]),
 					]));
 				}
 				this.lastRows = rows;

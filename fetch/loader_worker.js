@@ -15,12 +15,10 @@ define(['./StackExchangeAPI'], (StackExchangeAPI) => {
 	}
 
 	function parseAnswer(item, index, loaded, total) {
+		let title = 'Unknown competitor from ' + item.owner.display_name;
 		try {
-			const title = findRegex(item.body, REG_TITLE, 2);
+			title = findRegex(item.body, REG_TITLE, 2) || title;
 			const code = findRegex(item.body, REG_CODE, 1);
-			if(!title) {
-				throw 'Title not found!';
-			}
 			if(!code) {
 				throw 'Code not found!';
 			}
@@ -38,7 +36,13 @@ define(['./StackExchangeAPI'], (StackExchangeAPI) => {
 
 			return entry;
 		} catch(error) {
-			return {error};
+			return {
+				user_name: item.owner.display_name,
+				user_id: item.owner.user_id,
+				title,
+				code: '',
+				error,
+			};
 		}
 	}
 
