@@ -6,9 +6,9 @@ define([
 	'display/MarkerStore',
 	'display/MarkerTypes3D',
 	'display/FullSwitchingBoard',
+	'display/StepperOptions',
+	'display/OptionsBar',
 	'./components/BoardRenderer',
-	'./components/OptionsDisplay',
-	'./components/VisualOptionsDisplay',
 	'./components/LeaderboardDisplay',
 	'./components/DisqualificationsDisplay',
 ], (
@@ -19,9 +19,9 @@ define([
 	MarkerStore,
 	MarkerTypes3D,
 	FullSwitchingBoard,
+	StepperOptions,
+	OptionsBar,
 	BoardRenderer,
-	OptionsDisplay,
-	VisualOptionsDisplay,
 	LeaderboardDisplay,
 	DisqualificationsDisplay,
 ) => {
@@ -88,13 +88,40 @@ define([
 		},
 	};
 
+	const COLOUR_OPTIONS_SELECT = [];
+	for(let i in COLOUR_OPTIONS) {
+		if(COLOUR_OPTIONS.hasOwnProperty(i)) {
+			COLOUR_OPTIONS_SELECT.push({value: i, label: COLOUR_OPTIONS[i].name});
+		}
+	}
+
 	return class Display extends EventObject {
 		constructor() {
 			super();
 
 			this.renderer = new BoardRenderer();
-			this.options = new OptionsDisplay();
-			this.visualOptions = new VisualOptionsDisplay();
+			this.options = new StepperOptions();
+
+			this.visualOptions = new OptionsBar('changedisplay', [
+				{attribute: 'colourscheme', values: COLOUR_OPTIONS_SELECT},
+				{attribute: 'view3D', values: [
+					{value: false, label: '2D'},
+					{value: true, label: '3D'},
+				]},
+				{attribute: 'queenMarkerType', label: 'Queen marker', values: [
+					{value: '', label: 'None'},
+					{value: 'ring', label: 'Ring'},
+					{value: 'pointer', label: 'Pointer'},
+				]},
+				{attribute: 'workerMarkerType', label: 'Worker marker', values: [
+					{value: '', label: 'None'},
+					{value: 'pointer', label: 'Pointer'},
+				]},
+				{attribute: 'foodMarkerType', label: 'Food marker', values: [
+					{value: '', label: 'None'},
+					{value: 'pointer', label: 'Pointer'},
+				]},
+			]);
 			this.markers = new MarkerStore();
 			this.markerTypes3D = new MarkerTypes3D();
 			this.board = new FullSwitchingBoard({
@@ -107,7 +134,6 @@ define([
 			this.table = new LeaderboardDisplay();
 			this.errors = new DisqualificationsDisplay();
 			this.renderer.setColourChoices(COLOUR_OPTIONS);
-			this.visualOptions.setColourChoices(COLOUR_OPTIONS);
 			this.options.setRenderPerformance(this.renderer);
 
 			this.options.addEventForwarding(this);
@@ -182,7 +208,6 @@ define([
 
 		clear() {
 			this.options.clear();
-			this.visualOptions.clear();
 			this.renderer.clear();
 			this.table.clear();
 			this.errors.clear();
@@ -197,7 +222,6 @@ define([
 
 		updateGameConfig(config) {
 			this.options.updateGameConfig(config);
-			this.visualOptions.updateGameConfig(config);
 			this.renderer.updateGameConfig(config);
 			this.table.updateGameConfig(config);
 			this.errors.updateGameConfig(config);
@@ -234,7 +258,6 @@ define([
 
 		updateState(state) {
 			this.options.updateState(state);
-			this.visualOptions.updateState(state);
 			this.renderer.updateState(state);
 			this.table.updateState(state);
 			this.errors.updateState(state);

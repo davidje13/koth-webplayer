@@ -413,7 +413,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 		}
 
 		step(type) {
-			if(type === 'ant') {
+			if(type === 'single') {
 				this.stepOneAnt();
 			} else {
 				this.stepAllAnts();

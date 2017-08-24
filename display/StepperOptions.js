@@ -1,4 +1,4 @@
-define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) => {
+define(['core/EventObject', './document_utils'], (EventObject, docutil) => {
 	'use strict';
 
 	const REPLAY_BUTTON = {
@@ -23,12 +23,12 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 			params: [{delay: 0, speed: 0}],
 		}, {
 			label: '>',
-			title: 'Step Ant',
+			title: 'Step',
 			event: 'step',
-			params: ['ant', 1],
+			params: ['single', 1],
 		}, {
 			label: '>>',
-			title: 'Step',
+			title: 'Step Frame',
 			event: 'step',
 			params: [null, 1],
 		}, {
@@ -104,7 +104,7 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 		return true;
 	}
 
-	return class OptionsDisplay extends EventObject {
+	return class StepperOptions extends EventObject {
 		constructor() {
 			super();
 
