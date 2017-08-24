@@ -94,6 +94,8 @@
 }
 
 .fouls .foul-reason {
+	max-width: 350px;
+	word-wrap: break-word;
 	font-family: monospace;
 }
 
