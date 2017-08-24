@@ -19,7 +19,7 @@ define(['core/EventObject', 'core/array_utils', 'math/Random'], (EventObject, ar
 			return this.seed;
 		}
 
-		begin({seed = null, entries}) {
+		begin({seed = null, teams}) {
 			this.seed = Random.makeRandomSeedFrom(seed, 'M');
 
 			const random = new Random(this.seed);
@@ -32,13 +32,14 @@ define(['core/EventObject', 'core/array_utils', 'math/Random'], (EventObject, ar
 			for(let i = 0; i < this.gameCount; ++ i) {
 				const gameSeed = random.makeRandomSeed('G');
 				const randomShuffle = new Random(random);
+				// TODO: shuffle entries in teams too?
 				games.push(this.gameHandler(
 					gameSeed,
-					array_utils.shuffle(entries, randomShuffle)
+					array_utils.shuffle(teams, randomShuffle)
 				));
 			}
-			Promise.all(games).then((allScores) => {
-				this.trigger('complete', [allScores]);
+			Promise.all(games).then((gameScores) => {
+				this.trigger('complete', [gameScores]);
 			});
 		}
 	};

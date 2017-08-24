@@ -40,13 +40,13 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 	const SHARED_VIEW = []; // reusable array to reduce memory growth
 
 	function transferFood(worker, queen) {
-		if(queen.team === worker.team && worker.food > 0) {
+		if(queen.entry === worker.entry && worker.food > 0) {
 			// Give food to own queen
 			++ queen.food;
 			-- worker.food;
 			return true;
 		}
-		if(queen.team !== worker.team && queen.food > 0 && worker.food < 1) {
+		if(queen.entry !== worker.entry && queen.food > 0 && worker.food < 1) {
 			// Steal food from other queens
 			-- queen.food;
 			++ worker.food;
@@ -94,17 +94,17 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 		return true;
 	}
 
-	function findCache(team, hash, view) {
-		const v = team.cacheView[hash];
+	function findCache(entry, hash, view) {
+		const v = entry.cacheView[hash];
 		if(v && checkEqualView(v, view)) {
-			return team.cacheAct[hash];
+			return entry.cacheAct[hash];
 		}
 		return null;
 	}
 
-	function putCache(team, hash, view, action) {
-		team.cacheView[hash] = view;
-		team.cacheAct[hash] = action;
+	function putCache(entry, hash, view, action) {
+		entry.cacheView[hash] = view;
+		entry.cacheAct[hash] = action;
 	}
 
 	function checkError(action, ant, view) {
@@ -165,10 +165,11 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 	}
 
 	return class GameManager {
-		constructor(random, {width, height, foodRatio, maxFrame, entries}) {
+		constructor(random, {width, height, foodRatio, maxFrame, teams}) {
 			this.random = random;
 			this.width = width|0;
 			this.height = height|0;
+			this.teams = teams;
 			this.maxFrame = Math.max(maxFrame|0, 1);
 			const area = this.width * this.height;
 			this.frame = 0;
@@ -182,10 +183,13 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 
 			const foodCount = (area * foodRatio)|0;
 
+			let entryCount = 0;
+			teams.forEach((team) => entryCount += team.entries.length);
+
 			// Randomly position all food & queens without overlaps
 			// (inefficient, but predictable performance regardless of coverage)
 			const positions = [];
-			let remaining = foodCount + entries.length;
+			let remaining = foodCount + entryCount;
 			for(let i = 0; i < area; ++ i) {
 				if(this.random.next(area - i) < remaining) {
 					positions.push(i);
@@ -194,14 +198,14 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			}
 
 			// Take one position for each queen; the rest will be food
-			entries.forEach((entry) => {
+			teams.forEach((team) => team.entries.forEach((entry) => {
 				const positionIndex = this.random.next(positions.length);
 				const startIndex = positions.splice(positionIndex, 1)[0];
 
 				const code = entry_utils.compile(entry.code, ['view']);
 				const queen = {
 					id: (this.nextAntID ++),
-					team: entry.id,
+					entry: entry.id,
 					type: QUEEN,
 					x: startIndex % this.width,
 					y: (startIndex / this.width)|0,
@@ -224,7 +228,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 				});
 				this.ants.push(queen);
 				this.antGrid[queen.i] = queen;
-			});
+			}));
 
 			// Ensure random competitor order
 			array_utils.shuffleInPlace(this.ants, this.random);
@@ -282,14 +286,14 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			} else if(action.type) {
 				const newAnt = {
 					id: (this.nextAntID ++),
-					team: ant.team,
+					entry: ant.entry,
 					type: action.type,
 					x: p.x,
 					y: p.y,
 					i: p.i,
 					food: 0,
 				};
-				++ this.entryLookup.get(newAnt.team).workerCounts[newAnt.type - 1];
+				++ this.entryLookup.get(newAnt.entry).workerCounts[newAnt.type - 1];
 				this.ants.splice(index + 1, 0, newAnt);
 				this.antGrid[newAnt.i] = newAnt;
 				-- ant.food;
@@ -317,7 +321,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			}
 		}
 
-		generateView(target, p, team, rotation) {
+		generateView(target, p, entry, rotation) {
 			const rot = ROTATIONS[rotation];
 			let hash = 0;
 			for(let i = 0; i < 9; ++ i) {
@@ -328,7 +332,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					(ant ? (
 						ant.type |
 						(ant.food << SV_ANT_FOOD_SHIFT) |
-						((ant.team === team) ? SV_FRIEND : 0)
+						((ant.entry === entry) ? SV_FRIEND : 0)
 					) : 0)
 				);
 				target[i] = value;
@@ -339,40 +343,40 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 
 		stepAnt(index) {
 			const ant = this.ants[index];
-			const team = this.entryLookup.get(ant.team);
-			if(!team.active) {
+			const entry = this.entryLookup.get(ant.entry);
+			if(!entry.active) {
 				return;
 			}
 			const view = SHARED_VIEW;
 			const rotation = this.random.next(4);
-			const hash = this.generateView(view, ant, ant.team, rotation);
-			let action = findCache(team, hash, view);
+			const hash = this.generateView(view, ant, ant.entry, rotation);
+			let action = findCache(entry, hash, view);
 			if(!action) {
 				let error = null;
 				let elapsed = 0;
 				try {
 					const apiView = viewToAPI(view);
 					const begin = performance.now();
-					action = team.fn(apiView);
+					action = entry.fn(apiView);
 					elapsed = performance.now() - begin;
 					error = checkError(action, ant, view);
 				} catch(e) {
 					error = e.toString();
 				}
 				if(error) {
-					team.active = false;
-					team.error = error;
-					team.errorInput = JSON.stringify(viewToAPI(view));
-					team.errorOutput = JSON.stringify(action);
+					entry.active = false;
+					entry.error = error;
+					entry.errorInput = JSON.stringify(viewToAPI(view));
+					entry.errorOutput = JSON.stringify(action);
 					return;
 				}
 				const viewCopy = [];
 				for(let i = 0; i < 9; ++ i) {
 					viewCopy[i] = view[i];
 				}
-				putCache(team, hash, viewCopy, action);
-				team.elapsedTime += elapsed;
-				++ team.antSteps;
+				putCache(entry, hash, viewCopy, action);
+				entry.elapsedTime += elapsed;
+				++ entry.antSteps;
 			}
 			this.moveAnt(index, ant, action, rotation);
 		}
@@ -421,20 +425,6 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 		}
 
 		getState() {
-			const entries = [];
-			this.entryLookup.forEach((entry) => entries.push({
-				id: entry.id,
-				food: entry.queen.food,
-				queen: this.ants.indexOf(entry.queen),
-				workers: entry.workerCounts,
-				antSteps: entry.antSteps,
-				elapsedTime: entry.elapsedTime,
-				active: entry.active,
-				error: entry.error,
-				errorInput: entry.errorInput,
-				errorOutput: entry.errorOutput,
-			}));
-
 			return {
 				// Framework data
 				over: this.isOver(),
@@ -445,10 +435,27 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 				currentAnt: this.currentAnt,
 				simulationTime: this.simulationTime,
 				board: this.board,
-				entries,
+				teams: this.teams.map((team) => ({
+					id: team.id,
+					entries: team.entries.map((entry) => {
+						const entryState = this.entryLookup.get(entry.id);
+						return {
+							id: entry.id,
+							food: entryState.queen.food,
+							queen: this.ants.indexOf(entryState.queen),
+							workers: entryState.workerCounts,
+							antSteps: entryState.antSteps,
+							elapsedTime: entryState.elapsedTime,
+							active: entryState.active,
+							error: entryState.error,
+							errorInput: entryState.errorInput,
+							errorOutput: entryState.errorOutput,
+						};
+					}),
+				})),
 				ants: this.ants.map((ant) => ({
 					id: ant.id,
-					team: ant.team,
+					entry: ant.entry,
 					type: ant.type,
 					x: ant.x,
 					y: ant.y,

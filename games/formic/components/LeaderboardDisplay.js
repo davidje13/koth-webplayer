@@ -17,7 +17,8 @@ define([
 		constructor() {
 			super();
 
-			this.tableDataLookup = new Map();
+			this.tableTeamsLookup = new Map();
+			this.tableEntriesLookup = new Map();
 			this.seedLabel = docutil.text();
 
 			const workerColumns = [];
@@ -54,20 +55,26 @@ define([
 			});
 		}
 
-		updateEntries(entries) {
-			this.tableDataLookup.clear();
+		updateTeams(teams) {
+			this.tableTeamsLookup.clear();
+			this.tableEntriesLookup.clear();
 
-			entries.forEach((entry) => {
-				this.tableDataLookup.set(entry.id, {
-					key: entry.id,
-					baseClassName: 'team-' + entry.id,
-					name: {
-						value: entry.title,
-						title: entry.title,
-					},
-					food: 0,
-					time: '',
-					score: {value: '', className: ''},
+			teams.forEach((team) => {
+				this.tableTeamsLookup.set(team.id, {
+					key: team.id,
+					className: 'team-' + team.id,
+				});
+				team.entries.forEach((entry) => {
+					this.tableEntriesLookup.set(entry.id, {
+						key: entry.id,
+						className: '',
+						name: {
+							value: entry.title,
+							title: entry.title,
+						},
+						food: 0,
+						time: '',
+					});
 				});
 			});
 		}
@@ -75,38 +82,36 @@ define([
 		clear() {
 		}
 
-		updateGameConfig({seed, entries}) {
+		updateGameConfig({seed, teams}) {
 			docutil.updateText(this.seedLabel, seed);
-			this.updateEntries(entries);
+			this.updateTeams(teams);
 		}
 
 		updateDisplayConfig() {
 		}
 
 		updateState(state) {
-			state.entries.forEach((entry) => {
-				const data = this.tableDataLookup.get(entry.id);
-				data.food = entry.food;
+			state.teams.forEach((team) => team.entries.forEach((entry) => {
+				const tableEntry = this.tableEntriesLookup.get(entry.id);
+				tableEntry.food = entry.food;
 				entry.workers.forEach((count, index) => {
-					data['type' + index] = count;
+					tableEntry['type' + index] = count;
 				});
-				data.className = (
-					data.baseClassName +
-					(entry.active ? '' : ' disqualified')
-				);
+				tableEntry.className = (entry.active ? '' : 'disqualified');
 				if(entry.antSteps > 0) {
-					data.time = (entry.elapsedTime / entry.antSteps).toFixed(3) + 'ms';
+					tableEntry.time = (entry.elapsedTime / entry.antSteps).toFixed(3) + 'ms';
 				} else {
-					data.time = '';
+					tableEntry.time = '';
 				}
-			});
-
-			this.table.setData(GameScorer.score(null, state).map((place) => {
-				const data = this.tableDataLookup.get(place.id);
-				data.score.className = (place.winner ? 'win' : '');
-				data.score.value = place.score || '';
-				return data;
 			}));
+
+			this.table.setData(GameScorer.score(null, state).teams.map((teamScore) => Object.assign({
+				score: {
+					value: teamScore.score || '',
+					className: (teamScore.winner ? 'win' : ''),
+				},
+				nested: teamScore.entries.map((entryScore) => this.tableEntriesLookup.get(entryScore.id)),
+			}, this.tableTeamsLookup.get(teamScore.id))));
 		}
 
 		dom() {

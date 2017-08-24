@@ -200,7 +200,7 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 
 		updateState(state) {
 			let simTime = state.simulationTime;
-			state.entries.forEach((entry) => simTime -= entry.elapsedTime);
+			state.teams.forEach((team) => team.entries.forEach((entry) => simTime -= entry.elapsedTime));
 
 			docutil.updateText(this.frame, state.frame);
 			docutil.updateText(this.stepTime, (state.simulationTime / state.frame).toFixed(3));

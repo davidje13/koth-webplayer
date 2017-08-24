@@ -161,7 +161,7 @@ define([
 			this.begin({seed: this.getSeed()});
 		}
 
-		begin({seed = null, entries = null} = {}) {
+		begin({seed = null, teams = null} = {}) {
 			if(this.dead) {
 				throw 'Attempt to use terminated game';
 			}
@@ -178,8 +178,8 @@ define([
 				this.gameActive = false;
 			}
 			this.config.game.seed = Random.makeRandomSeedFrom(seed, 'G');
-			if(entries) {
-				this.config.game.entries = entries;
+			if(teams) {
+				this.config.game.teams = teams;
 			}
 			if(this.display) {
 				this.display.clear();
@@ -293,7 +293,7 @@ define([
 		}
 
 		make({
-			entries = [],
+			teams = [],
 			display = null,
 			baseGameConfig = {},
 			basePlayConfig = {},
@@ -304,7 +304,7 @@ define([
 			const config = {
 				game: Object.assign({
 					seed: null,
-					entries,
+					teams,
 				}, baseGameConfig),
 				play: Object.assign({
 					delay: 0,

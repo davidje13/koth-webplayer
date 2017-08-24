@@ -13,25 +13,27 @@ define([
 	'use strict';
 
 	return class MatchSummary extends EventObject {
-		constructor({name = 'Match', seed = '', entries, matchScorer}) {
+		constructor({name = 'Match', seed = '', teams, matchScorer}) {
 			super();
 
 			this.name = name;
 			this.matchSeed = seed;
-			this.entries = entries;
+			this.teams = teams;
 			this.matchScorer = matchScorer;
-			this.allScores = [];
+			this.gameScores = [];
 			this.games = [];
-			this.entryDataLookup = new Map();
-			entries.forEach((entry) => {
-				this.entryDataLookup.set(entry.id, {
-					key: entry.id,
-					baseClassName: 'team-' + entry.id,
-					name: {
-						value: entry.title,
-						title: entry.title,
-					},
+			this.tableTeamsLookup = new Map();
+			teams.forEach((team) => {
+				this.tableTeamsLookup.set(team.id, {
+					key: team.id,
+					className: 'team-' + team.id,
 					score: {value: '', className: ''},
+					nested: team.entries.map((entry) => ({
+						name: {
+							value: entry.title,
+							title: entry.title,
+						},
+					})),
 				});
 			});
 
@@ -78,30 +80,29 @@ define([
 //					docutil.make('p', {}, [seed]),
 				]),
 			});
-			this.allScores.push([]);
+			this.gameScores.push({teams: []});
 			this.updateColumns();
 			return index;
 		}
 
-		updateGameState(token, progress, scores) {
+		updateGameState(token, progress, gameScore) {
 			const game = this.games[token];
 			game.progress.setState(progress);
 
-			this.allScores[token] = scores;
-			scores.forEach((result) => {
-				this.entryDataLookup.get(result.id)['game' + token] = {
-					value: result.score,
-					className: result.winner ? 'win' : '',
+			this.gameScores[token] = gameScore;
+			gameScore.teams.forEach((gameTeamScore) => {
+				this.tableTeamsLookup.get(gameTeamScore.id)['game' + token] = {
+					value: gameTeamScore.score,
+					className: gameTeamScore.winner ? 'win' : '',
 				};
 			});
 
-			const aggScores = this.matchScorer.score(this.entries, this.allScores);
-			this.table.setData(aggScores.map((result) => {
-				const line = this.entryDataLookup.get(result.id);
-				line.score.value = result.score || '';
-				line.score.className = result.winner ? 'win' : '';
-				line.className = line.baseClassName;
-				return line;
+			const matchScore = this.matchScorer.score(this.teams, this.gameScores);
+			this.table.setData(matchScore.teams.map((matchTeamScore) => {
+				const tableTeam = this.tableTeamsLookup.get(matchTeamScore.id);
+				tableTeam.score.value = matchTeamScore.score || '';
+				tableTeam.score.className = matchTeamScore.winner ? 'win' : '';
+				return tableTeam;
 			}));
 		}
 

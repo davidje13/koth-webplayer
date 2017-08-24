@@ -23,17 +23,17 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 		clear() {
 		}
 
-		updateGameConfig({entries}) {
+		updateGameConfig({teams}) {
 			this.entryLookup.clear();
-			entries.forEach((entry) => this.entryLookup.set(entry.id, entry));
+			teams.forEach((team) => team.entries.forEach((entry) => this.entryLookup.set(entry.id, entry)));
 		}
 
 		updateDisplayConfig() {
 		}
 
-		updateState({entries}) {
+		updateState({teams}) {
 			const rows = [];
-			entries.forEach((entry) => {
+			teams.forEach((team) => team.entries.forEach((entry) => {
 				if(!entry.active) {
 					rows.push({
 						id: entry.id,
@@ -42,7 +42,7 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 						output: entry.errorOutput,
 					});
 				}
-			});
+			}));
 
 			const changed = (
 				this.lastRows === null ||

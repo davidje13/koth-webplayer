@@ -20,6 +20,8 @@ require([
 ) => {
 	const title = docutil.getTitle();
 	const gameType = docutil.getMetaTagValue('game-type');
+	const teamType = docutil.getMetaTagValue('team-type', 'free_for_all');
+	const teamTypeArgs = JSON.parse(docutil.getMetaTagValue('team-type-args', '{}'));
 	const baseGameConfig = JSON.parse(docutil.getMetaTagValue('game-config', '{}'));
 	const basePlayConfig = JSON.parse(docutil.getMetaTagValue('play-config', '{}'));
 	const basePlayHiddenConfig = JSON.parse(docutil.getMetaTagValue('play-hidden-config', '{"speed": -1, "maxTime": 250}'));
@@ -49,10 +51,11 @@ require([
 		'core/sandbox_utils',
 		'display/Overlay',
 		'display/MatchSummary', // TODO: game-customisable
+		'teammaker/' + teamType,
 		'path:' + gameDir + '/GameManager',
 		gameDir + '/Display',
 		gameDir + '/GameScorer',
-		gameDir + '/MatchScorer',
+		'engine/MatchScorer',
 		gameDir + '/style.css',
 	], (
 		Random,
@@ -62,6 +65,7 @@ require([
 		sandbox_utils,
 		Overlay,
 		MatchSummary,
+		TeamMaker,
 		GameManager_path,
 		Display,
 		GameScorer,
@@ -82,7 +86,7 @@ require([
 		docutil.body.appendChild(singleGameOverlay.dom());
 		let singleGame = null;
 
-		function showGame(seed, entries, dismissable) {
+		function showGame(seed, teams, dismissable) {
 			singleGameOverlay.show(singleGameDisplay.dom(), {
 				dismissable,
 				inline: !dismissable
@@ -97,7 +101,7 @@ require([
 				basePlayConfig,
 				baseDisplayConfig,
 			});
-			singleGame.begin({seed, entries});
+			singleGame.begin({seed, teams});
 		}
 
 		singleGameOverlay.addEventListener('dismissed', () => {
@@ -109,12 +113,12 @@ require([
 
 		// TODO: extract all of this & improve separation / APIs
 		const tournament = new Tournament();
-		tournament.setMatchHandler((seed, entries) => {
+		tournament.setMatchHandler((seed, teams) => {
 			const match = new Match(30);
 			const matchDisplay = new MatchSummary({
 				name: 'Match 1',
 				seed,
-				entries,
+				teams,
 				matchScorer: MatchScorer,
 			});
 			docutil.body.appendChild(docutil.make('section', {'class': 'tournament'}, [
@@ -124,7 +128,7 @@ require([
 				]),
 				matchDisplay.dom()
 			]));
-			match.setGameHandler((seed, entries) => {
+			match.setGameHandler((seed, teams) => {
 				const game = backgroundGames.make({
 					baseGameConfig,
 					basePlayConfig: basePlayHiddenConfig,
@@ -134,7 +138,7 @@ require([
 				// TODO: better API for this
 				matchDisplay.addEventListener('gametitleclick', (token) => {
 					if(token === gameDisplayToken) {
-						showGame(seed, entries, true);
+						showGame(seed, teams, true);
 					}
 				});
 				return new Promise((resolve, reject) => {
@@ -148,14 +152,14 @@ require([
 						game.terminate();
 						resolve(GameScorer.score(config, state));
 					});
-					game.begin({seed, entries});
+					game.begin({seed, teams});
 				});
 			});
 			return new Promise((resolve, reject) => {
 				match.addEventListener('complete', (matchScores) => {
-					resolve(MatchScorer.score(entries, matchScores));
+					resolve(MatchScorer.score(teams, matchScores));
 				});
-				match.begin({seed, entries});
+				match.begin({seed, teams});
 			});
 		});
 		tournament.addEventListener('complete', (finalScores) => {
@@ -181,10 +185,10 @@ require([
 		});
 		docutil.body.appendChild(linker);
 
-		function begin(entries) {
+		function begin(teams) {
 			const hash = (window.location.hash || '#').substr(1);
 			if(hash.startsWith('T')) {
-				tournament.begin({entries: entries, seed: hash});
+				tournament.begin({teams, seed: hash});
 				return;
 			}
 			if(hash.startsWith('M')) {
@@ -192,7 +196,7 @@ require([
 //				return;
 			}
 			if(hash.startsWith('G')) {
-				showGame(hash, entries, false);
+				showGame(hash, teams, false);
 				return;
 			}
 
@@ -201,13 +205,13 @@ require([
 			const btnTournament = docutil.make('button', {}, 'Tournament (work-in-progress!)');
 			btnTournament.addEventListener('click', () => {
 				docutil.body.removeChild(initialOptions);
-				tournament.begin({entries: entries});
+				tournament.begin({teams});
 			});
 
 			const btnGame = docutil.make('button', {}, 'Game');
 			btnGame.addEventListener('click', () => {
 				docutil.body.removeChild(initialOptions);
-				showGame(null, entries, false);
+				showGame(null, teams, false);
 			});
 
 			initialOptions = docutil.make('div', {'class': 'initial-options'}, [btnTournament, btnGame]);
@@ -232,7 +236,7 @@ require([
 			case 'LOADED':
 				docutil.body.removeChild(loader.dom());
 
-				begin(data.entries);
+				begin(TeamMaker.pickTeams(data.entries, teamTypeArgs));
 
 				break;
 			}

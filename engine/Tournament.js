@@ -17,7 +17,7 @@ define(['core/EventObject', 'math/Random'], (EventObject, Random) => {
 			return this.seed;
 		}
 
-		begin({seed = null, entries}) {
+		begin({seed = null, teams}) {
 			this.seed = Random.makeRandomSeedFrom(seed, 'T');
 
 			const random = new Random(this.seed);
@@ -28,7 +28,7 @@ define(['core/EventObject', 'math/Random'], (EventObject, Random) => {
 
 			const match1 = this.matchHandler(
 				random.makeRandomSeed('M'),
-				entries
+				teams,
 			);
 			match1.then((scores) => this.trigger('complete', [scores]));
 		}
