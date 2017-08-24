@@ -56,7 +56,7 @@ define(() => {
 			}
 			this.rawTeams.forEach((team) => team.entries.forEach((entry) => {
 				if(entry.alive && !entry.disqualified) {
-					c = palette[entry.teamIndex + 1];
+					c = palette[(entry.team === 'T1') ? 2 : 1];
 					const p = entry.y * this.dat.width + entry.x;
 					d[p * 4    ] = c[0];
 					d[p * 4 + 1] = c[1];

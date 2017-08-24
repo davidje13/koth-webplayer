@@ -287,6 +287,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 						const entryState = this.entryLookup.get(entry.id);
 						return {
 							id: entry.id,
+							team: team.id,
 							codeSteps: entryState.codeSteps,
 							elapsedTime: entryState.elapsedTime,
 							disqualified: entryState.disqualified,
