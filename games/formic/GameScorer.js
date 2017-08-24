@@ -39,10 +39,10 @@ define(() => {
 				team.entries.forEach((entry) => {
 					let entryWorkers = 0;
 					entry.workers.forEach((count) => entryWorkers += count);
-					teamWorkers += entryWorkers;
-					food += entry.food;
 					if(!entry.disqualified) {
 						disqualified = false;
+						teamWorkers += entryWorkers;
+						food += entry.food;
 					}
 					entries.push({
 						id: entry.id,

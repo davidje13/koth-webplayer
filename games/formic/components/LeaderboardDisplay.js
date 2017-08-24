@@ -98,8 +98,8 @@ define([
 					tableEntry['type' + index] = count;
 				});
 				tableEntry.className = (entry.disqualified ? 'disqualified' : '');
-				if(entry.antSteps > 0) {
-					tableEntry.time = (entry.elapsedTime / entry.antSteps).toFixed(3) + 'ms';
+				if(entry.codeSteps > 0) {
+					tableEntry.time = (entry.elapsedTime / entry.codeSteps).toFixed(3) + 'ms';
 				} else {
 					tableEntry.time = '';
 				}

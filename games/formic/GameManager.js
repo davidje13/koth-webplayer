@@ -223,7 +223,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					errorOutput: null,
 					queen,
 					workerCounts: array_utils.makeList(WORKER_TYPES, 0),
-					antSteps: 0,
+					codeSteps: 0,
 					elapsedTime: 0,
 				});
 				this.ants.push(queen);
@@ -379,7 +379,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 				}
 				putCache(entry, hash, viewCopy, action);
 				entry.elapsedTime += elapsed;
-				++ entry.antSteps;
+				++ entry.codeSteps;
 			}
 			this.moveAnt(index, ant, action, rotation);
 		}
@@ -447,7 +447,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 							food: entryState.queen.food,
 							queen: this.ants.indexOf(entryState.queen),
 							workers: entryState.workerCounts,
-							antSteps: entryState.antSteps,
+							codeSteps: entryState.codeSteps,
 							elapsedTime: entryState.elapsedTime,
 							disqualified: entryState.disqualified,
 							error: entryState.error,

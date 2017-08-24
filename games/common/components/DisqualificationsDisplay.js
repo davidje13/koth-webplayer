@@ -13,7 +13,7 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 				docutil.make('thead', {}, [
 					docutil.make('tr', {}, [
 						docutil.make('th', {}, ['Player']),
-						docutil.make('th', {}, ['Disqualification Reason']),
+						docutil.make('th', {}, ['Issue']),
 					]),
 				]),
 				this.tbody,
@@ -37,6 +37,13 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 					rows.push({
 						id: entry.id,
 						error: entry.error,
+						warn: false,
+					});
+				} else if(entry.error) {
+					rows.push({
+						id: entry.id,
+						error: entry.error,
+						warn: true,
 					});
 				}
 			}));
@@ -47,17 +54,21 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 				rows.some((v, i) => (
 					this.lastRows[i].id !== v.id ||
 					this.lastRows[i].error !== v.error ||
-					this.lastRows[i].input !== v.input ||
-					this.lastRows[i].output !== v.output
+					this.lastRows[i].warn !== v.warn
 				))
 			);
 			if(changed) {
 				docutil.empty(this.tbody);
 				for(let i = 0; i < rows.length; ++ i) {
 					const row = rows[i];
-					this.tbody.appendChild(docutil.make('tr', {}, [
+					this.tbody.appendChild(docutil.make('tr', {
+						'class': (row.warn ? 'foul-warn' : 'foul-error'),
+					}, [
 						docutil.make('td', {}, [this.entryLookup.get(row.id).title]),
-						docutil.make('td', {'class': 'foul-reason'}, [row.error]),
+						docutil.make('td', {'class': 'foul-reason'}, [
+							(row.warn ? 'WARNING: ' : 'DISQUALIFIED: ') +
+							row.error
+						]),
 					]));
 				}
 				this.lastRows = rows;

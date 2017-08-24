@@ -30,6 +30,9 @@ define(['core/worker_utils', 'path:./loader_worker'], (worker_utils, loader_work
 				'"use strict";' +
 				'const self = undefined;' +
 				'const window = undefined;' +
+				'const Date = undefined;' +
+				'const performance = undefined;' +
+				'const console = undefined;' +
 				'const require = undefined;' +
 				'const require_factory = undefined;' +
 				'const define = undefined;' +

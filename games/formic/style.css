@@ -156,3 +156,11 @@
 .fouls .foul-reason {
 	font-family: monospace;
 }
+
+.fouls .foul-warn {
+	background: #FFFFDD;
+}
+
+.fouls .foul-error {
+	background: #FFDDDD;
+}

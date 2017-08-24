@@ -105,7 +105,7 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 	}
 
 	return class StepperOptions extends EventObject {
-		constructor() {
+		constructor(speedButtons = SPEED_BUTTONS) {
 			super();
 
 			this.renderPerf = null;
@@ -132,7 +132,7 @@ define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) =>
 				this.trigger('begin', [{seed: this.seedEntry.value}]);
 			});
 
-			this.buttons = makeButtons(SPEED_BUTTONS, this);
+			this.buttons = makeButtons(speedButtons, this);
 
 			this.stepTime = docutil.text('-');
 			this.engineTime = docutil.text('-');
