@@ -6,6 +6,8 @@ See it in action:
 
 * https://davidje13.github.io/koth-webplayer/formic.htm
   (test implementation based on the existing [Formic Functions](https://codegolf.stackexchange.com/q/135102/8927) challenge)
+* https://davidje13.github.io/koth-webplayer/battlebots.htm
+  (test implementation based on the existing [Red vs. Blue - Pixel Team Battlebots](https://codegolf.stackexchange.com/q/48353/8927) challenge)
 
 A rough set of aims for this project:
 

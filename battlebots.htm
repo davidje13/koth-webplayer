@@ -1,0 +1,47 @@
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="content-security-policy" content="
+	base-uri 'self';
+	default-src 'none';
+	child-src blob:;
+	frame-src blob:;
+	connect-src https://api.stackexchange.com;
+	script-src 'self' 'unsafe-inline' blob:;
+	worker-src blob:;
+	style-src 'self';
+	img-src 'self';
+	form-action 'none';
+">
+
+<!-- these properties are read by the engine to configure the game -->
+<title>Red vs. Blue - Pixel Team Battlebots</title>
+<link rel="icon" href="battlebots.png">
+<meta name="stack-exchange-site" content="codegolf">
+<meta name="stack-exchange-qid" content="48353">
+<meta name="game-type" content="battlebots">
+<meta name="team-type" content="user_id_modulo">
+<meta name="game-config" content='{
+	"width": 128,
+	"height": 128,
+	"visibilityDistance": 16,
+	"maxFrame": 2048
+}'>
+<meta name="play-config" content='{
+	"delay": 0,
+	"speed": 1
+}'>
+<meta name="display-config" content='{
+	"scale": 3,
+	"colourscheme": "redblue"
+}'>
+
+<script src="core/require.js"></script>
+<script src="engine/engine.js" async></script>
+</head>
+<body>
+
+<noscript>This viewer requires Javascript!</noscript>
+
+</body>
+</html>
