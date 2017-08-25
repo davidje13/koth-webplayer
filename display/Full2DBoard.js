@@ -60,8 +60,8 @@ define([
 					dom = {element: docutil.make('div')};
 					this.renderedMarks.set(key, dom);
 				}
-				const x1 = ((mark.x * this.scaleX)|0);
-				const y1 = ((mark.y * this.scaleY)|0);
+				const x1 = (((mark.x + 0.5) * this.scaleX)|0);
+				const y1 = (((mark.y + 0.5) * this.scaleY)|0);
 				docutil.updateAttrs(dom.element, {
 					'class': 'mark ' + (mark.className || ''),
 				});

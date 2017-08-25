@@ -1,0 +1,65 @@
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="content-security-policy" content="
+	base-uri 'self';
+	default-src 'none';
+	child-src blob:;
+	frame-src blob:;
+	connect-src https://api.stackexchange.com;
+	script-src 'self' 'unsafe-inline' blob:;
+	worker-src blob:;
+	style-src 'self';
+	img-src 'self';
+	form-action 'none';
+">
+
+<!-- these properties are read by the engine to configure the game -->
+<title>Block Building Bot Flocks!</title>
+<link rel="icon" href="botflocks.png">
+<meta name="stack-exchange-site" content="codegolf">
+<meta name="stack-exchange-qid" content="50690">
+
+<meta name="team-type" content="free_for_all">
+<meta name="team-type-args" content='{}'>
+
+<meta name="tournament-type" content="all_v_all">
+<meta name="tournament-type-args" content='{
+	"matchTeamLimit": 2
+}'>
+
+<meta name="match-type" content="brawl">
+<meta name="match-type-args" content='{
+	"gameCount": 8,
+	"gameTeamShuffle": "roundRobin"
+}'>
+
+<meta name="game-type" content="botflocks">
+<meta name="game-config" content='{
+	"width": 128,
+	"height": 64,
+	"floorHeight": 8,
+	"flockSize": 8,
+	"visibilitySquare": 13,
+	"goalTimeLimit": 500,
+	"maxFrame": 2000
+}'>
+<meta name="play-config" content='{
+	"delay": 0,
+	"speed": 1
+}'>
+<meta name="display-config" content='{
+	"scale": 5,
+	"colourscheme": "bluered",
+	"targetMarkerType": "ring"
+}'>
+
+<script src="core/require.js"></script>
+<script src="engine/engine.js" async></script>
+</head>
+<body>
+
+<noscript>This viewer requires Javascript!</noscript>
+
+</body>
+</html>

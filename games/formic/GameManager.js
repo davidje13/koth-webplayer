@@ -361,7 +361,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					elapsed = performance.now() - begin;
 					error = checkError(action, ant, view);
 				} catch(e) {
-					error = e.toString();
+					error = 'Threw ' + e.toString();
 				}
 				if(error) {
 					entry.disqualified = true;

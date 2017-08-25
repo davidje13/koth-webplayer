@@ -23,8 +23,10 @@ define(['./StackExchangeAPI'], (StackExchangeAPI) => {
 				throw 'Code not found!';
 			}
 			const entry = {
+				answer_id: item.answer_id,
 				user_name: item.owner.display_name,
 				user_id: item.owner.user_id,
+				link: item.link,
 				title,
 				code,
 			};
@@ -37,8 +39,10 @@ define(['./StackExchangeAPI'], (StackExchangeAPI) => {
 			return entry;
 		} catch(error) {
 			return {
+				answer_id: item.answer_id,
 				user_name: item.owner.display_name,
 				user_id: item.owner.user_id,
+				link: item.link,
 				title,
 				code: '',
 				error,

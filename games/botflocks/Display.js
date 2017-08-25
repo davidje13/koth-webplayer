@@ -1,6 +1,7 @@
 define([
 	'core/EventObject',
 	'display/document_utils',
+	'display/MarkerStore',
 	'display/Full2DBoard',
 	'display/OptionsBar',
 	'games/common/components/StepperOptions',
@@ -12,6 +13,7 @@ define([
 ], (
 	EventObject,
 	docutil,
+	MarkerStore,
 	Full2DBoard,
 	OptionsBar,
 	StepperOptions,
@@ -22,12 +24,14 @@ define([
 	'use strict';
 
 	const COLOUR_OPTIONS = {
-		redblue: {
-			name: 'Red & Blue',
+		bluered: {
+			name: 'Blue & Red',
 			palette: [
-				[255, 255, 255, 255],
-				[255,   0,   0, 255],
-				[  0,   0, 255, 255],
+				[224, 224, 224, 255],
+				[ 96,  96,  96, 255],
+
+				[ 32,  64, 255, 255],
+				[255,  64,  32, 255],
 			],
 		},
 	};
@@ -84,12 +88,12 @@ define([
 					label: '\u25B6\u25B6\u25B6',
 					title: 'Play Very Fast',
 					event: 'changeplay',
-					params: [{delay: 0, speed: 32}],
+					params: [{delay: 0, speed: 25}],
 				}, {
 					label: '\u25B6\u25B6\u25B6\u25B6',
 					title: 'Play Crazy Fast',
 					event: 'changeplay',
-					params: [{delay: 0, speed: 64}],
+					params: [{delay: 0, speed: 50}],
 				}, {
 					label: '\u25B6!',
 					title: 'Fastest Possible',
@@ -106,9 +110,15 @@ define([
 					{value: 4, label: '1:4'},
 					{value: 5, label: '1:5'},
 				]},
+				{attribute: 'targetMarkerType', label: 'Target marker', values: [
+					{value: '', label: 'None'},
+					{value: 'ring', label: 'Ring'},
+				]},
 			]);
+			this.markers = new MarkerStore();
 			this.board = new Full2DBoard({
 				renderer: this.renderer,
+				markerStore: this.markers,
 				scaleX: 0
 			});
 			this.table = new LeaderboardDisplay();
@@ -118,6 +128,9 @@ define([
 
 			this.options.addEventForwarding(this);
 			this.visualOptions.addEventForwarding(this);
+
+			this.latestTarget = null;
+			this.targetMarkerType = '';
 
 			this.root = docutil.make('section', {'class': 'game-container'}, [
 				this.options.dom(),
@@ -133,6 +146,7 @@ define([
 			this.table.clear();
 			this.errors.clear();
 
+			this.markers.clear();
 			this.board.repaint();
 		}
 
@@ -145,6 +159,8 @@ define([
 			this.renderer.updateGameConfig(config);
 			this.table.updateGameConfig(config);
 			this.errors.updateGameConfig(config);
+			this.latestW = config.width;
+			this.latestH = config.height;
 
 			this.board.repaint();
 		}
@@ -155,6 +171,11 @@ define([
 
 			this.board.setScale(config.scale);
 
+			if(config.targetMarkerType !== this.targetMarkerType) {
+				this.targetMarkerType = config.targetMarkerType;
+				this.repositionMarkers();
+			}
+
 			this.board.repaint();
 		}
 
@@ -164,7 +185,24 @@ define([
 			this.table.updateState(state);
 			this.errors.updateState(state);
 
+			this.latestTarget = state.target;
+			this.repositionMarkers();
+
 			this.board.repaint();
+		}
+
+		repositionMarkers() {
+			this.markers.clear();
+
+			if(this.targetMarkerType && this.latestTarget) {
+				this.markers.mark('target', {
+					x: this.latestTarget.x,
+					y: this.latestTarget.y,
+					className: 'target-locator-' + this.targetMarkerType,
+					wrap: false,
+					clip: false,
+				});
+			}
 		}
 
 		dom() {

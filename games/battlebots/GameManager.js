@@ -105,7 +105,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			this.visDist2 = visibilityDistance * visibilityDistance;
 		}
 
-		moveBot(index, bot, action) {
+		moveBot(bot, action) {
 			const isBlue = (bot.team === 'T1');
 			const move = MOVES[bot.team][action];
 			bot.x += move.x;
@@ -213,7 +213,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					error = 'Too long to respond: ' + elapsed + 'ms';
 				}
 			} catch(e) {
-				error = e.toString();
+				error = 'Threw ' + e.toString();
 			}
 			Math.random = oldRandom;
 
@@ -228,7 +228,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					' for ' + entry.errorInput + ')'
 				);
 			} else {
-				this.moveBot(index, bot, action);
+				this.moveBot(bot, action);
 			}
 		}
 

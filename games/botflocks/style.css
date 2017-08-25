@@ -1,0 +1,12 @@
+.game-board canvas {
+	image-rendering: pixelated;
+}
+
+.game-board .mark.target-locator-ring {
+	margin: -4px;
+	width: 9px;
+	height: 9px;
+	border: 2px solid rgba(255, 128, 0, 1);
+	border-radius: 100%;
+	box-sizing: border-box;
+}

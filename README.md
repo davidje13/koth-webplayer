@@ -9,6 +9,8 @@ See it in action:
   (test implementation based on the existing [Formic Functions - Ant Queen of the Hill Contest](https://codegolf.stackexchange.com/q/135102/8927) challenge)
 * https://davidje13.github.io/koth-webplayer/battlebots.htm
   (test implementation based on the existing [Red vs. Blue - Pixel Team Battlebots](https://codegolf.stackexchange.com/q/48353/8927) challenge)
+* https://davidje13.github.io/koth-webplayer/botflocks.htm
+  (test implementation based on the existing [Block Building Bot Flocks!](https://codegolf.stackexchange.com/q/50690/8927) challenge)
 
 A rough set of aims for this project:
 

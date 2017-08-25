@@ -2,9 +2,11 @@ define(() => {
 	'use strict';
 
 	const DEFAULT_COLOURS = [
-		[255, 255, 255, 255],
-		[255,   0,   0, 255],
-		[  0,   0, 255, 255],
+		[224, 224, 224, 255],
+		[ 96,  96,  96, 255],
+
+		[ 32,  64, 255, 255],
+		[255,  64,  32, 255],
 	];
 
 	return class BoardRenderer {
@@ -12,6 +14,7 @@ define(() => {
 			this.colourChoices = {};
 			this.colourscheme = '';
 
+			this.rawBoard = null;
 			this.rawTeams = null;
 			this.dat = null;
 			this.dirty = true;
@@ -40,28 +43,33 @@ define(() => {
 		}
 
 		repaint() {
-			if(!this.rawTeams || !this.dat) {
+			if(!this.rawBoard || !this.rawTeams || !this.dat) {
 				return;
 			}
 
 			const palette = this.getPalette();
 
 			const d = this.dat.data;
-			let c = palette[0];
 			for(let p = 0; p < this.dat.width * this.dat.height; ++ p) {
+				const c = palette[this.rawBoard[p]];
 				d[p * 4    ] = c[0];
 				d[p * 4 + 1] = c[1];
 				d[p * 4 + 2] = c[2];
 				d[p * 4 + 3] = c[3];
 			}
-			this.rawTeams.forEach((team) => team.entries.forEach((entry) => {
-				if(entry.alive && !entry.disqualified) {
-					c = palette[(entry.team === 'T1') ? 2 : 1];
-					const p = entry.y * this.dat.width + entry.x;
-					d[p * 4    ] = c[0];
-					d[p * 4 + 1] = c[1];
-					d[p * 4 + 2] = c[2];
-					d[p * 4 + 3] = c[3];
+			this.rawTeams.forEach((team, teamIndex) => team.entries.forEach((entry) => {
+				if(!entry.disqualified) {
+					const c = palette[teamIndex + 2];
+					entry.bots.forEach((bot) => {
+						if(bot.hasWall) {
+							// TODO
+						}
+						const p = bot.y * this.dat.width + bot.x;
+						d[p * 4    ] = c[0];
+						d[p * 4 + 1] = c[1];
+						d[p * 4 + 2] = c[2];
+						d[p * 4 + 3] = c[3];
+					});
 				}
 			}));
 			this.dirty = false;
@@ -81,7 +89,8 @@ define(() => {
 			}
 		}
 
-		updateState({teams}) {
+		updateState({board, teams}) {
+			this.rawBoard = board;
 			this.rawTeams = teams;
 
 			if(!this.dat) {
