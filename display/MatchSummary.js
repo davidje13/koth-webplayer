@@ -41,6 +41,16 @@ define([
 			this.updateColumns(0);
 		}
 
+		sendData() {
+			const matchScore = this.matchScorer.score(this.teams, this.gameScores);
+			this.table.setData(matchScore.teams.map((matchTeamScore) => {
+				const tableTeam = this.tableTeamsLookup.get(matchTeamScore.id);
+				tableTeam.score.value = matchTeamScore.score || '';
+				tableTeam.score.className = matchTeamScore.winner ? 'win' : '';
+				return tableTeam;
+			}));
+		}
+
 		updateColumns() {
 			const gameCols = this.games.map((game, index) => ({
 				title: game.title,
@@ -60,6 +70,8 @@ define([
 				attribute: 'score',
 				className: 'result',
 			}]);
+
+			this.sendData();
 		}
 
 		addGame(seed) {
@@ -97,13 +109,7 @@ define([
 				};
 			});
 
-			const matchScore = this.matchScorer.score(this.teams, this.gameScores);
-			this.table.setData(matchScore.teams.map((matchTeamScore) => {
-				const tableTeam = this.tableTeamsLookup.get(matchTeamScore.id);
-				tableTeam.score.value = matchTeamScore.score || '';
-				tableTeam.score.className = matchTeamScore.winner ? 'win' : '';
-				return tableTeam;
-			}));
+			this.sendData();
 		}
 
 		dom() {

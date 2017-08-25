@@ -7,6 +7,8 @@ define([
 	'games/common/components/DisqualificationsDisplay',
 	'./components/BoardRenderer',
 	'./components/LeaderboardDisplay',
+	'games/common/style.css',
+	'./style.css',
 ], (
 	EventObject,
 	docutil,
@@ -158,7 +160,6 @@ define([
 		updateDisplayConfig(config) {
 			this.visualOptions.updateAttributes(config);
 			this.renderer.updateDisplayConfig(config);
-			this.table.updateDisplayConfig(config);
 
 			this.board.setScale(config.scale);
 

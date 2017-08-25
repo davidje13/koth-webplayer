@@ -1,7 +1,6 @@
 'use strict';
 
 // TODO:
-// * tournament management
 // * enable/disable/edit entries
 // * add new entry
 // * remember display config in local storage / cookies
@@ -22,6 +21,10 @@ require([
 	const gameType = docutil.getMetaTagValue('game-type');
 	const teamType = docutil.getMetaTagValue('team-type', 'free_for_all');
 	const teamTypeArgs = JSON.parse(docutil.getMetaTagValue('team-type-args', '{}'));
+	const tournamentType = docutil.getMetaTagValue('tournament-type', 'single_match');
+	const tournamentTypeArgs = JSON.parse(docutil.getMetaTagValue('tournament-type-args', '{}'));
+	const matchType = docutil.getMetaTagValue('match-type', 'brawl');
+	const matchTypeArgs = JSON.parse(docutil.getMetaTagValue('match-type-args', '{}'));
 	const baseGameConfig = JSON.parse(docutil.getMetaTagValue('game-config', '{}'));
 	const basePlayConfig = JSON.parse(docutil.getMetaTagValue('play-config', '{}'));
 	const basePlayHiddenConfig = JSON.parse(docutil.getMetaTagValue('play-hidden-config', '{"speed": -1, "maxTime": 250}'));
@@ -46,26 +49,25 @@ require([
 	require([
 		'math/Random',
 		'engine/GameOrchestrator',
-		'engine/Match',
-		'engine/Tournament',
 		'core/sandbox_utils',
 		'display/Overlay',
 		'display/MatchSummary', // TODO: game-customisable
-		'teammaker/' + teamType,
+		'teams/' + teamType,
+		'tournaments/' + tournamentType,
+		'matches/' + matchType,
 		'path:' + gameDir + '/GameManager',
 		gameDir + '/Display',
 		gameDir + '/GameScorer',
 		'engine/MatchScorer',
-		gameDir + '/style.css',
 	], (
 		Random,
 		GameOrchestrator,
-		Match,
-		Tournament,
 		sandbox_utils,
 		Overlay,
 		MatchSummary,
 		TeamMaker,
+		Tournament,
+		Match,
 		GameManager_path,
 		Display,
 		GameScorer,
@@ -85,6 +87,14 @@ require([
 		const singleGameOverlay = new Overlay();
 		docutil.body.appendChild(singleGameOverlay.dom());
 		let singleGame = null;
+
+		const tournamentSeed = docutil.text();
+		const tournamentDisplay = docutil.make('section', {'class': 'tournament'}, [
+			docutil.make('header', {}, [
+				docutil.make('h2', {}, 'Tournament'),
+				docutil.make('p', {}, tournamentSeed),
+			]),
+		]);
 
 		function showGame(seed, teams, dismissable) {
 			singleGameOverlay.show(singleGameDisplay.dom(), {
@@ -112,23 +122,17 @@ require([
 		});
 
 		// TODO: extract all of this & improve separation / APIs
-		const tournament = new Tournament();
-		tournament.setMatchHandler((seed, teams) => {
-			const match = new Match(30);
+		const tournament = new Tournament(tournamentTypeArgs);
+		tournament.setMatchHandler((seed, teams, index) => {
+			const match = new Match(matchTypeArgs);
 			const matchDisplay = new MatchSummary({
-				name: 'Match 1',
+				name: 'Match ' + (index + 1),
 				seed,
 				teams,
 				matchScorer: MatchScorer,
 			});
-			docutil.body.appendChild(docutil.make('section', {'class': 'tournament'}, [
-				docutil.make('header', {}, [
-					docutil.make('h2', {}, 'Tournament'),
-					docutil.make('p', {}, tournament.seed),
-				]),
-				matchDisplay.dom()
-			]));
-			match.setGameHandler((seed, teams) => {
+			tournamentDisplay.appendChild(matchDisplay.dom());
+			match.setGameHandler((seed, teams, index) => {
 				const game = backgroundGames.make({
 					baseGameConfig,
 					basePlayConfig: basePlayHiddenConfig,
@@ -185,10 +189,16 @@ require([
 		});
 		docutil.body.appendChild(linker);
 
+		function beginTournament(config) {
+			docutil.body.appendChild(tournamentDisplay);
+			tournament.begin(config);
+			docutil.updateText(tournamentSeed, tournament.seed);
+		}
+
 		function begin(teams) {
 			const hash = (window.location.hash || '#').substr(1);
 			if(hash.startsWith('T')) {
-				tournament.begin({teams, seed: hash});
+				beginTournament({teams, seed: hash});
 				return;
 			}
 			if(hash.startsWith('M')) {
@@ -200,12 +210,17 @@ require([
 				return;
 			}
 
+			if(tournamentTypeArgs.matchTeamLimit) { // TODO: support entry picking
+				beginTournament({teams});
+				return;
+			}
+
 			let initialOptions = null;
 
 			const btnTournament = docutil.make('button', {}, 'Tournament (work-in-progress!)');
 			btnTournament.addEventListener('click', () => {
 				docutil.body.removeChild(initialOptions);
-				tournament.begin({teams});
+				beginTournament({teams});
 			});
 
 			const btnGame = docutil.make('button', {}, 'Game');

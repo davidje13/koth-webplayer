@@ -34,7 +34,6 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			this.bots = [];
 			this.visDist2 = visibilityDistance * visibilityDistance;
 			this.entryLookup = new Map();
-			this.userIDLookup = new Map();
 
 			const area = this.width * this.height;
 
@@ -86,7 +85,6 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					y: (startIndex / this.width)|0,
 				};
 
-				this.userIDLookup.set(entry.user_id, bot);
 				this.entryLookup.set(entry.id, {
 					id: entry.id,
 					fn: code.fn,

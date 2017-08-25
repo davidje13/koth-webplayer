@@ -71,14 +71,12 @@ define([
 		}
 
 		clear() {
+			this.table.setData([]);
 		}
 
 		updateGameConfig({seed, teams}) {
 			docutil.updateText(this.seedLabel, seed);
 			this.updateTeams(teams);
-		}
-
-		updateDisplayConfig() {
 		}
 
 		updateState(state) {

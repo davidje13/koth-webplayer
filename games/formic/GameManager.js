@@ -384,6 +384,9 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			this.moveAnt(index, ant, action, rotation);
 		}
 
+		// TODO: maybe extract frame/step/maxFrames/isOver/progress logic for
+		// typical bot-based games into a reusable base class
+
 		stepOneAnt() {
 			if(this.frame >= this.maxFrame) {
 				return;

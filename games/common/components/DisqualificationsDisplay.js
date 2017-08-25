@@ -1,4 +1,10 @@
-define(['core/EventObject', 'display/document_utils'], (EventObject, docutil) => {
+define([
+	'core/EventObject',
+	'display/document_utils',
+], (
+	EventObject,
+	docutil
+) => {
 	'use strict';
 
 	return class DisqualificationsDisplay extends EventObject {

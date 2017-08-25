@@ -11,6 +11,9 @@ define([
 ) => {
 	'use strict';
 
+	// TODO:
+	// * Make this into a reusable component for all games
+
 	const WORKER_COUNT = 4;
 
 	return class LeaderboardDisplay extends EventObject {
@@ -80,14 +83,12 @@ define([
 		}
 
 		clear() {
+			this.table.setData([]);
 		}
 
 		updateGameConfig({seed, teams}) {
 			docutil.updateText(this.seedLabel, seed);
 			this.updateTeams(teams);
-		}
-
-		updateDisplayConfig() {
 		}
 
 		updateState(state) {
