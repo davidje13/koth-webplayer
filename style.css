@@ -259,16 +259,16 @@ header .bar-done {
 }
 
 .match .team-T1 {
-	background: #99DD99;
+	background: #9999DD;
 }
 
 .match .team-T2 {
-	background: #9999DD;
+	background: #99DD99;
 }
 
 
 .match .team-T3 {
-	background: #DDDD99;
+	background: #DD99DD;
 }
 
 .match .team-T4 {
@@ -276,83 +276,83 @@ header .bar-done {
 }
 
 .match .team-T5 {
-	background: #DD99DD;
+	background: #DDDD99;
 }
 
 
 .match .team-T6 {
-	background: #BBDD99;
-}
-
-.match .team-T7 {
-	background: #99BBDD;
-}
-
-.match .team-T8 {
-	background: #DD99BB;
-}
-
-
-.match .team-T9 {
-	background: #99DDBB;
-}
-
-.match .team-T10 {
 	background: #BB99DD;
 }
 
-.match .team-T11 {
+.match .team-T7 {
+	background: #99DDBB;
+}
+
+.match .team-T8 {
 	background: #DDBB99;
 }
 
 
+.match .team-T9 {
+	background: #99BBDD;
+}
+
+.match .team-T10 {
+	background: #BBDD99;
+}
+
+.match .team-T11 {
+	background: #DD99BB;
+}
+
+
 .match .team-T12 {
-	background: #99DDAA;
+	background: #99AADD;
 }
 
 .match .team-T13 {
-	background: #AA99DD;
+	background: #AADD99;
 }
 
 .match .team-T14 {
-	background: #DDAA99;
+	background: #DD99AA;
 }
 
 
 .match .team-T15 {
-	background: #99CCDD;
+	background: #99DDCC;
 }
 
 .match .team-T16 {
-	background: #DD99CC;
+	background: #DDCC99;
 }
 
 .match .team-T17 {
-	background: #CCDD99;
+	background: #CC99DD;
 }
 
 
 .match .team-T18 {
-	background: #99AADD;
+	background: #99DDAA;
 }
 
 .match .team-T19 {
-	background: #DD99AA;
+	background: #DDAA99;
 }
 
 .match .team-T20 {
-	background: #AADD99;
+	background: #AA99DD;
 }
 
 
 .match .team-T21 {
-	background: #CC99DD;
+	background: #CCDD99;
 }
 
 .match .team-T22 {
-	background: #DDCC99;
+	background: #DD99CC;
 }
 
 .match .team-T23 {
-	background: #99DDCC;
+	background: #99CCDD;
 }
