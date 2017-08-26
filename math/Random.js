@@ -4,22 +4,33 @@
 define(() => {
 	'use strict';
 
-	const B64 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_';
+	const CHARS_PER_INT = 5;
+	const BASE = (
+		'0123456789' +
+		'abcdefghij' +
+		'klmnopqrst' +
+		'uvwxyzABCD' +
+		'EFGHIJKLMN' +
+		'OPQRSTUVWX' +
+		'YZ\u03B1\u03B2\u03B3\u03B4\u03B5\u03B6\u03B7\u03B8' +
+		'\u03B9\u03BA\u03BB\u03BC\u03BD\u03BE\u03BF\u03C0\u03C1\u03C3' +
+		'\u03C4\u03C5\u03C6\u03C7\u03C8'
+	);
 
-	function read64(s) {
+	function readEncoded(s) {
 		let r = 0;
 		for(let i = 0; i < s.length; ++ i) {
-			r = (r * 64) + B64.indexOf(s.substr(i, 1));
+			r = (r * BASE.length) + BASE.indexOf(s.substr(i, 1));
 		}
 		return r;
 	}
 
-	function make64(v, l) {
+	function makeEncoded(v, l) {
 		let r = '';
 		let x = v;
 		for(let i = 0; i < l; ++ i) {
-			r = B64[x % 64] + r;
-			x = (x / 64)|0;
+			r = BASE[x % BASE.length] + r;
+			x = (x / BASE.length)|0;
 		}
 		return r;
 	}
@@ -39,7 +50,7 @@ define(() => {
 				seed = seed.substr(1); // trim identifier letter
 			}
 			for(let i = 0; i < 4; ++ i) {
-				this.s[i] = read64(seed.substr(i * 6, 6));
+				this.s[i] = readEncoded(seed.substr(i * CHARS_PER_INT, CHARS_PER_INT));
 			}
 		}
 
@@ -60,7 +71,7 @@ define(() => {
 		makeRandomSeed(prefix = 'X') {
 			let s = prefix;
 			for(let i = 0; i < 4; ++ i) {
-				s += make64(this.next(0x100000000), 6);
+				s += makeEncoded(this.next(0x100000000), CHARS_PER_INT);
 			}
 			return s;
 		}
@@ -70,7 +81,7 @@ define(() => {
 			crypto.getRandomValues(buffer);
 			let s = prefix;
 			for(let i = 0; i < 4; ++ i) {
-				s += make64(buffer[i], 6);
+				s += makeEncoded(buffer[i], CHARS_PER_INT);
 			}
 			return s;
 		}

@@ -6,6 +6,7 @@
 // * remember display config in local storage / cookies
 // * remember custom entries in local storage (maybe)
 // * team management
+// * permalinks need to store which entries were chosen (& ordering)
 
 require([
 	'display/document_utils',
@@ -172,7 +173,8 @@ require([
 		});
 
 		window.addEventListener('hashchange', () => {
-			console.log(window.location.hash);
+			const hash = decodeURIComponent((window.location.hash || '#').substr(1));
+			console.log(hash);
 			// TODO
 		});
 
@@ -196,7 +198,7 @@ require([
 		}
 
 		function begin(teams) {
-			const hash = (window.location.hash || '#').substr(1);
+			const hash = decodeURIComponent((window.location.hash || '#').substr(1));
 			if(hash.startsWith('T')) {
 				beginTournament({teams, seed: hash});
 				return;
