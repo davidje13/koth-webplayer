@@ -28,17 +28,16 @@ define(['display/document_utils', './style.css'], (docutil) => {
 			if(index < 0 || index >= this.items.length) {
 				return false;
 			}
-			if(this.currentIndex === index) {
-				return true;
-			}
 			const item = this.items[index];
-			this._swapPage(item.page, index > this.currentIndex);
-			this.currentIndex = index;
+			if(this.currentIndex !== index) {
+				this._swapPage(item.page, index > this.currentIndex);
+				this.currentIndex = index;
+				if(trimAfter) {
+					this.popTo(index, {navigate: false});
+				}
+			}
 			if(changeHash && item.hash !== null) {
 				document.location.hash = item.hash;
-			}
-			if(trimAfter) {
-				this.popTo(index, {navigate: false});
 			}
 			return true;
 		}
