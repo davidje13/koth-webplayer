@@ -2,11 +2,12 @@ define(() => {
 	'use strict';
 
 	const DEFAULT_COLOURS = [
-		[224, 224, 224, 255],
-		[ 96,  96,  96, 255],
+		[255, 255, 255, 255],
+		[  0,   0,   0, 255],
 
-		[ 32,  64, 255, 255],
-		[255,  64,  32, 255],
+		[255, 255,   0, 255], // Unknown entry
+		[  0,   0, 255, 255], // Player 1
+		[255,   0,   0, 255], // Player 2
 	];
 
 	return class BoardRenderer {
@@ -59,7 +60,7 @@ define(() => {
 			}
 			this.rawTeams.forEach((team, teamIndex) => team.entries.forEach((entry) => {
 				if(!entry.disqualified) {
-					const c = palette[teamIndex + 2];
+					const c = palette[teamIndex + 3] || palette[2];
 					entry.bots.forEach((bot) => {
 						if(bot.hasWall) {
 							// TODO

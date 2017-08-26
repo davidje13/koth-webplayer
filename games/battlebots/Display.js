@@ -30,6 +30,14 @@ define([
 				[  0,   0, 255, 255],
 			],
 		},
+		dark: {
+			name: 'Dark Red & Blue',
+			palette: [
+				[  0,   0,   0, 255],
+				[255, 128,  64, 255],
+				[ 64, 128, 255, 255],
+			],
+		},
 	};
 
 	const COLOUR_OPTIONS_SELECT = [];

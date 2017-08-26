@@ -24,14 +24,26 @@ define([
 	'use strict';
 
 	const COLOUR_OPTIONS = {
+		saturated: {
+			name: 'Saturated',
+			palette: [
+				[255, 255, 255, 255],
+				[  0,   0,   0, 255],
+
+				[255, 255,   0, 255], // Unknown entry
+				[  0,   0, 255, 255], // Player 1
+				[255,   0,   0, 255], // Player 2
+			],
+		},
 		bluered: {
 			name: 'Blue & Red',
 			palette: [
 				[224, 224, 224, 255],
 				[ 96,  96,  96, 255],
 
-				[ 32,  64, 255, 255],
-				[255,  64,  32, 255],
+				[255, 255,   0, 255], // Unknown entry
+				[ 32,  64, 255, 255], // Player 1
+				[255,  64,  32, 255], // Player 2
 			],
 		},
 	};

@@ -177,7 +177,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			}
 		}
 
-		stepEntry(entry, enemyEntries) {
+		stepEntry(entry, enemyTeams) {
 			if(entry.disqualified) {
 				return;
 			}
@@ -188,20 +188,28 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 
 			const oldRandom = Math.random;
 			const enemyBots = [];
-			enemyEntries.forEach((enemyEntry) => enemyEntry.bots.forEach((enemyBot) => {
-				if(entry.bots.some(botNear(enemyBot.x, enemyBot.y, this.visibilityDist))) {
-					enemyBots.push({
-						x: enemyBot.x,
-						y: enemyBot.y,
-						hasWall: enemyBot.hasWall,
-					});
-				}
-			}));
+			let anyEnemyEntry = null;
+			enemyTeams.forEach((enemyTeam) =>
+				enemyTeam.entries.forEach((enemyEntry) => {
+					if(!anyEnemyEntry) {
+						anyEnemyEntry = enemyEntry;
+					}
+					enemyEntry.bots.forEach((enemyBot) => {
+						if(entry.bots.some(botNear(enemyBot.x, enemyBot.y, this.visibilityDist))) {
+							enemyBots.push({
+								x: enemyBot.x,
+								y: enemyBot.y,
+								hasWall: enemyBot.hasWall,
+							});
+						}
+					})
+				})
+			);
 			array_utils.shuffleInPlace(enemyBots, this.random);
 			const params = {
 				p1: entry.p1,
 				id: entry.answer_id,
-				eid: enemyEntries[0].answer_id,
+				eid: anyEnemyEntry.answer_id,
 				move: ++ entry.moves,
 				goal: {
 					x: this.goal.x,
@@ -297,13 +305,17 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			const begin = performance.now();
 
 			const movingTeamIndex = (this.frame % this.teams.length);
-			const enemyTeamIndex = ((this.frame + 1) % this.teams.length); // TODO: should be all other teams combined
+			const enemyTeams = [];
+			this.teams.forEach((team, index) => {
+				if(index !== movingTeamIndex) {
+					enemyTeams.push(team);
+				}
+			});
 
 			// Step all entries for team
 			const team = this.teams[movingTeamIndex];
-			const enemyTeam = this.teams[enemyTeamIndex];
 			for(let i = 0; i < team.entries.length; ++ i) {
-				this.stepEntry(team.entries[i], enemyTeam.entries);
+				this.stepEntry(team.entries[i], enemyTeams);
 			}
 			if((-- this.goalLife) === 0) {
 				this.pickNewGoal();
