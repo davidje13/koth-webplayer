@@ -18,6 +18,8 @@ define([
 			this.tableTeamsLookup = new Map();
 			this.tableEntriesLookup = new Map();
 			this.seedLabel = docutil.text();
+			this.colourChoices = {};
+			this.colourscheme = '';
 
 			this.table = new ResultTable({
 				className: 'match',
@@ -42,21 +44,29 @@ define([
 			});
 		}
 
+		setColourChoices(colourChoices) {
+			this.colourChoices = colourChoices;
+			this.redraw();
+		}
+
 		updateTeams(teams) {
 			this.tableTeamsLookup.clear();
 			this.tableEntriesLookup.clear();
 
-			teams.forEach((team) => {
+			teams.forEach((team, teamIndex) => {
+				const colSample = docutil.make('div', {'class': 'colour-sample'});
 				this.tableTeamsLookup.set(team.id, {
 					key: team.id,
+					teamIndex,
 					className: 'team-' + team.id,
+					colSample,
 				});
 				team.entries.forEach((entry) => {
 					this.tableEntriesLookup.set(entry.id, {
 						key: entry.id,
 						className: '',
 						name: {
-							value: entry.title,
+							value: docutil.make('span', {}, [colSample, entry.title]),
 							title: entry.title,
 						},
 						points: '',
@@ -73,6 +83,26 @@ define([
 		updateGameConfig({seed, teams}) {
 			docutil.updateText(this.seedLabel, seed);
 			this.updateTeams(teams);
+		}
+
+		updateDisplayConfig({colourscheme}) {
+			if(colourscheme !== this.colourscheme) {
+				this.colourscheme = colourscheme;
+				this.redraw();
+			}
+		}
+
+		redraw() {
+			const scheme = this.colourChoices[this.colourscheme];
+			if(scheme) {
+				const palette = scheme.palette;
+				this.tableTeamsLookup.forEach((team) => {
+					const c = palette[team.teamIndex + 3] || palette[2];
+					docutil.updateStyle(team.colSample, {
+						background: 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')',
+					});
+				});
+			}
 		}
 
 		updateState(state) {
@@ -94,6 +124,8 @@ define([
 				},
 				nested: teamScore.entries.map((entryScore) => this.tableEntriesLookup.get(entryScore.id)),
 			}, this.tableTeamsLookup.get(teamScore.id))));
+
+			this.redraw();
 		}
 
 		dom() {

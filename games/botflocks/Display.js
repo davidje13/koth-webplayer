@@ -136,6 +136,7 @@ define([
 			this.table = new LeaderboardDisplay();
 			this.errors = new DisqualificationsDisplay();
 			this.renderer.setColourChoices(COLOUR_OPTIONS);
+			this.table.setColourChoices(COLOUR_OPTIONS);
 			this.options.setRenderPerformance(this.renderer);
 
 			this.options.addEventForwarding(this);
@@ -180,6 +181,7 @@ define([
 		updateDisplayConfig(config) {
 			this.visualOptions.updateAttributes(config);
 			this.renderer.updateDisplayConfig(config);
+			this.table.updateDisplayConfig(config);
 
 			this.board.setScale(config.scale);
 

@@ -10,3 +10,12 @@
 	border-radius: 100%;
 	box-sizing: border-box;
 }
+
+.colour-sample {
+	display: inline-block;
+	border: 1px solid #333333;
+	width: 8px;
+	height: 8px;
+	vertical-align: center;
+	margin-right: 5px;
+}
