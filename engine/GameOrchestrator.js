@@ -187,6 +187,7 @@ define([
 				this.display.updateGameConfig(this.config.game);
 				this.display.updateDisplayConfig(this.config.display);
 			}
+			this.trigger('begin');
 			const currentToken = this.token;
 			this.parent.awaitCapacity(() => {
 				if(this.token !== currentToken) {
@@ -331,13 +332,29 @@ define([
 			const game = this.games.get(token);
 			if(game) {
 				game._markDead();
-				this.sandbox.postMessage({
-					action: 'STOP',
-					token,
-				});
-				this.games.delete(token);
+				if(game.gameStarted) {
+					this.sandbox.postMessage({
+						action: 'STOP',
+						token: game.token,
+					});
+				}
+				this.games.delete(game.token);
 				this.checkCapacity();
 			}
+		}
+
+		terminateAll() {
+			this.games.forEach((game) => {
+				game._markDead();
+				if(game.gameStarted) {
+					this.sandbox.postMessage({
+						action: 'STOP',
+						token: game.token,
+					});
+				}
+			});
+			this.games.clear();
+			this.awaitingCapacity.length = 0;
 		}
 	};
 });

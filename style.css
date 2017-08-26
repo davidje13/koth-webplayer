@@ -7,10 +7,10 @@ body {
 	background: #666666;
 	color: #FFFFFF;
 	font-family: sans-serif;
-	margin: 10px;
+	margin: 50px 10px;
 }
 
-h1, h2, h3, h4, h5, h6, p, ul, li, table, thead, tbody, tr, td, th {
+h1, h2, h3, h4, h5, h6, p, nav, ol, ul, li, table, thead, tbody, tr, td, th {
 	font: 1em sans-serif;
 	margin: 0;
 	padding: 0;
@@ -35,6 +35,63 @@ h3 {
 
 h4 {
 	font-size: 1em;
+}
+
+nav {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	background: #333333;
+	box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5);
+	z-index: 200;
+}
+
+nav li {
+	display: inline-block;
+	position: relative;
+	font-size: 0.9em;
+	padding: 5px 15px;
+	height: 30px;
+	vertical-align: top;
+}
+
+nav li:before {
+	position: absolute;
+	left: -2px;
+	width: 10px;
+	height: 30px;
+	line-height: 34px;
+	font-size: 20px;
+	content: "\232A";
+}
+
+nav ol>a:link, nav ol>a:visited, nav ol>a:active, nav ol>a:hover {
+	color: inherit;
+	text-decoration: none;
+}
+
+nav a li {
+	cursor: pointer;
+}
+
+nav a li:hover {
+	background: rgba(255, 255, 255, 0.1);
+}
+
+nav li p {
+	font-size: 0.7em;
+	color: #CCCCCC;
+}
+
+nav a:link, nav a:visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+nav a:active, nav a:hover {
+	color: inherit;
+	text-decoration: none;
 }
 
 header p {
@@ -63,12 +120,11 @@ h4 a:active, h4 a:hover {
 
 .initial-load {
 	background: rgba(0, 0, 0, 0.5);
-	margin: 10px;
 	padding: 10px;
 	width: 400px;
 	border-radius: 5px;
 	box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-	margin: 20px auto;
+	margin: 100px auto;
 }
 
 .initial-load .message {
@@ -93,47 +149,6 @@ h4 a:active, h4 a:hover {
 
 .initial-options button {
 	margin: 5px;
-}
-
-.linker {
-	position: fixed;
-	top: 5px;
-	right: 40px;
-	z-index: 101;
-}
-
-.linker:link, .linker:visited {
-	color: inherit;
-	text-decoration: none;
-}
-
-.linker:active, .linker:hover {
-	color: inherit;
-	text-decoration: underline;
-}
-
-.linker:after {
-	content: "\01F517";
-}
-
-.overlay-shade {
-	background: rgba(0, 0, 0, 0.7);
-}
-
-.overlay-dismiss {
-	top: 10px;
-	right: 10px;
-	width: 30px;
-	height: 30px;
-	line-height: 30px;
-	text-align: center;
-	border-radius: 100%;
-	background: #000000;
-	color: #CCCCCC;
-}
-
-.overlay-dismiss:before {
-	content: "\2716";
 }
 
 header .bar-back {

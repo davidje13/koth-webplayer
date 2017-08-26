@@ -36,13 +36,82 @@ require([
 		'stack-exchange-question-url',
 		'https://' + site + '.stackexchange.com/questions/' + qid
 	);
+	const GITHUB_LINK = 'https://github.com/davidje13/koth-webplayer';
 
 	const gameDir = 'games/' + gameType;
 
-	docutil.body.appendChild(docutil.make('h1', {}, [docutil.make('a', {
-		'href': questionURL,
-		'target': '_blank',
-	}, [title])]));
+	const pageHold = docutil.make('div');
+	document.body.appendChild(pageHold);
+
+	// TODO: extract breadcrumb handling into reusable object, improve API
+	function setPage(page, toChild) {
+		if(pageHold.lastChild !== page) {
+			if(pageHold.lastChild) {
+				pageHold.lastChild.dispatchEvent(new CustomEvent('leave', {detail: {
+					toChild,
+				}}));
+				docutil.empty(pageHold);
+			}
+			pageHold.appendChild(page);
+			page.dispatchEvent(new Event('enter'));
+		}
+	}
+
+	function makeCrumb(elements, hash, page) {
+		const dom = docutil.make('a', {'href': '#' + hash}, [docutil.make('li', {}, elements)]);
+		dom.addEventListener('click', (e) => {
+			if(e.target.tagName.toUpperCase() === 'A') {
+				return;
+			}
+			e.preventDefault();
+			setPage(page, false);
+			document.location.hash = hash;
+			while(crumbs.lastChild && crumbs.lastChild !== dom) {
+				crumbs.removeChild(crumbs.lastChild);
+			}
+		});
+		return dom;
+	}
+
+	function addCrumb(elements, hash, page, changeHash = true) {
+		crumbs.appendChild(makeCrumb(elements, hash, page));
+		setPage(page, true);
+		if(changeHash) {
+			document.location.hash = hash;
+		}
+		return crumbs.children.length - 1;
+	}
+
+	function replaceCrumb(index, elements, hash, page) {
+		if(index < 0 || index >= crumbs.children.length) {
+			return;
+		}
+		if(index === crumbs.children.length - 1) {
+			crumbs.removeChild(crumbs.lastChild);
+			addCrumb(elements, hash, page);
+		} else {
+			crumbs.replaceChild(makeCrumb(elements, hash, page), crumbs.children[index]);
+		}
+	}
+
+	const welcomePage = docutil.make('div');
+
+	const crumbs = docutil.make('ol', {}, [
+		docutil.make('li', {}, ['WebPlayer', docutil.make('p', {}, [
+			docutil.make('a', {
+				'href': GITHUB_LINK,
+				'target': '_blank',
+			}, ['GitHub']),
+		])]),
+	]);
+	const navBar = docutil.make('nav', {}, [crumbs]);
+	addCrumb([title, docutil.make('p', {}, [
+		docutil.make('a', {
+			'href': questionURL,
+			'target': '_blank',
+		}, ['Question']),
+	])], '', welcomePage, false);
+	docutil.body.appendChild(navBar);
 
 	const loader = new Loader('initial-load', 'user interface', 0);
 	docutil.body.appendChild(loader.dom());
@@ -51,7 +120,6 @@ require([
 		'math/Random',
 		'engine/GameOrchestrator',
 		'core/sandbox_utils',
-		'display/Overlay',
 		'display/MatchSummary', // TODO: game-customisable
 		'teams/' + teamType,
 		'tournaments/' + tournamentType,
@@ -64,7 +132,6 @@ require([
 		Random,
 		GameOrchestrator,
 		sandbox_utils,
-		Overlay,
 		MatchSummary,
 		TeamMaker,
 		Tournament,
@@ -84,42 +151,34 @@ require([
 			maxConcurrency: 1,
 		});
 
-		const singleGameDisplay = new Display();
-		const singleGameOverlay = new Overlay();
-		docutil.body.appendChild(singleGameOverlay.dom());
-		let singleGame = null;
-
 		const tournamentSeed = docutil.text();
 		const tournamentDisplay = docutil.make('section', {'class': 'tournament'}, [
 			docutil.make('header', {}, [
-				docutil.make('h2', {}, 'Tournament'),
-				docutil.make('p', {}, tournamentSeed),
+				docutil.make('h2', {}, ['Tournament']),
+				docutil.make('p', {}, [tournamentSeed]),
 			]),
 		]);
+		const tournamentPage = docutil.make('div', {}, [tournamentDisplay]);
 
-		function showGame(seed, teams, dismissable) {
-			singleGameOverlay.show(singleGameDisplay.dom(), {
-				dismissable,
-				inline: !dismissable
-			});
+		const singleGameDisplay = new Display();
+		const gamePage = docutil.make('div', {}, [singleGameDisplay.dom()]);
+		let singleGame = null;
 
-			if(singleGame) {
-				singleGame.terminate();
+		gamePage.addEventListener('leave', (e) => {
+			if(e.detail.toChild) {
+				return;
 			}
-			singleGame = foregroundGames.make({
-				display: singleGameDisplay,
-				baseGameConfig,
-				basePlayConfig,
-				baseDisplayConfig,
-			});
-			singleGame.begin({seed, teams});
-		}
-
-		singleGameOverlay.addEventListener('dismissed', () => {
 			if(singleGame) {
 				singleGame.terminate();
 			}
 			singleGame = null;
+		});
+
+		tournamentPage.addEventListener('leave', (e) => {
+			if(e.detail.toChild) {
+				return;
+			}
+			backgroundGames.terminateAll();
 		});
 
 		// TODO: extract all of this & improve separation / APIs
@@ -143,7 +202,7 @@ require([
 				// TODO: better API for this
 				matchDisplay.addEventListener('gametitleclick', (token) => {
 					if(token === gameDisplayToken) {
-						showGame(seed, teams, true);
+						beginGame(seed, teams);
 					}
 				});
 				return new Promise((resolve, reject) => {
@@ -174,30 +233,51 @@ require([
 
 		window.addEventListener('hashchange', () => {
 			const hash = decodeURIComponent((window.location.hash || '#').substr(1));
-			console.log(hash);
+			console.log('Hash changed', hash);
 			// TODO
 		});
 
-		const linker = docutil.make('a', {'href': '#', 'class': 'linker', 'title': 'Permalink'});
-		linker.addEventListener('click', (e) => {
-			e.preventDefault();
-			if(singleGame && singleGameOverlay.visible) {
-				document.location.hash = '#' + singleGame.getSeed();
-			} else if(tournament.seed) {
-				document.location.hash = '#' + tournament.getSeed();
-			} else {
-				document.location.hash = '';
+		function beginGame(seed, teams) {
+			if(singleGame) {
+				singleGame.terminate();
 			}
-		});
-		docutil.body.appendChild(linker);
+			singleGame = foregroundGames.make({
+				display: singleGameDisplay,
+				baseGameConfig,
+				basePlayConfig,
+				baseDisplayConfig,
+			});
+			singleGame.begin({seed, teams});
+			const crumb = addCrumb(['Game', docutil.make('p', {}, [singleGame.getSeed()])], singleGame.getSeed(), gamePage);
+			singleGame.addEventListener('begin', () => {
+				replaceCrumb(crumb, ['Game', docutil.make('p', {}, [singleGame.getSeed()])], singleGame.getSeed(), gamePage);
+			});
+		}
 
 		function beginTournament(config) {
-			docutil.body.appendChild(tournamentDisplay);
+			backgroundGames.terminateAll();
+			docutil.empty(tournamentDisplay);
 			tournament.begin(config);
-			docutil.updateText(tournamentSeed, tournament.seed);
+			addCrumb(['Tournament', docutil.make('p', {}, [tournament.getSeed()])], tournament.getSeed(), tournamentPage);
+			docutil.updateText(tournamentSeed, tournament.getSeed());
 		}
 
 		function begin(teams) {
+			const btnTournament = docutil.make('button', {}, 'Begin Random Tournament');
+			btnTournament.addEventListener('click', () => {
+				beginTournament({teams});
+			});
+
+			let btnGame = null;
+			if(!tournamentTypeArgs.matchTeamLimit) {
+				btnGame = docutil.make('button', {}, 'Begin Random Game');
+				btnGame.addEventListener('click', () => {
+					beginGame(null, teams);
+				});
+			}
+
+			welcomePage.appendChild(docutil.make('div', {'class': 'initial-options'}, [btnTournament, btnGame]));
+
 			const hash = decodeURIComponent((window.location.hash || '#').substr(1));
 			if(hash.startsWith('T')) {
 				beginTournament({teams, seed: hash});
@@ -208,32 +288,13 @@ require([
 //				return;
 			}
 			if(hash.startsWith('G')) {
-				showGame(hash, teams, false);
+				beginGame(hash, teams);
 				return;
 			}
-
 			if(tournamentTypeArgs.matchTeamLimit) { // TODO: support entry picking
 				beginTournament({teams});
 				return;
 			}
-
-			let initialOptions = null;
-
-			const btnTournament = docutil.make('button', {}, 'Tournament (work-in-progress!)');
-			btnTournament.addEventListener('click', () => {
-				docutil.body.removeChild(initialOptions);
-				beginTournament({teams});
-			});
-
-			const btnGame = docutil.make('button', {}, 'Game');
-			btnGame.addEventListener('click', () => {
-				docutil.body.removeChild(initialOptions);
-				showGame(null, teams, false);
-			});
-
-			initialOptions = docutil.make('div', {'class': 'initial-options'}, [btnTournament, btnGame]);
-
-			docutil.body.appendChild(initialOptions);
 		}
 
 		sandbox.addEventListener('message', (event) => {

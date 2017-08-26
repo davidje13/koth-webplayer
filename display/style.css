@@ -41,39 +41,6 @@
 	height: 100%;
 }
 
-/* Overlay */
-
-.overlay-container {
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	z-index: 100;
-}
-
-.overlay-shade {
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-}
-
-.overlay-hold {
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	overflow: auto;
-}
-
-.overlay-dismiss {
-	position: absolute;
-	cursor: pointer;
-}
-
 /* ResultTable */
 
 .result-table {
