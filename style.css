@@ -71,10 +71,6 @@ nav ol>a:link, nav ol>a:visited, nav ol>a:active, nav ol>a:hover {
 	text-decoration: none;
 }
 
-nav a li {
-	cursor: pointer;
-}
-
 nav a li:hover {
 	background: rgba(255, 255, 255, 0.1);
 }

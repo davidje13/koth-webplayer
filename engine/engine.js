@@ -10,11 +10,13 @@
 
 require([
 	'display/document_utils',
+	'display/NestedNav',
 	'display/Loader',
 	'path:engine/sandboxed_loader',
 	'style.css',
 ], (
 	docutil,
+	NestedNav,
 	Loader,
 	sandboxed_loader_path,
 ) => {
@@ -40,81 +42,33 @@ require([
 
 	const gameDir = 'games/' + gameType;
 
-	const pageHold = docutil.make('div');
-	document.body.appendChild(pageHold);
+	const nav = new NestedNav();
+	const loader = new Loader('initial-load', 'user interface', 0);
 
-	// TODO: extract breadcrumb handling into reusable object, improve API
-	function setPage(page, toChild) {
-		if(pageHold.lastChild !== page) {
-			if(pageHold.lastChild) {
-				pageHold.lastChild.dispatchEvent(new CustomEvent('leave', {detail: {
-					toChild,
-				}}));
-				docutil.empty(pageHold);
-			}
-			pageHold.appendChild(page);
-			page.dispatchEvent(new Event('enter'));
-		}
-	}
-
-	function makeCrumb(elements, hash, page) {
-		const dom = docutil.make('a', {'href': '#' + hash}, [docutil.make('li', {}, elements)]);
-		dom.addEventListener('click', (e) => {
-			if(e.target.tagName.toUpperCase() === 'A') {
-				return;
-			}
-			e.preventDefault();
-			setPage(page, false);
-			document.location.hash = hash;
-			while(crumbs.lastChild && crumbs.lastChild !== dom) {
-				crumbs.removeChild(crumbs.lastChild);
-			}
-		});
-		return dom;
-	}
-
-	function addCrumb(elements, hash, page, changeHash = true) {
-		crumbs.appendChild(makeCrumb(elements, hash, page));
-		setPage(page, true);
-		if(changeHash) {
-			document.location.hash = hash;
-		}
-		return crumbs.children.length - 1;
-	}
-
-	function replaceCrumb(index, elements, hash, page) {
-		if(index < 0 || index >= crumbs.children.length) {
-			return;
-		}
-		if(index === crumbs.children.length - 1) {
-			crumbs.removeChild(crumbs.lastChild);
-			addCrumb(elements, hash, page);
-		} else {
-			crumbs.replaceChild(makeCrumb(elements, hash, page), crumbs.children[index]);
-		}
-	}
+	docutil.body.appendChild(docutil.make('nav', {}, [nav.navDOM()]));
+	docutil.body.appendChild(nav.pageDOM());
+	docutil.body.appendChild(loader.dom());
 
 	const welcomePage = docutil.make('div');
 
-	const crumbs = docutil.make('ol', {}, [
-		docutil.make('li', {}, ['WebPlayer', docutil.make('p', {}, [
+	nav.push({
+		navElements: ['WebPlayer', docutil.make('p', {}, [
 			docutil.make('a', {
 				'href': GITHUB_LINK,
 				'target': '_blank',
 			}, ['GitHub']),
-		])]),
-	]);
-	const navBar = docutil.make('nav', {}, [crumbs]);
-	addCrumb([title, docutil.make('p', {}, [
-		docutil.make('a', {
-			'href': questionURL,
-			'target': '_blank',
-		}, ['Question']),
-	])], '', welcomePage, false);
-	docutil.body.appendChild(navBar);
-
-	const loader = new Loader('initial-load', 'user interface', 0);
-	docutil.body.appendChild(loader.dom());
+		])],
+	});
+	const navRoot = nav.push({
+		navElements: [title, docutil.make('p', {}, [
+			docutil.make('a', {
+				'href': questionURL,
+				'target': '_blank',
+			}, ['Question']),
+		])],
+		hash: '',
+		page: welcomePage,
+	}, {changeHash: false});
 
 	require([
 		'math/Random',
@@ -151,6 +105,8 @@ require([
 			maxConcurrency: 1,
 		});
 
+		let baseTeams = null;
+
 		const tournamentSeed = docutil.text();
 		const tournamentDisplay = docutil.make('section', {'class': 'tournament'}, [
 			docutil.make('header', {}, [
@@ -164,20 +120,14 @@ require([
 		const gamePage = docutil.make('div', {}, [singleGameDisplay.dom()]);
 		let singleGame = null;
 
-		gamePage.addEventListener('leave', (e) => {
-			if(e.detail.toChild) {
-				return;
-			}
+		gamePage.addEventListener('pop', () => {
 			if(singleGame) {
 				singleGame.terminate();
 			}
 			singleGame = null;
 		});
 
-		tournamentPage.addEventListener('leave', (e) => {
-			if(e.detail.toChild) {
-				return;
-			}
+		tournamentPage.addEventListener('pop', () => {
 			backgroundGames.terminateAll();
 		});
 
@@ -231,11 +181,29 @@ require([
 			// TODO
 		});
 
-		window.addEventListener('hashchange', () => {
+		function handleHashChange() {
 			const hash = decodeURIComponent((window.location.hash || '#').substr(1));
-			console.log('Hash changed', hash);
-			// TODO
-		});
+			if(nav.goToHash(hash)) {
+				return true;
+			}
+			if(hash.startsWith('T')) {
+				nav.popTo(navRoot, {navigate: false});
+				beginTournament({teams: baseTeams, seed: hash});
+				return true;
+			}
+			if(hash.startsWith('M')) {
+				// TODO
+//				nav.popTo(navRoot, {navigate: false});
+//				return true;
+			}
+			if(hash.startsWith('G')) {
+				nav.popTo(navRoot, {navigate: false});
+				beginGame(hash, baseTeams);
+				return true;
+			}
+			console.log('Unknown hash request', hash);
+			return false;
+		}
 
 		function beginGame(seed, teams) {
 			if(singleGame) {
@@ -248,17 +216,26 @@ require([
 				baseDisplayConfig,
 			});
 			singleGame.begin({seed, teams});
-			const crumb = addCrumb(['Game', docutil.make('p', {}, [singleGame.getSeed()])], singleGame.getSeed(), gamePage);
-			singleGame.addEventListener('begin', () => {
-				replaceCrumb(crumb, ['Game', docutil.make('p', {}, [singleGame.getSeed()])], singleGame.getSeed(), gamePage);
-			});
+			function makeNav() {
+				return {
+					navElements: ['Game', docutil.make('p', {}, [singleGame.getSeed()])],
+					hash: singleGame.getSeed(),
+					page: gamePage,
+				};
+			}
+			const navPos = nav.push(makeNav());
+			singleGame.addEventListener('begin', () => nav.swap(navPos, makeNav()));
 		}
 
 		function beginTournament(config) {
 			backgroundGames.terminateAll();
 			docutil.empty(tournamentDisplay);
 			tournament.begin(config);
-			addCrumb(['Tournament', docutil.make('p', {}, [tournament.getSeed()])], tournament.getSeed(), tournamentPage);
+			nav.push({
+				navElements: ['Tournament', docutil.make('p', {}, [tournament.getSeed()])],
+				hash: tournament.getSeed(),
+				page: tournamentPage,
+			});
 			docutil.updateText(tournamentSeed, tournament.getSeed());
 		}
 
@@ -278,17 +255,9 @@ require([
 
 			welcomePage.appendChild(docutil.make('div', {'class': 'initial-options'}, [btnTournament, btnGame]));
 
-			const hash = decodeURIComponent((window.location.hash || '#').substr(1));
-			if(hash.startsWith('T')) {
-				beginTournament({teams, seed: hash});
-				return;
-			}
-			if(hash.startsWith('M')) {
-				// TODO
-//				return;
-			}
-			if(hash.startsWith('G')) {
-				beginGame(hash, teams);
+			baseTeams = teams;
+			window.addEventListener('hashchange', handleHashChange);
+			if(handleHashChange()) {
 				return;
 			}
 			if(tournamentTypeArgs.matchTeamLimit) { // TODO: support entry picking
