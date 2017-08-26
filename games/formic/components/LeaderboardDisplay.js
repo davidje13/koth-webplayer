@@ -1,12 +1,12 @@
 define([
 	'core/EventObject',
 	'display/document_utils',
-	'display/ResultTable',
+	'display/HierarchyTable',
 	'../GameScorer',
 ], (
 	EventObject,
 	docutil,
-	ResultTable,
+	HierarchyTable,
 	GameScorer,
 ) => {
 	'use strict';
@@ -32,7 +32,7 @@ define([
 				});
 			}
 
-			this.table = new ResultTable({
+			this.table = new HierarchyTable({
 				className: 'match',
 				columns: [{
 					title: docutil.make('header', {}, [

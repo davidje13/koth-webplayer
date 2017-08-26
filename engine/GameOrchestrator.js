@@ -44,7 +44,7 @@ define([
 
 		swapDisplay(display) {
 			if(this.dead) {
-				throw 'Attempt to use terminated game';
+				throw new Error('Attempt to use terminated game');
 			}
 			if(this.display === display) {
 				return;
@@ -83,7 +83,7 @@ define([
 
 		step(type = null, steps = null) {
 			if(this.dead) {
-				throw 'Attempt to use terminated game';
+				throw new Error('Attempt to use terminated game');
 			}
 			Object.assign(this.config.play, {
 				delta: 0,
@@ -111,7 +111,7 @@ define([
 
 		updateGameConfig(delta) {
 			if(this.dead) {
-				throw 'Attempt to use terminated game';
+				throw new Error('Attempt to use terminated game');
 			}
 			Object.assign(this.config.game, delta);
 			if(this.display) {
@@ -128,7 +128,7 @@ define([
 
 		updatePlayConfig(delta) {
 			if(this.dead) {
-				throw 'Attempt to use terminated game';
+				throw new Error('Attempt to use terminated game');
 			}
 			Object.assign(this.config.play, delta);
 			if(this.display) {
@@ -145,7 +145,7 @@ define([
 
 		updateDisplayConfig(delta) {
 			if(this.dead) {
-				throw 'Attempt to use terminated game';
+				throw new Error('Attempt to use terminated game');
 			}
 			Object.assign(this.config.display, delta);
 			if(this.display) {
@@ -163,7 +163,7 @@ define([
 
 		begin({seed = null, teams = null} = {}) {
 			if(this.dead) {
-				throw 'Attempt to use terminated game';
+				throw new Error('Attempt to use terminated game');
 			}
 			const wasActive = this.gameActive;
 			if(this.gameStarted) {
@@ -219,7 +219,7 @@ define([
 
 		updateState(state) {
 			if(this.dead) {
-				throw 'Attempt to use terminated game';
+				throw new Error('Attempt to use terminated game');
 			}
 			this.latestState = state;
 			if(this.latestState.over) {
@@ -264,7 +264,7 @@ define([
 		_swapTokenFn(token) {
 			const game = this.games.get(token);
 			if(!game) {
-				throw 'Game not found for token ' + token;
+				throw new Error('Game not found for token ' + token);
 			}
 			this.games.delete(token);
 			const newToken = (this.nextToken ++);

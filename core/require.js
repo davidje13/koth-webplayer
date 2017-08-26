@@ -104,7 +104,7 @@ const require_factory = () => {
 						unnamedDef = null;
 					}
 					if(!state.factory) {
-						throw src + ' did not define a module!';
+						throw new Error(src + ' did not define a module!');
 					}
 					resolve(src);
 				});
@@ -157,7 +157,7 @@ const require_factory = () => {
 			return src;
 		}
 		if(!base && base !== '') {
-			throw 'Relative path ' + src + ' used from unknown location';
+			throw new Error('Relative path ' + src + ' used from unknown location');
 		}
 		const path = (base + '/' + src).split('/');
 		for(let i = 0; i < path.length;) {
@@ -175,7 +175,7 @@ const require_factory = () => {
 
 	function requireOne(base, src) {
 		if(blocked) {
-			throw 'Attempted to require ' + src + ' after shedding privilege';
+			throw new Error('Attempted to require ' + src + ' after shedding privilege');
 		}
 		if(src.startsWith(DEFINITION_PREFIX)) {
 			const trueSrc = resolvePath(base, src.substr(DEFINITION_PREFIX.length));
@@ -244,11 +244,15 @@ const require_factory = () => {
 			const base = (lastSlash === -1) ? null : src.substr(0, lastSlash);
 			Object.assign(stateOf(src), def, {base});
 		} else if(unnamedDef) {
-			throw 'Multiple unnamed definitions in the same file';
+			throw new Error('Multiple unnamed definitions in the same file');
 		} else {
 			unnamedDef = def;
 		}
 	};
+
+	// Disguise ourselves so that third-party libraries will integrate nicely
+	// (we're a pretty close API anyway)
+	require.define.amd = true;
 
 	require.shed = function() {
 		self.require = {define: require.define};

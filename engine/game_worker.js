@@ -22,7 +22,7 @@ define(['math/Random'], (Random) => {
 			switch(data.action) {
 			case 'BEGIN':
 				if(game != null) {
-					throw 'Cannot re-use game worker';
+					throw new Error('Cannot re-use game worker');
 				}
 				time0 = Date.now();
 				game = new GameManager(new Random(data.config.seed), data.config);

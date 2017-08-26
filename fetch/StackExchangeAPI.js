@@ -32,7 +32,7 @@ define(() => {
 
 		checkError(data) {
 			if(data.error_id) {
-				throw (
+				throw new Error(
 					'StackExchange API error ' + data.error_id +
 					' (' + data.error_name + '): ' +
 					data.error_message

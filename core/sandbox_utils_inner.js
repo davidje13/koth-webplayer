@@ -6,7 +6,7 @@ define(['require', 'document', './EventObject'], (require, document, EventObject
 	function handleScript(event) {
 		const src = event.data.require_script_src;
 		if(!self.restrictedScriptSrc) {
-			throw 'Unexpected script message for ' + src;
+			throw new Error('Unexpected script message for ' + src);
 		}
 		const done = awaiting.get(src);
 		if(!done) {

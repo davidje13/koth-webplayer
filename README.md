@@ -41,10 +41,12 @@ the engine itself.
 
 The project is designed to be runnable from the local filesystem; there should
 be no need to start a localhost server or run a browser with any special
-configuration. There are no dependencies (no jQuery, React, requirejs, etc.); I
-make no claims that that's a good (or even remotely sensible) architectural
-choice, just that I felt like working from the lowest level (several APIs here
-are heavily inspired by such projects and may be vaguely familiar).
+configuration. Other than codemirror (which has its code bundled in the
+/codemirror directory), there are no dependencies (no jQuery, React, requirejs,
+etc.); I make no claims that that's a good (or even remotely sensible)
+architectural choice, just that I felt like working from the lowest level
+(several APIs here are heavily inspired by such projects and may be vaguely
+familiar).
 
 Modern Javascript syntax and APIs are used throughout and no polyfils are
 included, so don't expect this to work in Internet Explorer. So far it's only

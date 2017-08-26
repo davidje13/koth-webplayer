@@ -32,6 +32,7 @@ require([
 	const basePlayConfig = JSON.parse(docutil.getMetaTagValue('play-config', '{}'));
 	const basePlayHiddenConfig = JSON.parse(docutil.getMetaTagValue('play-hidden-config', '{"speed": -1, "maxTime": 250}'));
 	const baseDisplayConfig = JSON.parse(docutil.getMetaTagValue('display-config', '{}'));
+	const teamViewColumns = JSON.parse(docutil.getMetaTagValue('team-view-columns', '[]'));
 	const site = docutil.getMetaTagValue('stack-exchange-site');
 	const qid = docutil.getMetaTagValue('stack-exchange-qid');
 	const questionURL = docutil.getMetaTagValue(
@@ -74,6 +75,7 @@ require([
 		'math/Random',
 		'engine/GameOrchestrator',
 		'core/sandbox_utils',
+		'display/TreeTable',
 		'display/MatchSummary', // TODO: game-customisable
 		'teams/' + teamType,
 		'tournaments/' + tournamentType,
@@ -86,6 +88,7 @@ require([
 		Random,
 		GameOrchestrator,
 		sandbox_utils,
+		TreeTable,
 		MatchSummary,
 		TeamMaker,
 		Tournament,
@@ -105,7 +108,18 @@ require([
 			maxConcurrency: 1,
 		});
 
-		let baseTeams = null;
+		let allTeams = null;
+		let managedTeams = null;
+
+		const btnTournament = docutil.make('button', {}, ['Begin Random Tournament']);
+		btnTournament.addEventListener('click', () => {
+			beginTournament({teams: managedTeams});
+		});
+
+		const btnGame = docutil.make('button', {}, ['Begin Random Game']);
+		btnGame.addEventListener('click', () => {
+			beginGame(null, managedTeams);
+		});
 
 		const tournamentSeed = docutil.text();
 		const tournamentDisplay = docutil.make('section', {'class': 'tournament'}, [
@@ -186,9 +200,11 @@ require([
 			if(nav.goToHash(hash)) {
 				return true;
 			}
+			// TODO: filter teams according to hash (need to store team choices in hash somehow)
+			const teams = allTeams;
 			if(hash.startsWith('T')) {
 				nav.popTo(navRoot, {navigate: false});
-				beginTournament({teams: baseTeams, seed: hash});
+				beginTournament({teams, seed: hash});
 				return true;
 			}
 			if(hash.startsWith('M')) {
@@ -198,7 +214,7 @@ require([
 			}
 			if(hash.startsWith('G')) {
 				nav.popTo(navRoot, {navigate: false});
-				beginGame(hash, baseTeams);
+				beginGame(hash, teams);
 				return true;
 			}
 			console.log('Unknown hash request', hash);
@@ -239,31 +255,117 @@ require([
 			docutil.updateText(tournamentSeed, tournament.getSeed());
 		}
 
-		function begin(teams) {
-			const btnTournament = docutil.make('button', {}, 'Begin Random Tournament');
-			btnTournament.addEventListener('click', () => {
-				beginTournament({teams});
+		function renderEntryManagement(teams) {
+			// TODO:
+			// * Allow drag+drop to reorder teams & entries, and switch entry teams
+			// * Add change handler to 'enabled' chekboxes & reordering to update managedTeams
+			// * Load code into codemirror when selecting
+			// * Default code for new entries (via meta tag)
+			// * Persist in local storage (maybe use answer_id as unique refs)
+
+			let titleEditor = docutil.make('input', {disabled: 'disabled'});
+			let codeEditor = docutil.make('textarea', {disabled: 'disabled'});
+			const tree = new TreeTable({
+				className: 'team-table',
+				columns: [
+					{title: 'Entry', attribute: 'label'},
+					...teamViewColumns,
+					{title: '', attribute: 'enabled', className: 'enabled-opt'},
+				],
+			});
+			let treeData = [];
+			if(teamType === 'free_for_all') {
+				teams.forEach((team) => team.entries.forEach((entry) => {
+					treeData.push({
+						label: entry.title,
+						user_id: entry.user_id,
+						answer_id: entry.answer_id,
+						enabled: docutil.make('input', {type: 'checkbox', checked: 'checked', disabled: 'disabled'}),
+						baseEntry: entry,
+					});
+				}));
+				treeData.push({label: docutil.make('button', {disabled: 'disabled'}, ['+ Add Entry']), selectable: false});
+			} else {
+				treeData = teams.map((team) => {
+					const nested = team.entries.map((entry) => {
+						return {
+							label: entry.title,
+							user_id: entry.user_id,
+							answer_id: entry.answer_id,
+							enabled: docutil.make('input', {type: 'checkbox', checked: 'checked', disabled: 'disabled'}),
+							baseEntry: entry,
+						};
+					});
+					nested.push({label: docutil.make('button', {disabled: 'disabled'}, ['+ Add Entry']), selectable: false});
+					return {
+						className: 'team',
+						label: 'Team ' + team.id,
+						enabled: docutil.make('input', {type: 'checkbox', checked: 'checked', disabled: 'disabled'}),
+						nested,
+						baseTeam: team,
+					};
+				});
+				treeData.push({label: docutil.make('button', {disabled: 'disabled'}, ['+ Add Team']), selectable: false});
+			}
+			tree.setData(treeData);
+
+			tree.addEventListener('select', (item) => {
+				if(item.baseEntry) {
+					docutil.updateStyle(entrybox, {'display': 'inline-block'});
+					if(codeEditor.getDoc) {
+						codeEditor.getDoc().setValue(item.baseEntry.code);
+					} else {
+						codeEditor.value = item.baseEntry.code;
+					}
+					titleEditor.value = item.baseEntry.title;
+				} else {
+					docutil.updateStyle(entrybox, {'display': 'none'});
+				}
 			});
 
-			let btnGame = null;
-			if(!tournamentTypeArgs.matchTeamLimit) {
-				btnGame = docutil.make('button', {}, 'Begin Random Game');
-				btnGame.addEventListener('click', () => {
-					beginGame(null, teams);
+			const entrybox = docutil.make('div', {'class': 'entry-editor'}, [
+				docutil.make('label', {}, ['Title ', titleEditor]),
+				docutil.make('div', {'class': 'code-editor'}, [codeEditor]),
+			]);
+			docutil.updateStyle(entrybox, {'display': 'none'});
+			const manager = docutil.make('div', {'class': 'team-manager'}, [
+				docutil.make('div', {'class': 'team-table-hold'}, [tree.dom()]),
+				entrybox
+			]);
+
+			welcomePage.appendChild(manager);
+
+			require([
+				'codemirror/lib/codemirror',
+				'codemirror/mode/javascript/javascript',
+				'codemirror/addon/comment/comment', // TODO
+				'codemirror/addon/edit/matchbrackets',
+				'codemirror/addon/edit/trailingspace',
+				'codemirror/lib/codemirror.css',
+			], (CodeMirror) => {
+				codeEditor = CodeMirror.fromTextArea(codeEditor, {
+					mode: 'javascript',
+					lineNumbers: true,
+					matchBrackets: true,
+					showTrailingSpace: true, // TODO: define cm-trailingspace
+					readOnly: true, // TODO: temporary
 				});
-			}
+				// TODO: support searching (plugins: searchcursor, search + UI)
+				// TODO: support line jumping (jump-to-line + UI)
+				codeEditor.refresh(); // TODO: call after displaying page
+			});
+		}
+
+		function begin(teams) {
+			allTeams = teams;
+			managedTeams = allTeams;
 
 			welcomePage.appendChild(docutil.make('div', {'class': 'initial-options'}, [btnTournament, btnGame]));
 
-			baseTeams = teams;
+			renderEntryManagement(allTeams);
+
 			window.addEventListener('hashchange', handleHashChange);
-			if(handleHashChange()) {
-				return;
-			}
-			if(tournamentTypeArgs.matchTeamLimit) { // TODO: support entry picking
-				beginTournament({teams});
-				return;
-			}
+			handleHashChange();
 		}
 
 		sandbox.addEventListener('message', (event) => {

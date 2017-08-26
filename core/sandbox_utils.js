@@ -102,7 +102,7 @@ define(['require', 'document', './EventObject', 'def:./EventObject', 'def:./sand
 				return;
 			}
 			if(blockRequire) {
-				throw 'Blocked late sandbox require() call: ' + src;
+				throw new Error('Blocked late sandbox require() call: ' + src);
 			}
 			require(['def:' + src], (def) => {
 				postMessage({

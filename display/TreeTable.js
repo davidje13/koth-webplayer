@@ -1,5 +1,7 @@
-define(['display/document_utils', './style.css'], (docutil) => {
+define(['core/EventObject', './document_utils', './style.css'], (EventObject, docutil) => {
 	'use strict';
+
+	// TODO: might be possible to merge this with HierarchyTable, or at least share lots of functionality
 
 	function countNesting(items) {
 		if(!items || !items.length) {
@@ -77,8 +79,10 @@ define(['display/document_utils', './style.css'], (docutil) => {
 		return colSpan;
 	}
 
-	function populateRows(targetRows, datum, attribute, columnClass) {
-		if(datum.hasOwnProperty(attribute) || !datum.nested) {
+	function buildRows(target, output, cols, datum, nesting = 0) {
+		const row = docutil.make('tr', {'class': datum.className});
+		row.addEventListener('click', () => target.select(datum));
+		cols.forEach(({attribute, columnClass}, index) => {
 			let v = datum[attribute];
 			let className = columnClass;
 			let title = '';
@@ -89,46 +93,25 @@ define(['display/document_utils', './style.css'], (docutil) => {
 				title = v.title || '';
 				v = v.value;
 			}
-			const rowCount = countEntries(datum);
-			targetRows[0].appendChild(docutil.make('td', {
+			const cell = docutil.make('td', {
 				'class': className,
-				'rowspan': rowCount,
 				'title': title,
-			}, [v]));
-			return rowCount;
-		}
-		let offset = 0;
-		datum.nested.forEach((child) => {
-			offset += populateRows(targetRows.slice(offset), child, attribute, columnClass);
+			}, [v]);
+			if(index === 0) {
+				cell.style.paddingLeft = (5 + nesting * 20) + 'px';
+			}
+			row.appendChild(cell);
 		});
-		return offset;
-	}
-
-	function createRows(output, datum, commonClasses = []) {
-		const classes = (
-			datum.className
-			? [...commonClasses, datum.className]
-			: commonClasses
-		);
-
+		output.push(row);
 		if(datum.nested) {
-			datum.nested.forEach((child) => createRows(output, child, classes));
-		} else {
-			output.push(docutil.make('tr', {'class': classes.join(' ')}));
+			datum.nested.forEach((child) => buildRows(target, output, cols, child, nesting + 1));
 		}
 	}
 
-	function buildRows(cols, datum) {
-		const rows = [];
-		createRows(rows, datum);
-		cols.forEach(({attribute, columnClass}) => {
-			populateRows(rows, datum, attribute, columnClass);
-		});
-		return rows;
-	}
-
-	return class ResultTable {
+	return class TreeTable extends EventObject {
 		constructor({className = '', columns = [], data = []} = {}) {
+			super();
+
 			this.columns = columns;
 			this.data = data;
 			this.columnData = [];
@@ -136,7 +119,7 @@ define(['display/document_utils', './style.css'], (docutil) => {
 			this.tbody = docutil.make('tbody');
 			this.table = docutil.make(
 				'table',
-				{'class': 'result-table ' + className},
+				{'class': 'tree-table ' + className},
 				[this.thead, this.tbody]
 			);
 			this.redrawColumns();
@@ -157,6 +140,11 @@ define(['display/document_utils', './style.css'], (docutil) => {
 			this.redrawRows();
 		}
 
+		select(datum) {
+			// TODO: change CSS to highlight selection
+			this.trigger('select', [datum]);
+		}
+
 		redrawRows() {
 			docutil.empty(this.tbody);
 
@@ -169,10 +157,11 @@ define(['display/document_utils', './style.css'], (docutil) => {
 			//   - note that rowspan'd cells will need to be kept on the top-most row of the block
 			// - ensure data in rows is up to date
 
+			const rows = [];
 			this.data.forEach((datum) => {
-				const rows = buildRows(this.columnData, datum);
-				rows.forEach((row) => this.tbody.appendChild(row));
+				buildRows(this, rows, this.columnData, datum);
 			});
+			rows.forEach((row) => this.tbody.appendChild(row));
 		}
 
 		setColumns(columns) {

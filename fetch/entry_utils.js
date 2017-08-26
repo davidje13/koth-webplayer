@@ -12,6 +12,7 @@ define(['core/worker_utils', 'path:./loader_worker'], (worker_utils, loader_work
 	function parseEntry(entry, index) {
 		return {
 			id: 'E' + index,
+			answer_id: entry.answer_id,
 			user_name: entry.user_name,
 			user_id: entry.user_id,
 			title: unescapeHTML(entry.title),

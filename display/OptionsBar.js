@@ -19,7 +19,7 @@ define(['core/EventObject', './document_utils'], (EventObject, docutil) => {
 				const v = String(uniqueValue ++);
 				lookup.set(v, option.value);
 				rlookup.set(option.value, v);
-				select.appendChild(docutil.make('option', {'value': v}, option.label));
+				select.appendChild(docutil.make('option', {'value': v}, [option.label]));
 			}
 		};
 		replace(options);

@@ -71,7 +71,7 @@ define(['require', './EventObject', 'def:./EventObject', 'def:./worker_utils_inn
 					return;
 				}
 				if(blockRequire) {
-					throw 'Blocked late worker require() call: ' + src;
+					throw new Error('Blocked late worker require() call: ' + src);
 				}
 				require(['def:' + src], (def) => {
 					worker.postMessage({

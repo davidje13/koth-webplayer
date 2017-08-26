@@ -28,6 +28,9 @@ define(['document'], (document) => {
 		},
 
 		make: (type, attrs = {}, children = []) => {
+			if(children && !Array.isArray(children)) {
+				throw new Error('Children should be a list');
+			}
 			const o = document.createElement(type);
 			for(let k in attrs) {
 				if(attrs.hasOwnProperty(k)) {

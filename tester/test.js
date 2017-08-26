@@ -126,7 +126,7 @@ require(['document', 'tester/test.css'], (document) => {
 
 	self.it = (behaviour, fn) => {
 		if(!running) {
-			throw 'it() must be inside describe()!';
+			throw new Error('it() must be inside describe()!');
 		}
 		if(skipping) {
 			++ skipped;
@@ -145,7 +145,7 @@ require(['document', 'tester/test.css'], (document) => {
 
 	self.xit = (behaviour, fn) => {
 		if(!running) {
-			throw 'it() must be inside describe()!';
+			throw new Error('it() must be inside describe()!');
 		}
 		++ skipped;
 	};

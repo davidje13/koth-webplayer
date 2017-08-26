@@ -28,7 +28,7 @@ define(() => {
 		gl.shaderSource(shader, src);
 		gl.compileShader(shader);
 		if(!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-			throw 'Failed to compile shader: ' + gl.getShaderInfoLog(shader);
+			throw new Error('Failed to compile shader: ' + gl.getShaderInfoLog(shader));
 		}
 		return shader;
 	}
@@ -38,11 +38,11 @@ define(() => {
 		shaders.forEach((shader) => gl.attachShader(prog, shader));
 		gl.linkProgram(prog);
 		if(!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-			throw 'Failed to link program: ' + gl.getProgramInfoLog(prog);
+			throw new Error('Failed to link program: ' + gl.getProgramInfoLog(prog));
 		}
 		gl.validateProgram(prog);
 		if(!gl.getProgramParameter(prog, gl.VALIDATE_STATUS)) {
-			throw 'Failed to validate program: ' + gl.getProgramInfoLog(prog);
+			throw new Error('Failed to validate program: ' + gl.getProgramInfoLog(prog));
 		}
 		return prog;
 	}
@@ -68,7 +68,7 @@ define(() => {
 		} else if(v.length === 4) {
 			gl.uniform4iv(locn, v);
 		} else {
-			throw 'Bad vector size ' + v.length;
+			throw new Error('Bad vector size ' + v.length);
 		}
 	}
 
@@ -84,7 +84,7 @@ define(() => {
 		} else if(v.length === 4) {
 			gl.uniform4fv(locn, v);
 		} else {
-			throw 'Bad vector size ' + v.length;
+			throw new Error('Bad vector size ' + v.length);
 		}
 	}
 
@@ -99,7 +99,7 @@ define(() => {
 		} else if(v.length === 4 * 4) {
 			gl.uniformMatrix4fv(locn, false, v);
 		} else {
-			throw 'Bad matrix size ' + v.length;
+			throw new Error('Bad matrix size ' + v.length);
 		}
 	}
 
@@ -155,7 +155,7 @@ define(() => {
 					} else if(v.length) {
 						setUniformF(this.gl, locn, v);
 					} else {
-						throw 'Unknown value for uniform ' + attr + ': ' + v;
+						throw new Error('Unknown value for uniform ' + attr + ': ' + v);
 					}
 				}
 			}

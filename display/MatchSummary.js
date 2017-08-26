@@ -1,13 +1,13 @@
 define([
 	'core/EventObject',
 	'./document_utils',
-	'./ResultTable',
+	'./HierarchyTable',
 	'./Loader',
 	'./style.css',
 ], (
 	EventObject,
 	docutil,
-	ResultTable,
+	HierarchyTable,
 	Loader,
 ) => {
 	'use strict';
@@ -37,7 +37,7 @@ define([
 				});
 			});
 
-			this.table = new ResultTable({className: 'match expanded'});
+			this.table = new HierarchyTable({className: 'match expanded'});
 			this.updateColumns(0);
 		}
 

@@ -20,7 +20,7 @@ define(['./StackExchangeAPI'], (StackExchangeAPI) => {
 			title = findRegex(item.body, REG_TITLE, 2) || title;
 			const code = findRegex(item.body, REG_CODE, 1);
 			if(!code) {
-				throw 'Code not found!';
+				throw new Error('Code not found!');
 			}
 			const entry = {
 				answer_id: item.answer_id,
