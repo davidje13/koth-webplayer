@@ -21,6 +21,10 @@
 
 /* Loader */
 
+.loader {
+	user-select: none;
+}
+
 .loader .message:before {
 	content: "Loading ";
 }

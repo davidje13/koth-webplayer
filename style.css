@@ -18,6 +18,10 @@ h1, h2, h3, h4, h5, h6, p, nav, ol, ul, li, table, thead, tbody, tr, td, th {
 	text-align: left;
 }
 
+button {
+	user-select: none;
+}
+
 header {
 }
 
@@ -44,8 +48,8 @@ nav {
 	right: 0;
 	padding: 0 10px;
 	background: #333333;
-	box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5);
 	z-index: 200;
+	user-select: none;
 }
 
 nav li {
@@ -139,34 +143,38 @@ h4 a:active, h4 a:hover {
 	background: #FFFFFF;
 }
 
-.initial-options {
-	margin: 60px 10px 20px;
-	text-align: center;
-}
-
-.initial-options button {
-	margin: 5px;
-}
-
 .team-manager {
 	background: #FFFFFF;
 	color: #333333;
 
 	position: absolute;
-	top: 150px;
+	top: 40px;
 	left: 0;
 	right: 0;
 	bottom: 0;
 	border-top: 1px solid #333333;
 }
 
-.team-manager .enabled-opt {
+.team-manager .options-bar {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 30px;
+	padding: 5px;
+	border-bottom: 1px solid #333333;
+	box-sizing: border-box;
+	background: #EEEEEE;
 	text-align: right;
+}
+
+.team-manager .options-bar button {
+	margin: 0 5px;
 }
 
 .team-table-hold {
 	position: absolute;
-	top: 0;
+	top: 30px;
 	left: 0;
 	bottom: 0;
 	width: 350px;
@@ -180,6 +188,7 @@ h4 a:active, h4 a:hover {
 	font-size: 0.7em;
 	color: #333333;
 	width: 100%;
+	user-select: none;
 }
 
 .team-table th {
@@ -204,6 +213,10 @@ h4 a:active, h4 a:hover {
 	background: #EEEEEE;
 }
 
+.team-table .enabled-opt {
+	text-align: right;
+}
+
 .team-table .selected {
 	background: #CCCCCC;
 }
@@ -218,10 +231,11 @@ h4 a:active, h4 a:hover {
 
 .entry-editor {
 	position: absolute;
-	top: 0;
+	top: 30px;
 	left: 350px;
 	right: 0;
 	bottom: 0;
+	font-size: 0.9em;
 }
 
 .entry-editor label {
@@ -237,6 +251,7 @@ h4 a:active, h4 a:hover {
 	padding: 0 15px;
 	border-bottom: 1px solid #333333;
 	box-sizing: border-box;
+	user-select: none;
 }
 
 .entry-editor label input {
@@ -273,6 +288,11 @@ h4 a:active, h4 a:hover {
 	left: 0;
 	content: "\00BB";
 	opacity: 0.2;
+}
+
+.CodeMirror-linenumber {
+	padding-top: 0.2em !important;
+	font-size: 0.8em;
 }
 
 header .bar-back {

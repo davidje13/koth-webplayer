@@ -384,12 +384,15 @@ require([
 			titleEditor.addEventListener('change', saveState);
 			codeEditor.addEventListener('change', saveState);
 
+			const optsBar = docutil.make('div', {'class': 'options-bar'});
+
 			const entrybox = docutil.make('div', {'class': 'entry-editor'}, [
 				docutil.make('label', {}, ['Title ', titleEditor]),
 				docutil.make('div', {'class': 'code-editor'}, [codeEditor]),
 			]);
 			docutil.updateStyle(entrybox, {'display': 'none'});
 			const manager = docutil.make('div', {'class': 'team-manager'}, [
+				optsBar,
 				docutil.make('div', {'class': 'team-table-hold'}, [tree.dom()]),
 				entrybox
 			]);
@@ -432,6 +435,8 @@ require([
 //					pauseOnError: true,
 //				})),
 //			}));
+
+			return optsBar;
 		}
 
 		function begin(teams) {
@@ -441,9 +446,9 @@ require([
 			allTeams = teams;
 			managedTeams = allTeams;
 
-			welcomePage.appendChild(docutil.make('div', {'class': 'initial-options'}, [btnTournament, btnGame]));
-
-			renderEntryManagement(allTeams);
+			const optionsBar = renderEntryManagement(allTeams);
+			optionsBar.appendChild(btnTournament);
+			optionsBar.appendChild(btnGame);
 
 			window.addEventListener('hashchange', handleHashChange);
 			handleHashChange();
