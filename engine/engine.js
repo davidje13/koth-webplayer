@@ -263,8 +263,8 @@ require([
 			// * Default code for new entries (via meta tag)
 			// * Persist in local storage (maybe use answer_id as unique refs)
 
-			let titleEditor = docutil.make('input', {disabled: 'disabled'});
-			let codeEditor = docutil.make('textarea', {disabled: 'disabled'});
+			let titleEditor = docutil.make('input');
+			let codeEditor = docutil.make('textarea');
 			const tree = new TreeTable({
 				className: 'team-table',
 				columns: [
@@ -273,43 +273,75 @@ require([
 					{title: '', attribute: 'enabled', className: 'enabled-opt'},
 				],
 			});
-			let treeData = [];
-			if(teamType === 'free_for_all') {
-				teams.forEach((team) => team.entries.forEach((entry) => {
-					treeData.push({
-						label: entry.title,
-						user_id: entry.user_id,
-						answer_id: entry.answer_id,
-						enabled: docutil.make('input', {type: 'checkbox', checked: 'checked', disabled: 'disabled'}),
-						baseEntry: entry,
-					});
-				}));
-				treeData.push({label: docutil.make('button', {disabled: 'disabled'}, ['+ Add Entry']), selectable: false});
-			} else {
-				treeData = teams.map((team) => {
-					const nested = team.entries.map((entry) => {
-						return {
-							label: entry.title,
+
+			function rebuildTree() {
+				let treeData = [];
+				if(teamType === 'free_for_all') {
+					teams.forEach((team) => team.entries.forEach((entry) => {
+						const changed = entry.code !== entry.originalCode;
+						treeData.push({
+							className: changed ? 'changed' : '',
+							label: {
+								value: entry.title,
+								title: entry.title + (changed ? ' (changed)' : ''),
+							},
 							user_id: entry.user_id,
 							answer_id: entry.answer_id,
 							enabled: docutil.make('input', {type: 'checkbox', checked: 'checked', disabled: 'disabled'}),
 							baseEntry: entry,
+						});
+					}));
+					treeData.push({label: docutil.make('button', {disabled: 'disabled'}, ['+ Add Entry']), selectable: false});
+				} else {
+					treeData = teams.map((team) => {
+						const nested = team.entries.map((entry) => {
+							const changed = entry.code !== entry.originalCode;
+							return {
+								className: changed ? 'changed' : '',
+								label: {
+									value: entry.title,
+									title: entry.title + (changed ? ' (changed)' : ''),
+								},
+								user_id: entry.user_id,
+								answer_id: entry.answer_id,
+								enabled: docutil.make('input', {type: 'checkbox', checked: 'checked', disabled: 'disabled'}),
+								baseEntry: entry,
+							};
+						});
+						nested.push({label: docutil.make('button', {disabled: 'disabled'}, ['+ Add Entry']), selectable: false});
+						return {
+							className: 'team',
+							label: 'Team ' + team.id,
+							enabled: docutil.make('input', {type: 'checkbox', checked: 'checked', disabled: 'disabled'}),
+							nested,
+							baseTeam: team,
 						};
 					});
-					nested.push({label: docutil.make('button', {disabled: 'disabled'}, ['+ Add Entry']), selectable: false});
-					return {
-						className: 'team',
-						label: 'Team ' + team.id,
-						enabled: docutil.make('input', {type: 'checkbox', checked: 'checked', disabled: 'disabled'}),
-						nested,
-						baseTeam: team,
-					};
-				});
-				treeData.push({label: docutil.make('button', {disabled: 'disabled'}, ['+ Add Team']), selectable: false});
+					treeData.push({label: docutil.make('button', {disabled: 'disabled'}, ['+ Add Team']), selectable: false});
+				}
+				tree.setData(treeData);
 			}
-			tree.setData(treeData);
+			rebuildTree();
 
+			function saveState() {
+				if(!selectedEntry) {
+					return;
+				}
+				const title = titleEditor.value;
+				let code = null;
+				if(codeEditor.getDoc) {
+					code = codeEditor.getDoc().getValue();
+				} else {
+					code = codeEditor.value;
+				}
+				selectedEntry.title = title;
+				selectedEntry.code = code;
+				rebuildTree();
+			}
+
+			let selectedEntry = null;
 			tree.addEventListener('select', (item) => {
+				saveState();
 				if(item.baseEntry) {
 					docutil.updateStyle(entrybox, {'display': 'inline-block'});
 					if(codeEditor.getDoc) {
@@ -318,10 +350,15 @@ require([
 						codeEditor.value = item.baseEntry.code;
 					}
 					titleEditor.value = item.baseEntry.title;
+					selectedEntry = item.baseEntry;
 				} else {
 					docutil.updateStyle(entrybox, {'display': 'none'});
+					selectedEntry = null;
 				}
 			});
+
+			titleEditor.addEventListener('change', saveState);
+			codeEditor.addEventListener('change', saveState);
 
 			const entrybox = docutil.make('div', {'class': 'entry-editor'}, [
 				docutil.make('label', {}, ['Title ', titleEditor]),
@@ -348,15 +385,25 @@ require([
 					lineNumbers: true,
 					matchBrackets: true,
 					showTrailingSpace: true, // TODO: define cm-trailingspace
-					readOnly: true, // TODO: temporary
 				});
+				codeEditor.on('blur', saveState);
 				// TODO: support searching (plugins: searchcursor, search + UI)
 				// TODO: support line jumping (jump-to-line + UI)
 				codeEditor.refresh(); // TODO: call after displaying page
 			});
+
+			// TODO
+//			managedTeams = allTeams.map((team) => Object.assign({}, team, {
+//				entries: team.entries.map((entry) => Object.assign({}, entry, {
+//					pauseOnError: true,
+//				})),
+//			}));
 		}
 
 		function begin(teams) {
+			teams.forEach((team) => team.entries.forEach((entry) => {
+				entry.originalCode = entry.code;
+			}));
 			allTeams = teams;
 			managedTeams = allTeams;
 
