@@ -66,8 +66,6 @@ define(['core/EventObject', 'core/array_utils', 'math/Random'], (EventObject, ar
 			}
 			return Promise.all(games).then((gameScores) => {
 				// TODO: should score aggregation happen here?
-				// TODO: average score would be better than sum, to prevent bias
-				// towards players who happened to play more games
 				this.trigger('complete', [gameScores]);
 			});
 		}

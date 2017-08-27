@@ -280,6 +280,7 @@ require([
 					teams.forEach((team) => team.entries.forEach((entry) => {
 						const changed = entry.code !== entry.originalCode;
 						treeData.push({
+							key: entry.id,
 							className: changed ? 'changed' : '',
 							label: {
 								value: entry.title,
@@ -297,6 +298,7 @@ require([
 						const nested = team.entries.map((entry) => {
 							const changed = entry.code !== entry.originalCode;
 							return {
+								key: team.id + '-' + entry.id,
 								className: changed ? 'changed' : '',
 								label: {
 									value: entry.title,
@@ -310,6 +312,7 @@ require([
 						});
 						nested.push({label: docutil.make('button', {disabled: 'disabled'}, ['+ Add Entry']), selectable: false});
 						return {
+							key: team.id,
 							className: 'team',
 							label: 'Team ' + team.id,
 							enabled: docutil.make('input', {type: 'checkbox', checked: 'checked', disabled: 'disabled'}),
@@ -336,19 +339,40 @@ require([
 				}
 				selectedEntry.title = title;
 				selectedEntry.code = code;
+				// TODO: this rebuild prevents clicking directly on an item in the tree
+				// (the item is rebuilt on text area blur so the click never happens)
+				// Should update TableTree to only re-render diff
 				rebuildTree();
+			}
+
+			function setCode(code) {
+				if(codeEditor.getDoc) {
+					codeEditor.getDoc().setValue(code);
+					let tabs = false;
+					let indent = 4;
+					if((code.match(/\n  [^ ]/g) || []).length) {
+						indent = 2;
+					} else if((code.match(/\n\t/g) || []).length > (code.match(/\n  /g) || []).length) {
+						tabs = true;
+					}
+
+					codeEditor.setOption('indentUnit', indent);
+					codeEditor.setOption('indentWithTabs', tabs);
+					codeEditor.setOption('mode', {
+						name: 'javascript',
+						statementIndent: indent,
+					});
+				} else {
+					codeEditor.value = code;
+				}
 			}
 
 			let selectedEntry = null;
 			tree.addEventListener('select', (item) => {
 				saveState();
-				if(item.baseEntry) {
+				if(item && item.baseEntry) {
 					docutil.updateStyle(entrybox, {'display': 'inline-block'});
-					if(codeEditor.getDoc) {
-						codeEditor.getDoc().setValue(item.baseEntry.code);
-					} else {
-						codeEditor.value = item.baseEntry.code;
-					}
+					setCode(item.baseEntry.code);
 					titleEditor.value = item.baseEntry.title;
 					selectedEntry = item.baseEntry;
 				} else {
@@ -375,17 +399,27 @@ require([
 			require([
 				'codemirror/lib/codemirror',
 				'codemirror/mode/javascript/javascript',
-				'codemirror/addon/comment/comment', // TODO
+				'codemirror/addon/comment/comment',
 				'codemirror/addon/edit/matchbrackets',
 				'codemirror/addon/edit/trailingspace',
 				'codemirror/lib/codemirror.css',
 			], (CodeMirror) => {
+				const code = codeEditor.value;
 				codeEditor = CodeMirror.fromTextArea(codeEditor, {
-					mode: 'javascript',
+					mode: {
+						name: 'javascript',
+					},
 					lineNumbers: true,
 					matchBrackets: true,
-					showTrailingSpace: true, // TODO: define cm-trailingspace
+					showTrailingSpace: true,
+					extraKeys: {
+						'Tab': (cm) => cm.execCommand('indentMore'),
+						'Shift-Tab': (cm) => cm.execCommand('indentLess'),
+						'Cmd-/': (cm) => cm.execCommand('toggleComment'),
+						'Ctrl-/': (cm) => cm.execCommand('toggleComment'),
+					},
 				});
+				setCode(code);
 				codeEditor.on('blur', saveState);
 				// TODO: support searching (plugins: searchcursor, search + UI)
 				// TODO: support line jumping (jump-to-line + UI)

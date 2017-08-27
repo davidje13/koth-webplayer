@@ -150,11 +150,14 @@ h4 a:active, h4 a:hover {
 
 .team-manager {
 	background: #FFFFFF;
-	border: 1px solid #333333;
-	height: 600px;
-	position: relative;
 	color: #333333;
-	margin: 10px 50px;
+
+	position: absolute;
+	top: 150px;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	border-top: 1px solid #333333;
 }
 
 .team-manager .enabled-opt {
@@ -174,27 +177,39 @@ h4 a:active, h4 a:hover {
 
 .team-table {
 	background: #FFFFFF;
-	font-size: 0.8em;
+	font-size: 0.7em;
 	color: #333333;
 	width: 100%;
 }
 
-.team-table td, .team-table th {
-	padding: 2px 5px;
-}
-
 .team-table th {
 	background: #DDDDDD;
-	border-bottom: 1px solid #333333;
+	position: sticky;
+	padding: 4px 5px;
+	top: 0;
+}
+
+.team-table tbody tr {
+	cursor: pointer;
 }
 
 .team-table td {
-	border-bottom: 1px dotted #CCCCCC;
+	padding: 2px 5px;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .team-table .team td {
 	font-weight: bolder;
 	background: #EEEEEE;
+}
+
+.team-table .selected {
+	background: #CCCCCC;
+}
+
+.team-table .selected.changed {
+	background: #CCCCAA;
 }
 
 .team-table .changed {
@@ -242,6 +257,22 @@ h4 a:active, h4 a:hover {
 .code-editor textarea, .code-editor .CodeMirror {
 	width: 100%;
 	height: 100%;
+}
+
+.cm-trailingspace {
+	background: rgba(255, 0, 0, 0.5);
+}
+
+.cm-tab {
+	position: relative;
+}
+
+.cm-tab:before {
+	position: absolute;
+	top: 0;
+	left: 0;
+	content: "\00BB";
+	opacity: 0.2;
 }
 
 header .bar-back {

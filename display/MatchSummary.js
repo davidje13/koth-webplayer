@@ -45,7 +45,11 @@ define([
 			const matchScore = this.matchScorer.score(this.teams, this.gameScores);
 			this.table.setData(matchScore.teams.map((matchTeamScore) => {
 				const tableTeam = this.tableTeamsLookup.get(matchTeamScore.id);
-				tableTeam.score.value = matchTeamScore.score || '';
+				if(matchTeamScore.score) {
+					tableTeam.score.value = matchTeamScore.score.toFixed(1);
+				} else {
+					tableTeam.score.value = '';
+				}
 				tableTeam.score.className = matchTeamScore.winner ? 'win' : '';
 				return tableTeam;
 			}));

@@ -102,7 +102,7 @@ define(['core/EventObject', './document_utils', './style.css'], (EventObject, do
 			}
 			row.appendChild(cell);
 		});
-		output.push(row);
+		output.push({key: datum.key, datum, row});
 		if(datum.nested) {
 			datum.nested.forEach((child) => buildRows(target, output, cols, child, nesting + 1));
 		}
@@ -114,6 +114,9 @@ define(['core/EventObject', './document_utils', './style.css'], (EventObject, do
 
 			this.columns = columns;
 			this.data = data;
+			this.rows = [];
+			this.selected = null;
+			this.selectedKey = null;
 			this.columnData = [];
 			this.thead = docutil.make('thead');
 			this.tbody = docutil.make('tbody');
@@ -141,12 +144,33 @@ define(['core/EventObject', './document_utils', './style.css'], (EventObject, do
 		}
 
 		select(datum) {
-			// TODO: change CSS to highlight selection
-			this.trigger('select', [datum]);
+			if(this.selected && this.selected.datum === datum) {
+				return;
+			}
+			if(this.selected) {
+				const oldClass = this.selected.row.getAttribute('class');
+				docutil.updateAttrs(this.selected.row, {'class': oldClass.replace(/ *\bselected\b/, '')});
+			}
+			this.selected = null;
+			this.selectedKey = null;
+			if(datum && datum.selectable !== false) {
+				this.rows.forEach((row) => {
+					if(row.key === datum.key) {
+						this.selected = row;
+						this.selectedKey = row.key;
+					}
+				});
+				if(this.selected) {
+					const oldClass = this.selected.row.getAttribute('class');
+					docutil.updateAttrs(this.selected.row, {'class': oldClass + ' selected'});
+				}
+			}
+			this.trigger('select', [this.selected ? this.selected.datum : null]);
 		}
 
 		redrawRows() {
 			docutil.empty(this.tbody);
+			this.selected = null;
 
 			// TODO: only redraw changed values
 			// - each result has an associated row
@@ -157,11 +181,22 @@ define(['core/EventObject', './document_utils', './style.css'], (EventObject, do
 			//   - note that rowspan'd cells will need to be kept on the top-most row of the block
 			// - ensure data in rows is up to date
 
-			const rows = [];
+			this.rows.length = 0;
 			this.data.forEach((datum) => {
-				buildRows(this, rows, this.columnData, datum);
+				buildRows(this, this.rows, this.columnData, datum);
 			});
-			rows.forEach((row) => this.tbody.appendChild(row));
+			this.rows.forEach((row) => {
+				this.tbody.appendChild(row.row);
+				if(row.key === this.selectedKey) {
+					this.selected = row;
+				}
+			});
+			if(this.selected) {
+				const oldClass = this.selected.row.getAttribute('class');
+				docutil.updateAttrs(this.selected.row, {'class': oldClass + ' selected'});
+			} else {
+				this.selectedKey = null;
+			}
 		}
 
 		setColumns(columns) {
