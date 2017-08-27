@@ -74,7 +74,8 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			const type = (v & SV_ANT_TYPE);
 			api[i] = {
 				color: ((v >>> SV_COLOUR_SHIFT) & COLOUR_BITS) + 1,
-				food: Boolean(v & SV_FOOD),
+				// Original challenge implementation uses ints, not bools, for food
+				food: Boolean(v & SV_FOOD) ? 1 : 0,
 				ant: type ? {
 					type,
 					food: v >>> SV_ANT_FOOD_SHIFT,

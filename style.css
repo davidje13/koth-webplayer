@@ -229,13 +229,43 @@ h4 a:active, h4 a:hover {
 	background: #FFFFCC;
 }
 
-.entry-editor {
+.entry-editor, .entry-editor-empty {
 	position: absolute;
 	top: 30px;
 	left: 350px;
 	right: 0;
 	bottom: 0;
+}
+
+.entry-editor {
 	font-size: 0.9em;
+}
+
+.entry-editor-empty {
+	color: #666666;
+	font-size: 1.2em;
+	line-height: 1.5em;
+	padding: 50px;
+	overflow: auto;
+}
+
+.entry-editor-empty h1 {
+	font-size: 1.2em;
+	margin-bottom: 40px;
+}
+
+.entry-editor-empty ul {
+	margin-left: 30px;
+}
+
+.entry-editor-empty li {
+	margin-bottom: 20px;
+	list-style: disc;
+}
+
+.entry-editor-empty div {
+	margin-top: 5px;
+	font-size: 0.8em;
 }
 
 .entry-editor label {

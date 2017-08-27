@@ -367,37 +367,39 @@ require([
 				}
 			}
 
-			let selectedEntry = null;
-			tree.addEventListener('select', (item) => {
-				saveState();
-				if(item && item.baseEntry) {
-					docutil.updateStyle(entrybox, {'display': 'inline-block'});
-					setCode(item.baseEntry.code);
-					titleEditor.value = item.baseEntry.title;
-					selectedEntry = item.baseEntry;
-				} else {
-					docutil.updateStyle(entrybox, {'display': 'none'});
-					selectedEntry = null;
-				}
-			});
-
 			titleEditor.addEventListener('change', saveState);
 			codeEditor.addEventListener('change', saveState);
 
-			const optsBar = docutil.make('div', {'class': 'options-bar'});
+			const optionsBar = docutil.make('div', {'class': 'options-bar'});
 
 			const entrybox = docutil.make('div', {'class': 'entry-editor'}, [
 				docutil.make('label', {}, ['Title ', titleEditor]),
 				docutil.make('div', {'class': 'code-editor'}, [codeEditor]),
 			]);
 			docutil.updateStyle(entrybox, {'display': 'none'});
+			const emptyState = docutil.make('div', {'class': 'entry-editor-empty'});
 			const manager = docutil.make('div', {'class': 'team-manager'}, [
-				optsBar,
+				optionsBar,
 				docutil.make('div', {'class': 'team-table-hold'}, [tree.dom()]),
+				emptyState,
 				entrybox
 			]);
 
-			welcomePage.appendChild(manager);
+			let selectedEntry = null;
+			tree.addEventListener('select', (item) => {
+				saveState();
+				if(item && item.baseEntry) {
+					docutil.updateStyle(emptyState, {'display': 'none'});
+					docutil.updateStyle(entrybox, {'display': 'block'});
+					setCode(item.baseEntry.code);
+					titleEditor.value = item.baseEntry.title;
+					selectedEntry = item.baseEntry;
+				} else {
+					docutil.updateStyle(entrybox, {'display': 'none'});
+					docutil.updateStyle(emptyState, {'display': 'block'});
+					selectedEntry = null;
+				}
+			});
 
 			require([
 				'codemirror/lib/codemirror',
@@ -426,8 +428,13 @@ require([
 				codeEditor.on('blur', saveState);
 				// TODO: support searching (plugins: searchcursor, search + UI)
 				// TODO: support line jumping (jump-to-line + UI)
-				codeEditor.refresh(); // TODO: call after displaying page
 			});
+
+			function onEnter() {
+				if(codeEditor.refresh) {
+					codeEditor.refresh();
+				}
+			}
 
 			// TODO
 //			managedTeams = allTeams.map((team) => Object.assign({}, team, {
@@ -436,7 +443,7 @@ require([
 //				})),
 //			}));
 
-			return optsBar;
+			return {manager, optionsBar, emptyState, onEnter};
 		}
 
 		function begin(teams) {
@@ -446,9 +453,24 @@ require([
 			allTeams = teams;
 			managedTeams = allTeams;
 
-			const optionsBar = renderEntryManagement(allTeams);
+			const {manager, optionsBar, emptyState, onEnter} = renderEntryManagement(allTeams);
 			optionsBar.appendChild(btnTournament);
 			optionsBar.appendChild(btnGame);
+			emptyState.appendChild(docutil.make('h1', {}, ['Online web player for ' + title]));
+			emptyState.appendChild(docutil.make('ul', {}, [
+				docutil.make('li', {}, ['Watch a game by clicking "Begin Random Game" in the top-right']),
+				docutil.make('li', {}, [
+					'Run a tournament by clicking "Begin Random Tournament" in the top-right',
+					docutil.make('div', {}, ['(Within a tournament, you can view any game by clicking on the "G(n)" column header)']),
+				]),
+				docutil.make('li', {}, [
+					'Edit the code for an entry, or add a new entry, using the list on the left',
+					docutil.make('div', {}, ['(Changes will apply to games and tournaments within your browser session. Modified entries are marked in yellow)']),
+				]),
+			]));
+			welcomePage.appendChild(manager);
+			welcomePage.addEventListener('enter', onEnter);
+			onEnter();
 
 			window.addEventListener('hashchange', handleHashChange);
 			handleHashChange();

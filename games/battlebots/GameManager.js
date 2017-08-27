@@ -124,6 +124,16 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			if(user_id !== null) {
 				entry.user_id = user_id;
 			}
+			this.entryLookup.forEach((otherEntry) => {
+				if(
+					otherEntry !== entry &&
+					otherEntry.user_id === entry.user_id &&
+					!otherEntry.disqualified
+				) {
+					entry.disqualified = true;
+					entry.error = 'Only one entry per user';
+				}
+			});
 		}
 
 		updateConfig({maxFrame, visibilityDistance}) {
