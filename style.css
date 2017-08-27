@@ -534,3 +534,13 @@ header .bar-done {
 .match .team-T23 {
 	background: #99CCDD;
 }
+
+
+/* Work around https://github.com/codemirror/CodeMirror/issues/4937 */
+.CodeMirror-search-field {
+	width: 10em;
+}
+
+.CodeMirror-search-hint {
+	color: #888888;
+}

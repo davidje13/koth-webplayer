@@ -405,6 +405,11 @@ require([
 				'codemirror/lib/codemirror',
 				'codemirror/mode/javascript/javascript',
 				'codemirror/addon/comment/comment',
+				'codemirror/addon/dialog/dialog',
+				'codemirror/addon/dialog/dialog.css',
+				'codemirror/addon/search/search',
+				'codemirror/addon/search/searchcursor',
+				'codemirror/addon/search/jump-to-line',
 				'codemirror/addon/edit/matchbrackets',
 				'codemirror/addon/edit/trailingspace',
 				'codemirror/lib/codemirror.css',
@@ -420,8 +425,8 @@ require([
 					extraKeys: {
 						'Tab': (cm) => cm.execCommand('indentMore'),
 						'Shift-Tab': (cm) => cm.execCommand('indentLess'),
-						'Cmd-/': (cm) => cm.execCommand('toggleComment'),
-						'Ctrl-/': (cm) => cm.execCommand('toggleComment'),
+						'Cmd-/': (cm) => cm.toggleComment({padding: ''}),
+						'Ctrl-/': (cm) => cm.toggleComment({padding: ''}),
 					},
 				});
 				setCode(code);
