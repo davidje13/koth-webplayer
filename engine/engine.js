@@ -501,6 +501,13 @@ require([
 				begin(TeamMaker.pickTeams(data.entries, teamTypeArgs));
 
 				break;
+
+			case 'LOAD_FAILED':
+				docutil.body.removeChild(loader.dom());
+				docutil.body.appendChild(docutil.make('div', {'class': 'error'}, [
+					'Failed to load entries: ' + data.error
+				]));
+				break;
 			}
 		});
 

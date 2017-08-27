@@ -1,0 +1,55 @@
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="content-security-policy" content="
+	base-uri 'self';
+	default-src 'none';
+	child-src blob:;
+	frame-src blob:;
+	connect-src https://api.stackexchange.com;
+	script-src 'self' 'unsafe-inline' blob:;
+	worker-src blob:;
+	style-src 'self';
+	img-src 'self';
+	form-action 'none';
+">
+
+<!-- these properties are read by the engine to configure the game -->
+<title>Your title here!</title>
+<link rel="icon" href="example.png"> <!-- don't forget to make a favicon! -->
+<meta name="stack-exchange-site" content="codegolf">
+<meta name="stack-exchange-qid" content=""> <!-- question ID here -->
+
+<!-- Defines extra columns which appear in the entry selection pane of the code editor -->
+<meta name="team-view-columns" content='[]'>
+
+<!-- team selection configuration - pick a filename from /teams
+     (free_for_all = all entries on their own team) -->
+<meta name="team-type" content="free_for_all">
+<meta name="team-type-args" content='{}'>
+
+<!-- tournament configuration - pick a filename from /tournaments -->
+<meta name="tournament-type" content="single_match">
+<meta name="tournament-type-args" content='{}'>
+
+<!-- match configuration - pick a filename from /matches -->
+<meta name="match-type" content="brawl">
+<meta name="match-type-args" content='{}'>
+
+<meta name="game-type" content="example"> <!-- put your /games/<folder_name> here -->
+<meta name="game-config" content='{}'> <!-- put any default gameConfig stuff here -->
+<meta name="play-config" content='{
+	"delay": 0,
+	"speed": 1
+}'> <!-- pick a reasonable default playspeed (should be fast but watchable) -->
+<meta name="display-config" content='{}'> <!-- put any default displayConfig stuff here -->
+
+<script src="core/require.js"></script>
+<script src="engine/engine.js" async></script>
+</head>
+<body>
+
+<noscript>This viewer requires Javascript!</noscript>
+
+</body>
+</html>

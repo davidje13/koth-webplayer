@@ -13,6 +13,11 @@ define(['fetch/entry_utils'], (entry_utils) => {
 				action: 'LOADED',
 				entries,
 			});
+		}).catch((error) => {
+			self.postMessage({
+				action: 'LOAD_FAILED',
+				error: error.message,
+			});
 		});
 	}
 

@@ -81,6 +81,11 @@ define(['core/worker_utils', 'path:./loader_worker'], (worker_utils, loader_work
 			return new Promise((resolve, reject) => {
 				loaderWorker.addEventListener('message', (event) => {
 					const data = event.data;
+					if(data.error) {
+						loaderWorker.terminate();
+						reject(data.error);
+						return;
+					}
 					if(!data.entries) {
 						progressCallback && progressCallback(data.loaded, data.total);
 						return;

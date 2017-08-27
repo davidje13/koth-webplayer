@@ -33,6 +33,8 @@ should be as simple as defining its `GameManager`, `GameScorer` and `Display`
 inside a folder named `/games/<game-name-here>/`, and creating a new HTML file
 in the root with the desired configuration metatags.
 
+See `example.htm` and `/games/example/*` for details.
+
 ## Modification of the engine
 
 This is very early stages, and most functionality doesn't exist yet, or is

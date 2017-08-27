@@ -133,6 +133,9 @@ define(() => {
 		}
 
 		requestAnswers(site, qid, answerCallback, expectOver200 = false) {
+			if(!qid) {
+				return Promise.reject(new Error('No question ID given'));
+			}
 			return this.requestPaginatedItems(
 				'/questions/' + qid + '/answers',
 				{
