@@ -37,7 +37,7 @@ define(() => {
 
 	return class Random {
 		constructor(seed) {
-			this.s = new Uint32Array(4);
+			this.s = new Uint32Array(8);
 			this.seed(seed);
 		}
 
@@ -51,6 +51,20 @@ define(() => {
 			}
 			for(let i = 0; i < 4; ++ i) {
 				this.s[i] = readEncoded(seed.substr(i * CHARS_PER_INT, CHARS_PER_INT));
+			}
+		}
+
+		save() {
+//			this.s.copyWithin(4, 0, 4);
+			for(let i = 0; i < 4; ++ i) { // WORKAROUND (Safari)
+				this.s[i + 4] = this.s[i];
+			}
+		}
+
+		rollback() {
+//			this.s.copyWithin(0, 4, 4);
+			for(let i = 0; i < 4; ++ i) { // WORKAROUND (Safari)
+				this.s[i] = this.s[i + 4];
 			}
 		}
 

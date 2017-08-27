@@ -29,13 +29,17 @@ define(['core/worker_utils', 'path:./game_worker'], (worker_utils, game_worker_p
 			switch(data.action) {
 			case 'STEP_COMPLETE':
 				this.waiting = false;
-				if(!data.state.over) {
+				if(data.pauseTriggered) {
+					this.playConfig.delay = 0;
+					this.playConfig.speed = 0;
+				} else if(!data.state.over) {
 					this._advanceDelayed(true);
 				}
 				self.postMessage({
 					action: 'RENDER',
 					token: this.token,
 					state: data.state,
+					pauseTriggered: data.pauseTriggered,
 				});
 				break;
 			}
@@ -101,10 +105,16 @@ define(['core/worker_utils', 'path:./game_worker'], (worker_utils, game_worker_p
 		}
 
 		updateGameConfig(config) {
-			this.lastStartStep = Date.now();
 			this.gameWorker.postMessage({
 				action: 'UPDATE_CONFIG',
 				config,
+			});
+		}
+
+		updateEntry(entry) {
+			this.gameWorker.postMessage({
+				action: 'UPDATE_ENTRY',
+				entry,
 			});
 		}
 	};
@@ -134,6 +144,10 @@ define(['core/worker_utils', 'path:./game_worker'], (worker_utils, game_worker_p
 
 		case 'UPDATE_GAME_CONFIG':
 			game.updateGameConfig(data.gameConfig);
+			break;
+
+		case 'UPDATE_ENTRY':
+			game.updateEntry(data.entry);
 			break;
 
 		case 'STEP':

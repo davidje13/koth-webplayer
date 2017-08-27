@@ -31,6 +31,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			this.simulationTime = 0;
 			this.goal = {x: 0, y: 0};
 			this.goalLife = 0;
+			this.entryLookup = new Map();
 
 			const area = this.width * this.height;
 
@@ -51,24 +52,6 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 				return {
 					id: team.id,
 					entries: team.entries.map((entry) => {
-						const code = entry_utils.compile(
-							'Math.random = MathRandom;\n' +
-							entry.code,
-							[
-								'p1',
-								'id',
-								'eid',
-								'move',
-								'goal',
-								'grid',
-								'bots',
-								'ebots',
-								'getMem',
-								'setMem',
-								'MathRandom',
-							]
-						);
-
 						const bots = [];
 						for(let i = 0; i < flockSize; ++ i) {
 							bots.push({
@@ -79,15 +62,16 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 							sideInfo.x += sideInfo.dx;
 							sideInfo.y += sideInfo.dy;
 						}
-						return {
+						const o = {
 							id: entry.id,
-							fn: code.fn,
-							disqualified: Boolean(code.compileError),
-							error: code.compileError,
+							fn: null,
+							pauseOnError: false,
+							disqualified: false,
+							error: null,
 							errorInput: null,
 							errorOutput: null,
 							p1: sideInfos.p1,
-							answer_id: entry.answer_id,
+							answer_id: null,
 							bots,
 							memory: '',
 							moves: 0,
@@ -95,10 +79,55 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 							codeSteps: 0,
 							elapsedTime: 0,
 						};
+						this.entryLookup.set(entry.id, o);
+						this.updateEntry(entry);
+						return o;
 					}),
 				};
 			});
 			this.pickNewGoal();
+		}
+
+		updateEntry({id, code = null, pauseOnError = null, disqualified = null, answer_id = null}) {
+			const entry = this.entryLookup.get(id);
+			if(!entry) {
+				throw new Error('Attempt to modify an entry which was not registered in the game');
+			}
+			if(code !== null) {
+				const compiledCode = entry_utils.compile(
+					'Math.random = MathRandom;\n' + code,
+					[
+						'p1',
+						'id',
+						'eid',
+						'move',
+						'goal',
+						'grid',
+						'bots',
+						'ebots',
+						'getMem',
+						'setMem',
+						'MathRandom',
+					]
+				);
+				entry.fn = compiledCode.fn;
+				if(compiledCode.compileError) {
+					entry.disqualified = true;
+					entry.error = compiledCode.compileError;
+				} else {
+					// Automatically un-disqualify entries when code is updated
+					entry.disqualified = false;
+				}
+			}
+			if(pauseOnError !== null) {
+				entry.pauseOnError = pauseOnError;
+			}
+			if(disqualified !== null) {
+				entry.disqualified = disqualified;
+			}
+			if(answer_id !== null) {
+				entry.answer_id = answer_id;
+			}
 		}
 
 		updateConfig({maxFrame, visibilitySquare, goalTimeLimit}) {

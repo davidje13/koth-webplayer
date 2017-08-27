@@ -202,7 +202,6 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 				const positionIndex = this.random.next(positions.length);
 				const startIndex = positions.splice(positionIndex, 1)[0];
 
-				const code = entry_utils.compile(entry.code, ['view']);
 				const queen = {
 					id: (this.nextAntID ++),
 					entry: entry.id,
@@ -214,20 +213,22 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 				};
 				this.entryLookup.set(entry.id, {
 					id: entry.id,
-					fn: code.fn,
-					cacheView: array_utils.makeList(CACHE_SIZE, null),
-					cacheAct: array_utils.makeList(CACHE_SIZE, null),
-					disqualified: Boolean(code.compileError),
-					error: code.compileError,
+					fn: null,
+					pauseOnError: false,
+					disqualified: false,
+					error: null,
 					errorInput: null,
 					errorOutput: null,
 					queen,
 					workerCounts: array_utils.makeList(WORKER_TYPES, 0),
+					cacheView: array_utils.makeList(CACHE_SIZE, null),
+					cacheAct: array_utils.makeList(CACHE_SIZE, null),
 					codeSteps: 0,
 					elapsedTime: 0,
 				});
 				this.ants.push(queen);
 				this.antGrid[queen.i] = queen;
+				this.updateEntry(entry);
 			}));
 
 			// Ensure random competitor order
@@ -236,6 +237,30 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			// All remaining positions are food
 			for(let i = 0; i < positions.length; ++ i) {
 				setFoodAtI(this.board, positions[i], true);
+			}
+		}
+
+		updateEntry({id, code = null, pauseOnError = null, disqualified = null}) {
+			const entry = this.entryLookup.get(id);
+			if(!entry) {
+				throw new Error('Attempt to modify an entry which was not registered in the game');
+			}
+			if(code !== null) {
+				const compiledCode = entry_utils.compile(code, ['view']);
+				entry.fn = compiledCode.fn;
+				if(compiledCode.compileError) {
+					entry.disqualified = true;
+					entry.error = compiledCode.compileError;
+				} else {
+					// Automatically un-disqualify entries when code is updated
+					entry.disqualified = false;
+				}
+			}
+			if(pauseOnError !== null) {
+				entry.pauseOnError = pauseOnError;
+			}
+			if(disqualified !== null) {
+				entry.disqualified = disqualified;
 			}
 		}
 
@@ -342,6 +367,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 		}
 
 		stepAnt(index) {
+			this.random.save();
 			const ant = this.ants[index];
 			const entry = this.entryLookup.get(ant.entry);
 			if(entry.disqualified) {
@@ -364,13 +390,19 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					error = 'Threw ' + e.toString();
 				}
 				if(error) {
-					entry.disqualified = true;
 					entry.errorInput = JSON.stringify(viewToAPI(view));
 					entry.errorOutput = JSON.stringify(action);
 					entry.error = (
 						error + ' (gave ' + entry.errorOutput +
 						' for ' + entry.errorInput + ')'
 					);
+					if(entry.pauseOnError) {
+						this.random.rollback();
+						this.currentAnt = index + 1;
+						throw 'PAUSE';
+					} else {
+						entry.disqualified = true;
+					}
 					return;
 				}
 				const viewCopy = [];

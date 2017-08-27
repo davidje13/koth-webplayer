@@ -54,9 +54,45 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 				const positionIndex = this.random.next(positions.length);
 				const startIndex = positions.splice(positionIndex, 1)[0];
 
-				const code = entry_utils.compile(
-					'Math.random = MathRandom;\n' +
-					entry.code,
+				const bot = {
+					id: this.bots.length,
+					entry: entry.id,
+					team: team.id,
+					teamIndex,
+					alive: true,
+					message: '',
+					moves: 0,
+					kills: 0,
+					x: startIndex % this.width,
+					y: (startIndex / this.width)|0,
+				};
+
+				this.entryLookup.set(entry.id, {
+					id: entry.id,
+					fn: null,
+					pauseOnError: false,
+					disqualified: false,
+					error: null,
+					errorInput: null,
+					errorOutput: null,
+					bot,
+					user_id: null,
+					codeSteps: 0,
+					elapsedTime: 0,
+				});
+				this.bots.push(bot);
+				this.updateEntry(entry);
+			}));
+		}
+
+		updateEntry({id, code = null, pauseOnError = null, disqualified = null, user_id = null}) {
+			const entry = this.entryLookup.get(id);
+			if(!entry) {
+				throw new Error('Attempt to modify an entry which was not registered in the game');
+			}
+			if(code !== null) {
+				const compiledCode = entry_utils.compile(
+					'Math.random = MathRandom;' + code,
 					[
 						'move',
 						'x',
@@ -70,34 +106,24 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 						'MathRandom',
 					]
 				);
-
-				const bot = {
-					id: this.bots.length,
-					entry: entry.id,
-					team: team.id,
-					teamIndex,
-					user_id: entry.user_id,
-					alive: true,
-					message: '',
-					moves: 0,
-					kills: 0,
-					x: startIndex % this.width,
-					y: (startIndex / this.width)|0,
-				};
-
-				this.entryLookup.set(entry.id, {
-					id: entry.id,
-					fn: code.fn,
-					disqualified: Boolean(code.compileError),
-					error: code.compileError,
-					errorInput: null,
-					errorOutput: null,
-					bot,
-					codeSteps: 0,
-					elapsedTime: 0,
-				});
-				this.bots.push(bot);
-			}));
+				entry.fn = compiledCode.fn;
+				if(compiledCode.compileError) {
+					entry.disqualified = true;
+					entry.error = compiledCode.compileError;
+				} else {
+					// Automatically un-disqualify entries when code is updated
+					entry.disqualified = false;
+				}
+			}
+			if(pauseOnError !== null) {
+				entry.pauseOnError = pauseOnError;
+			}
+			if(disqualified !== null) {
+				entry.disqualified = disqualified;
+			}
+			if(user_id !== null) {
+				entry.user_id = user_id;
+			}
 		}
 
 		updateConfig({maxFrame, visibilityDistance}) {
@@ -159,12 +185,12 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 						nearby[team].push({
 							x: otherBot.x,
 							y: otherBot.y,
-							id: otherBot.user_id,
+							id: otherEntry.user_id,
 						});
 					}
-					messages[otherBot.user_id] = otherBot.message;
+					messages[otherEntry.user_id] = otherBot.message;
 				} else {
-					messages[otherBot.user_id] = 'X';
+					messages[otherEntry.user_id] = 'X';
 				}
 			});
 
@@ -195,7 +221,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					params.eNear,
 					(msg) => { // setMsg(message)
 						if(typeof msg === 'string') {
-							messages[bot.user_id] = bot.message = msg.substr(0, 64);
+							messages[entry.user_id] = bot.message = msg.substr(0, 64);
 						}
 					},
 					(id) => { // getMsg(ppcg_user_id)

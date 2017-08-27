@@ -5,7 +5,7 @@ define(['math/Random'], (Random) => {
 		let game = null;
 		let time0 = null;
 
-		function sendState() {
+		function sendState(pauseTriggered = false) {
 			const now = Date.now();
 			const state = game.getState();
 			self.postMessage({
@@ -13,6 +13,7 @@ define(['math/Random'], (Random) => {
 				state: Object.assign({}, state, {
 					realWorldTime: now - time0,
 				}),
+				pauseTriggered,
 			});
 		}
 
@@ -31,17 +32,29 @@ define(['math/Random'], (Random) => {
 
 			case 'STEP':
 				const limit = data.maxTime ? (Date.now() + data.maxTime) : 0;
-				for(let i = 0; (data.steps < 0 || i < data.steps) && !game.isOver(); ++ i) {
-					game.step(data.type);
-					if(limit && Date.now() >= limit) {
-						break;
+				try {
+					for(let i = 0; (data.steps < 0 || i < data.steps) && !game.isOver(); ++ i) {
+						game.step(data.type);
+						if(limit && Date.now() >= limit) {
+							break;
+						}
+					}
+					sendState();
+				} catch(e) {
+					if(e === 'PAUSE') {
+						sendState(true);
+					} else {
+						throw e;
 					}
 				}
-				sendState();
 				break;
 
 			case 'UPDATE_CONFIG':
 				game.updateConfig(data.config);
+				break;
+
+			case 'UPDATE_ENTRY':
+				game.updateEntry(data.entry);
 				break;
 			}
 		});

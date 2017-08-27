@@ -126,6 +126,24 @@ define([
 			}
 		}
 
+		updateEntry(updatedEntry) {
+			if(this.dead) {
+				throw new Error('Attempt to use terminated game');
+			}
+			this.config.game.teams.forEach((team) => team.entries.forEach((entry) => {
+				if(entry.id === updatedEntry.id) {
+					Object.assign(entry, updateEntry);
+				}
+			}));
+			if(this.gameStarted) {
+				this.parent.sandbox.postMessage({
+					action: 'UPDATE_ENTRY',
+					token: this.token,
+					entry: updatedEntry,
+				});
+			}
+		}
+
 		updatePlayConfig(delta) {
 			if(this.dead) {
 				throw new Error('Attempt to use terminated game');
@@ -253,6 +271,9 @@ define([
 					const game = this.games.get(data.token);
 					if(game) {
 						game.updateState(data.state);
+						if(data.pauseTriggered) {
+							game.updatePlayConfig({speed: 0, delta: 0});
+						}
 					}
 					break;
 				}
