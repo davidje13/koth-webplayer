@@ -140,6 +140,7 @@ define([
 
 			this.latestAnts = null;
 			this.latestBoard = null;
+			this.latestEntries = new Map();
 			this.latestW = 0;
 			this.latestH = 0;
 			this.queenMarkerType = '';
@@ -213,6 +214,10 @@ define([
 		}
 
 		clear() {
+			this.latestAnts = null;
+			this.latestBoard = null;
+			this.latestEntries.clear();
+
 			this.renderer.clear();
 			this.table.clear();
 
@@ -231,6 +236,12 @@ define([
 			this.latestW = config.width;
 			this.latestH = config.height;
 
+			this.latestEntries.clear();
+			config.teams.forEach((team) => team.entries.forEach((entry) => {
+				this.latestEntries.set(entry.id, entry);
+			}));
+
+			this.repositionMarkers();
 			this.board.repaint();
 		}
 
@@ -263,8 +274,8 @@ define([
 
 			this.latestAnts = state.ants;
 			this.latestBoard = state.board;
-			this.repositionMarkers();
 
+			this.repositionMarkers();
 			this.board.repaint();
 		}
 
@@ -290,8 +301,19 @@ define([
 				}
 			}
 			if((this.queenMarkerType || this.workerMarkerType) && this.latestAnts) {
-				for(let i = 0; i < this.latestAnts.length; ++ i) {
-					const ant = this.latestAnts[i];
+				let anyFocussed = false;
+				this.latestEntries.forEach((entry) => {
+					if(entry.focussed) {
+						anyFocussed = true;
+					}
+				});
+				this.latestAnts.forEach((ant) => {
+					if(anyFocussed) {
+						const entry = this.latestEntries.get(ant.entry);
+						if(!entry || !entry.focussed) {
+							return;
+						}
+					}
 					let className = '';
 					if(ant.type === QUEEN) {
 						if(this.queenMarkerType) {
@@ -311,7 +333,7 @@ define([
 							clip: false,
 						});
 					}
-				}
+				});
 			}
 		}
 

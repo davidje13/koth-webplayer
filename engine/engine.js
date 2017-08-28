@@ -156,8 +156,20 @@ require([
 		const popupClose = docutil.make('button', {'class': 'close'}, ['Close']);
 		popupClose.addEventListener('click', () => {
 			docutil.setParent(popupManager.dom(), null);
+			updateEntryFocus(null);
 		});
 		popupManager.optionsDOM().appendChild(popupClose);
+
+		function updateEntryFocus(focussedEntry) {
+			if(!singleGame) {
+				return;
+			}
+			const teams = singleGame.getTeams();
+			teams.forEach((team) => team.entries.forEach((entry) => {
+				entry.focussed = (focussedEntry && entry.id === focussedEntry.id);
+			}));
+			singleGame.updateGameConfig({teams}, {updateGame: false});
+		}
 
 		popupManager.addEventListener('change', ({entry, title, code, pauseOnError}) => {
 			entry.title = title;
@@ -172,6 +184,7 @@ require([
 			}
 			popupManager.rebuild();
 		});
+		popupManager.addEventListener('select', updateEntryFocus);
 
 		tournamentPage.addEventListener('pop', () => {
 			backgroundGames.terminateAll();
@@ -183,6 +196,7 @@ require([
 			}
 			popupManager.setTeams(singleGame.getTeams());
 			docutil.setParent(popupManager.dom(), docutil.body);
+			updateEntryFocus(popupManager.getSelectedEntry());
 		});
 
 		function updateEntryManager({teams}) {
@@ -191,6 +205,7 @@ require([
 
 		gamePage.addEventListener('leave', () => {
 			docutil.setParent(popupManager.dom(), null);
+			updateEntryFocus(null);
 		});
 
 		// TODO: extract all of this & improve separation / APIs

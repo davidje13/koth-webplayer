@@ -64,7 +64,10 @@ define(['core/EventObject', 'display/document_utils', 'display/TreeTable'], (Eve
 				]),
 			]);
 
-			this.tree.addEventListener('select', this._update.bind(this));
+			this.tree.addEventListener('select', () => {
+				this._update();
+				this.trigger('select', [this.getSelectedEntry()]);
+			});
 
 			require([
 				'codemirror/lib/codemirror',
@@ -98,6 +101,11 @@ define(['core/EventObject', 'display/document_utils', 'display/TreeTable'], (Eve
 				this.setCode(code);
 				this.codeEditor.on('blur', this._triggerChange);
 			});
+		}
+
+		getSelectedEntry() {
+			const selectedItem = this.tree.getSelectedItem();
+			return (selectedItem ? selectedItem.datum.baseEntry : null);
 		}
 
 		_triggerChange() {

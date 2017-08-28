@@ -114,7 +114,7 @@ define([
 			}
 		}
 
-		updateGameConfig(delta) {
+		updateGameConfig(delta, {updateGame = true} = {}) {
 			if(this.dead) {
 				throw new Error('Attempt to use terminated game');
 			}
@@ -122,7 +122,7 @@ define([
 			if(this.display) {
 				this.display.updateGameConfig(this.config.game);
 			}
-			if(this.gameStarted) {
+			if(this.gameStarted && updateGame) {
 				this.parent.sandbox.postMessage({
 					action: 'UPDATE_GAME_CONFIG',
 					token: this.token,
@@ -140,6 +140,9 @@ define([
 					Object.assign(entry, updatedEntry);
 				}
 			}));
+			if(this.display) {
+				this.display.updateGameConfig(this.config.game);
+			}
 			if(this.gameStarted) {
 				this.parent.sandbox.postMessage({
 					action: 'UPDATE_ENTRY',
