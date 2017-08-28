@@ -1,6 +1,10 @@
 define(['document'], (document) => {
 	'use strict';
 
+	function normaliseClasses(c) {
+		return c.replace(/  +/g, ' ').trim();
+	}
+
 	return {
 		body: document.body,
 
@@ -61,6 +65,24 @@ define(['document'], (document) => {
 						element.setAttribute(k, attrs[k]);
 					}
 				}
+			}
+		},
+
+		addClass: (element, className) => {
+			const c = ' ' + element.getAttribute('class') + ' ';
+			if(c.indexOf(' ' + className + ' ') === -1) {
+				element.setAttribute('class', normaliseClasses(c + ' ' + className));
+			}
+		},
+
+		removeClass: (element, className) => {
+			const c = ' ' + element.getAttribute('class') + ' ';
+			const p = c.indexOf(' ' + className + ' ');
+			if(p !== -1) {
+				element.setAttribute('class', normaliseClasses(
+					c.substr(0, p) +
+					c.substr(p + className.length + 1)
+				));
 			}
 		},
 

@@ -39,6 +39,7 @@ define([
 
 		_markDead() {
 			this.swapDisplay(null);
+			this.removeAllEventListeners();
 			this.dead = true;
 		}
 
@@ -79,6 +80,10 @@ define([
 
 		getSeed() {
 			return this.config.game.seed;
+		}
+
+		getTeams() {
+			return this.config.game.teams;
 		}
 
 		step(type = null, steps = null) {
@@ -132,7 +137,7 @@ define([
 			}
 			this.config.game.teams.forEach((team) => team.entries.forEach((entry) => {
 				if(entry.id === updatedEntry.id) {
-					Object.assign(entry, updateEntry);
+					Object.assign(entry, updatedEntry);
 				}
 			}));
 			if(this.gameStarted) {

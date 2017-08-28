@@ -1,13 +1,35 @@
 .game-container {
-	position: relative;
-	padding: 10px;
-	background: #999999;
-	margin: 10px;
-	float: left;
+	text-align: center;
+}
+
+.visualisation-container {
+	display: inline-block;
+	vertical-align: top;
+	margin: 0 10px 20px;
+}
+
+.game-container .match {
+	display: inline-block;
+	vertical-align: top;
+	margin: 0 10px 20px;
+}
+
+.entry-edit-button {
+	position: fixed;
+	bottom: 10px;
+	right: 10px;
+}
+
+.game-board, .game-board-3d {
+	margin: 0 auto;
+}
+
+.game-board canvas {
+	background: #808080;
 }
 
 .options {
-	color: #333333;
+	color: #EEEEEE;
 	font-size: 0.8em;
 	margin: 5px -5px;
 }
@@ -62,6 +84,8 @@
 	font-size: 0.8em;
 	vertical-align: -5px;
 	margin: 0 10px;
+	text-align: left;
+	min-width: 200px;
 }
 
 .options .metric {
@@ -69,36 +93,6 @@
 }
 
 .options .destructive {
-	margin: 5px 0 0 10px;
-	float: right;
-}
-
-.fouls {
-	margin: 20px;
-	border-collapse: collapse;
 	display: inline-block;
-	background: #FFFFFF;
-	color: #444444;
-	font-size: 0.8em;
-	vertical-align: top;
-	max-width: 500px;
-}
-
-.fouls td, .fouls th {
-	border: 1px solid #444444;
-	padding: 5px;
-}
-
-.fouls .foul-reason {
-	max-width: 350px;
-	word-wrap: break-word;
-	font-family: monospace;
-}
-
-.fouls .foul-warn {
-	background: #FFFFDD;
-}
-
-.fouls .foul-error {
-	background: #FFDDDD;
+	margin: 5px 0 0 10px;
 }

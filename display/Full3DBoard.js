@@ -183,6 +183,10 @@ define([
 				this.canvas.style.width = width + 'px';
 				this.canvas.style.height = height + 'px';
 				this.context.viewport(0, 0, this.canvas.width, this.canvas.height);
+				docutil.updateStyle(this.board, {
+					'width': (width|0) + 'px',
+					'height': (height|0) + 'px',
+				});
 			}
 		}
 

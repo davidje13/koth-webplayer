@@ -7,7 +7,6 @@ body {
 	background: #666666;
 	color: #FFFFFF;
 	font-family: sans-serif;
-	margin: 50px 10px;
 }
 
 h1, h2, h3, h4, h5, h6, p, nav, ol, ul, li, table, thead, tbody, tr, td, th {
@@ -42,14 +41,14 @@ h4 {
 }
 
 nav {
-	position: fixed;
+	position: sticky;
 	top: 0;
 	left: 0;
-	right: 0;
 	padding: 0 10px;
 	background: #333333;
 	z-index: 200;
 	user-select: none;
+	margin-bottom: 20px;
 }
 
 nav li {
@@ -125,7 +124,7 @@ h4 a:active, h4 a:hover {
 	width: 400px;
 	border-radius: 5px;
 	box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-	margin: 100px auto;
+	margin: 0 auto;
 }
 
 .initial-load .message {
@@ -147,10 +146,12 @@ h4 a:active, h4 a:hover {
 	text-align: center;
 }
 
-.team-manager {
+.team-manager, .popup-team-manager {
 	background: #FFFFFF;
 	color: #333333;
+}
 
+.team-manager {
 	position: absolute;
 	top: 40px;
 	left: 0;
@@ -159,26 +160,20 @@ h4 a:active, h4 a:hover {
 	border-top: 1px solid #333333;
 }
 
-.team-manager .options-bar {
-	position: absolute;
-	top: 0;
+.popup-team-manager {
+	position: fixed;
 	left: 0;
 	right: 0;
-	height: 30px;
-	padding: 5px;
-	border-bottom: 1px solid #333333;
-	box-sizing: border-box;
-	background: #EEEEEE;
-	text-align: right;
-}
-
-.team-manager .options-bar button {
-	margin: 0 5px;
+	bottom: 0;
+	height: 50%;
+	min-height: 100px;
+	border-top: 1px solid #333333;
+	z-index: 10;
 }
 
 .team-table-hold {
 	position: absolute;
-	top: 30px;
+	top: 0;
 	left: 0;
 	bottom: 0;
 	width: 350px;
@@ -210,6 +205,7 @@ h4 a:active, h4 a:hover {
 	padding: 2px 5px;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	position: relative;
 }
 
 .team-table .team td {
@@ -233,19 +229,74 @@ h4 a:active, h4 a:hover {
 	background: #FFFFCC;
 }
 
-.entry-editor, .entry-editor-empty {
+.team-table .warning td:first-child:after, .team-table .disqualified td:first-child:after {
+	content: "";
 	position: absolute;
-	top: 30px;
-	left: 350px;
-	right: 0;
-	bottom: 0;
+	top: 50%;
+	right: 15px;
+	width: 10px;
+	height: 10px;
+	margin-top: -5px;
+	border-radius: 100%;
+}
+
+.team-table .warning td:first-child:after {
+	background: #EEEE00;
+}
+
+.team-table .disqualified td:first-child:after {
+	background: #EE0000;
 }
 
 .entry-editor {
+	position: absolute;
+	top: 0;
+	left: 350px;
+	right: 0;
+	bottom: 0;
 	font-size: 0.9em;
 }
 
+.options-bar {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 30px;
+	padding: 5px 15px;
+	border-bottom: 1px solid #333333;
+	box-sizing: border-box;
+	background: #EEEEEE;
+	user-select: none;
+	font-size: 0.9em;
+	color: #333333;
+}
+
+.options-bar button {
+	margin: 0 5px;
+}
+
+.options-bar .close, .options-bar .general-options {
+	float: right;
+}
+
+.options-bar label {
+	margin-right: 20px;
+}
+
+.options-bar input[type="text"] {
+	width: 250px;
+	margin-left: 10px;
+	border: 1px solid #333333;
+	padding: 3px 5px;
+}
+
 .entry-editor-empty {
+	position: absolute;
+	top: 30px;
+	left: 0;
+	right: 0;
+	bottom: 0;
 	color: #666666;
 	font-size: 1.2em;
 	line-height: 1.5em;
@@ -254,7 +305,7 @@ h4 a:active, h4 a:hover {
 }
 
 .entry-editor-empty h1 {
-	font-size: 1.2em;
+	font-size: 1.3em;
 	margin-bottom: 40px;
 }
 
@@ -272,40 +323,30 @@ h4 a:active, h4 a:hover {
 	font-size: 0.8em;
 }
 
-.entry-editor label {
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	height: 30px;
-	line-height: 29px;
-	background: #EEEEEE;
-	font-size: 0.9em;
-	color: #333333;
-	padding: 0 15px;
-	border-bottom: 1px solid #333333;
-	box-sizing: border-box;
-	user-select: none;
-}
-
-.entry-editor label input {
-	width: 300px;
-	margin-left: 10px;
-	border: 1px solid #333333;
-	padding: 3px 5px;
-}
-
 .code-editor {
 	position: absolute;
 	top: 30px;
 	left: 0;
-	right: 0;
+	right: 300px;
 	bottom: 0;
 }
 
 .code-editor textarea, .code-editor .CodeMirror {
 	width: 100%;
 	height: 100%;
+}
+
+.info-box {
+	position: absolute;
+	top: 30px;
+	right: 0;
+	bottom: 0;
+	width: 300px;
+	padding: 5px;
+	border-left: 1px solid #333333;
+	box-sizing: border-box;
+	word-wrap: break-word;
+	font-family: monospace;
 }
 
 .cm-trailingspace {

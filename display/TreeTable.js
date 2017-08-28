@@ -115,6 +115,7 @@ define(['core/EventObject', './document_utils', './style.css'], (EventObject, do
 			this.columns = columns;
 			this.data = data;
 			this.rows = [];
+			this.rowLookup = new Map();
 			this.selected = null;
 			this.selectedKey = null;
 			this.columnData = [];
@@ -143,13 +144,20 @@ define(['core/EventObject', './document_utils', './style.css'], (EventObject, do
 			this.redrawRows();
 		}
 
+		getItemByKey(key) {
+			return this.rowLookup.get(key) || null;
+		}
+
+		getSelectedItem() {
+			return this.selected;
+		}
+
 		select(datum) {
 			if(this.selected && this.selected.datum === datum) {
 				return;
 			}
 			if(this.selected) {
-				const oldClass = this.selected.row.getAttribute('class');
-				docutil.updateAttrs(this.selected.row, {'class': oldClass.replace(/ *\bselected\b/, '')});
+				docutil.removeClass(this.selected.row, 'selected');
 			}
 			this.selected = null;
 			this.selectedKey = null;
@@ -161,8 +169,7 @@ define(['core/EventObject', './document_utils', './style.css'], (EventObject, do
 					}
 				});
 				if(this.selected) {
-					const oldClass = this.selected.row.getAttribute('class');
-					docutil.updateAttrs(this.selected.row, {'class': oldClass + ' selected'});
+					docutil.addClass(this.selected.row, 'selected');
 				}
 			}
 			this.trigger('select', [this.selected ? this.selected.datum : null]);
@@ -182,18 +189,19 @@ define(['core/EventObject', './document_utils', './style.css'], (EventObject, do
 			// - ensure data in rows is up to date
 
 			this.rows.length = 0;
+			this.rowLookup.clear();
 			this.data.forEach((datum) => {
 				buildRows(this, this.rows, this.columnData, datum);
 			});
 			this.rows.forEach((row) => {
 				this.tbody.appendChild(row.row);
+				this.rowLookup.set(row.key, row);
 				if(row.key === this.selectedKey) {
 					this.selected = row;
 				}
 			});
 			if(this.selected) {
-				const oldClass = this.selected.row.getAttribute('class');
-				docutil.updateAttrs(this.selected.row, {'class': oldClass + ' selected'});
+				docutil.addClass(this.selected.row, 'selected');
 			} else {
 				this.selectedKey = null;
 			}

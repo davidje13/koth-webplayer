@@ -5,7 +5,6 @@ define([
 	'display/Full2DBoard',
 	'display/OptionsBar',
 	'games/common/components/StepperOptions',
-	'games/common/components/DisqualificationsDisplay',
 	'./components/BoardRenderer',
 	'./components/LeaderboardDisplay',
 	'games/common/style.css',
@@ -17,7 +16,6 @@ define([
 	Full2DBoard,
 	OptionsBar,
 	StepperOptions,
-	DisqualificationsDisplay,
 	BoardRenderer,
 	LeaderboardDisplay,
 ) => {
@@ -134,7 +132,6 @@ define([
 				scaleX: 0
 			});
 			this.table = new LeaderboardDisplay();
-			this.errors = new DisqualificationsDisplay();
 			this.renderer.setColourChoices(COLOUR_OPTIONS);
 			this.table.setColourChoices(COLOUR_OPTIONS);
 			this.options.setRenderPerformance(this.renderer);
@@ -145,19 +142,25 @@ define([
 			this.latestTarget = null;
 			this.targetMarkerType = '';
 
+			const entryEditButton = docutil.make('button', {'class': 'entry-edit-button'}, ['Edit Entries']);
+			entryEditButton.addEventListener('click', () => {
+				this.trigger('editentries');
+			});
+
 			this.root = docutil.make('section', {'class': 'game-container'}, [
-				this.options.dom(),
-				this.board.dom(),
-				this.visualOptions.dom(),
+				docutil.make('div', {'class': 'visualisation-container'}, [
+					this.options.dom(),
+					this.board.dom(),
+					this.visualOptions.dom(),
+				]),
 				this.table.dom(),
-				this.errors.dom(),
+				entryEditButton,
 			]);
 		}
 
 		clear() {
 			this.renderer.clear();
 			this.table.clear();
-			this.errors.clear();
 
 			this.markers.clear();
 			this.board.repaint();
@@ -171,7 +174,6 @@ define([
 			this.options.updateGameConfig(config);
 			this.renderer.updateGameConfig(config);
 			this.table.updateGameConfig(config);
-			this.errors.updateGameConfig(config);
 			this.latestW = config.width;
 			this.latestH = config.height;
 
@@ -197,7 +199,6 @@ define([
 			this.options.updateState(state);
 			this.renderer.updateState(state);
 			this.table.updateState(state);
-			this.errors.updateState(state);
 
 			this.latestTarget = state.target;
 			this.repositionMarkers();

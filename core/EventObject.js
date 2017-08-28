@@ -31,7 +31,7 @@ define(() => {
 			return (this.listeners.get(type) || []).length;
 		}
 
-		removeAllEventListenets(type) {
+		removeAllEventListeners(type) {
 			if(type) {
 				this.listeners.delete(type);
 			} else {

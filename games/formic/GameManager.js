@@ -254,8 +254,11 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					entry.error = compiledCode.compileError;
 				} else {
 					// Automatically un-disqualify entries when code is updated
+					entry.error = null;
 					entry.disqualified = false;
 				}
+				entry.errorInput = null;
+				entry.errorOutput = null;
 			}
 			if(pauseOnError !== null) {
 				entry.pauseOnError = pauseOnError;

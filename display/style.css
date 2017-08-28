@@ -10,7 +10,6 @@
 }
 
 .game-board canvas {
-	background: #808080;
 	transform-origin: top left;
 	-webkit-transform-style: preserve-3d;
 }

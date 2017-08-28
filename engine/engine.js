@@ -1,12 +1,14 @@
 'use strict';
 
 // TODO:
-// * enable/disable/edit entries
-// * add new entry
 // * remember display config in local storage / cookies
 // * remember custom entries in local storage (maybe)
-// * team management
 // * permalinks need to store which entries were chosen (& ordering)
+// * add drag-resizing of entry editor popup (and columns within it)
+// * fix page scrolling when entry editor popup is visible (body margin? move into new scrolling div?)
+// * jump-to-entry in editor when pausing due to an error
+// * why are the entry table headers not visible in the popup version of the entry editor?
+// * currently using the code editor mutates the original team object state; it should be considered immutable, and copies made (will need some thought on how to handle propagating changes made in a game back to tournaments/welcome screen)
 
 require([
 	'display/document_utils',
@@ -74,8 +76,8 @@ require([
 	require([
 		'math/Random',
 		'engine/GameOrchestrator',
+		'engine/EntryManager',
 		'core/sandbox_utils',
-		'display/TreeTable',
 		'display/MatchSummary', // TODO: game-customisable
 		'teams/' + teamType,
 		'tournaments/' + tournamentType,
@@ -87,8 +89,8 @@ require([
 	], (
 		Random,
 		GameOrchestrator,
+		EntryManager,
 		sandbox_utils,
-		TreeTable,
 		MatchSummary,
 		TeamMaker,
 		Tournament,
@@ -121,6 +123,8 @@ require([
 			beginGame(null, managedTeams);
 		});
 
+		const generalOptions = docutil.make('span', {'class': 'general-options'}, [btnTournament, btnGame]);
+
 		const tournamentSeed = docutil.text();
 		const tournamentDisplay = docutil.make('section', {'class': 'tournament'}, [
 			docutil.make('header', {}, [
@@ -141,8 +145,52 @@ require([
 			singleGame = null;
 		});
 
+		const popupManager = new EntryManager({
+			className: 'popup-team-manager',
+			extraColumns: teamViewColumns,
+			showTeams: teamType !== 'free_for_all',
+			allowTeamModification: false,
+			allowAdd: false,
+		});
+
+		const popupClose = docutil.make('button', {'class': 'close'}, ['Close']);
+		popupClose.addEventListener('click', () => {
+			docutil.setParent(popupManager.dom(), null);
+		});
+		popupManager.optionsDOM().appendChild(popupClose);
+
+		popupManager.addEventListener('change', ({entry, title, code, pauseOnError}) => {
+			entry.title = title;
+			entry.code = code;
+			if(singleGame) {
+				singleGame.updateEntry({
+					id: entry.id,
+					title,
+					code,
+					pauseOnError,
+				});
+			}
+			popupManager.rebuild();
+		});
+
 		tournamentPage.addEventListener('pop', () => {
 			backgroundGames.terminateAll();
+		});
+
+		singleGameDisplay.addEventListener('editentries', () => {
+			if(!singleGame) {
+				return;
+			}
+			popupManager.setTeams(singleGame.getTeams());
+			docutil.setParent(popupManager.dom(), docutil.body);
+		});
+
+		function updateEntryManager({teams}) {
+			popupManager.setTeamStatuses(teams);
+		}
+
+		gamePage.addEventListener('leave', () => {
+			docutil.setParent(popupManager.dom(), null);
 		});
 
 		// TODO: extract all of this & improve separation / APIs
@@ -231,6 +279,7 @@ require([
 				basePlayConfig,
 				baseDisplayConfig,
 			});
+			singleGame.addEventListener('update', updateEntryManager);
 			singleGame.begin({seed, teams});
 			function makeNav() {
 				return {
@@ -255,202 +304,6 @@ require([
 			docutil.updateText(tournamentSeed, tournament.getSeed());
 		}
 
-		function renderEntryManagement(teams) {
-			// TODO:
-			// * Allow drag+drop to reorder teams & entries, and switch entry teams
-			// * Add change handler to 'enabled' chekboxes & reordering to update managedTeams
-			// * Load code into codemirror when selecting
-			// * Default code for new entries (via meta tag)
-			// * Persist in local storage (maybe use answer_id as unique refs)
-
-			let titleEditor = docutil.make('input');
-			let codeEditor = docutil.make('textarea');
-			const tree = new TreeTable({
-				className: 'team-table',
-				columns: [
-					{title: 'Entry', attribute: 'label'},
-					...teamViewColumns,
-					{title: '', attribute: 'enabled', className: 'enabled-opt'},
-				],
-			});
-
-			function rebuildTree() {
-				let treeData = [];
-				if(teamType === 'free_for_all') {
-					teams.forEach((team) => team.entries.forEach((entry) => {
-						const changed = entry.code !== entry.originalCode;
-						treeData.push({
-							key: entry.id,
-							className: changed ? 'changed' : '',
-							label: {
-								value: entry.title,
-								title: entry.title + (changed ? ' (changed)' : ''),
-							},
-							user_id: entry.user_id,
-							answer_id: entry.answer_id,
-							enabled: docutil.make('input', {type: 'checkbox', checked: 'checked', disabled: 'disabled'}),
-							baseEntry: entry,
-						});
-					}));
-					treeData.push({label: docutil.make('button', {disabled: 'disabled'}, ['+ Add Entry']), selectable: false});
-				} else {
-					treeData = teams.map((team) => {
-						const nested = team.entries.map((entry) => {
-							const changed = entry.code !== entry.originalCode;
-							return {
-								key: team.id + '-' + entry.id,
-								className: changed ? 'changed' : '',
-								label: {
-									value: entry.title,
-									title: entry.title + (changed ? ' (changed)' : ''),
-								},
-								user_id: entry.user_id,
-								answer_id: entry.answer_id,
-								enabled: docutil.make('input', {type: 'checkbox', checked: 'checked', disabled: 'disabled'}),
-								baseEntry: entry,
-							};
-						});
-						nested.push({label: docutil.make('button', {disabled: 'disabled'}, ['+ Add Entry']), selectable: false});
-						return {
-							key: team.id,
-							className: 'team',
-							label: 'Team ' + team.id,
-							enabled: docutil.make('input', {type: 'checkbox', checked: 'checked', disabled: 'disabled'}),
-							nested,
-							baseTeam: team,
-						};
-					});
-					treeData.push({label: docutil.make('button', {disabled: 'disabled'}, ['+ Add Team']), selectable: false});
-				}
-				tree.setData(treeData);
-			}
-			rebuildTree();
-
-			function saveState() {
-				if(!selectedEntry) {
-					return;
-				}
-				const title = titleEditor.value;
-				let code = null;
-				if(codeEditor.getDoc) {
-					code = codeEditor.getDoc().getValue();
-				} else {
-					code = codeEditor.value;
-				}
-				selectedEntry.title = title;
-				selectedEntry.code = code;
-				// TODO: this rebuild prevents clicking directly on an item in the tree
-				// (the item is rebuilt on text area blur so the click never happens)
-				// Should update TableTree to only re-render diff
-				rebuildTree();
-			}
-
-			function setCode(code) {
-				if(codeEditor.getDoc) {
-					codeEditor.getDoc().setValue(code);
-					let tabs = false;
-					let indent = 4;
-					if((code.match(/\n  [^ ]/g) || []).length) {
-						indent = 2;
-					} else if((code.match(/\n\t/g) || []).length > (code.match(/\n  /g) || []).length) {
-						tabs = true;
-					}
-
-					codeEditor.setOption('indentUnit', indent);
-					codeEditor.setOption('indentWithTabs', tabs);
-					codeEditor.setOption('mode', {
-						name: 'javascript',
-						statementIndent: indent,
-					});
-				} else {
-					codeEditor.value = code;
-				}
-			}
-
-			titleEditor.addEventListener('change', saveState);
-			codeEditor.addEventListener('change', saveState);
-
-			const optionsBar = docutil.make('div', {'class': 'options-bar'});
-
-			const entrybox = docutil.make('div', {'class': 'entry-editor'}, [
-				docutil.make('label', {}, ['Title ', titleEditor]),
-				docutil.make('div', {'class': 'code-editor'}, [codeEditor]),
-			]);
-			docutil.updateStyle(entrybox, {'display': 'none'});
-			const emptyState = docutil.make('div', {'class': 'entry-editor-empty'});
-			const manager = docutil.make('div', {'class': 'team-manager'}, [
-				optionsBar,
-				docutil.make('div', {'class': 'team-table-hold'}, [tree.dom()]),
-				emptyState,
-				entrybox
-			]);
-
-			let selectedEntry = null;
-			tree.addEventListener('select', (item) => {
-				saveState();
-				if(item && item.baseEntry) {
-					docutil.updateStyle(emptyState, {'display': 'none'});
-					docutil.updateStyle(entrybox, {'display': 'block'});
-					setCode(item.baseEntry.code);
-					titleEditor.value = item.baseEntry.title;
-					selectedEntry = item.baseEntry;
-				} else {
-					docutil.updateStyle(entrybox, {'display': 'none'});
-					docutil.updateStyle(emptyState, {'display': 'block'});
-					selectedEntry = null;
-				}
-			});
-
-			require([
-				'codemirror/lib/codemirror',
-				'codemirror/mode/javascript/javascript',
-				'codemirror/addon/comment/comment',
-				'codemirror/addon/dialog/dialog',
-				'codemirror/addon/dialog/dialog.css',
-				'codemirror/addon/search/search',
-				'codemirror/addon/search/searchcursor',
-				'codemirror/addon/search/jump-to-line',
-				'codemirror/addon/edit/matchbrackets',
-				'codemirror/addon/edit/trailingspace',
-				'codemirror/lib/codemirror.css',
-			], (CodeMirror) => {
-				const code = codeEditor.value;
-				codeEditor = CodeMirror.fromTextArea(codeEditor, {
-					mode: {
-						name: 'javascript',
-					},
-					lineNumbers: true,
-					matchBrackets: true,
-					showTrailingSpace: true,
-					extraKeys: {
-						'Tab': (cm) => cm.execCommand('indentMore'),
-						'Shift-Tab': (cm) => cm.execCommand('indentLess'),
-						'Cmd-/': (cm) => cm.toggleComment({padding: ''}),
-						'Ctrl-/': (cm) => cm.toggleComment({padding: ''}),
-					},
-				});
-				setCode(code);
-				codeEditor.on('blur', saveState);
-				// TODO: support searching (plugins: searchcursor, search + UI)
-				// TODO: support line jumping (jump-to-line + UI)
-			});
-
-			function onEnter() {
-				if(codeEditor.refresh) {
-					codeEditor.refresh();
-				}
-			}
-
-			// TODO
-//			managedTeams = allTeams.map((team) => Object.assign({}, team, {
-//				entries: team.entries.map((entry) => Object.assign({}, entry, {
-//					pauseOnError: true,
-//				})),
-//			}));
-
-			return {manager, optionsBar, emptyState, onEnter};
-		}
-
 		function begin(teams) {
 			teams.forEach((team) => team.entries.forEach((entry) => {
 				entry.originalCode = entry.code;
@@ -458,11 +311,20 @@ require([
 			allTeams = teams;
 			managedTeams = allTeams;
 
-			const {manager, optionsBar, emptyState, onEnter} = renderEntryManagement(allTeams);
-			optionsBar.appendChild(btnTournament);
-			optionsBar.appendChild(btnGame);
-			emptyState.appendChild(docutil.make('h1', {}, ['Online web player for ' + title]));
-			emptyState.appendChild(docutil.make('ul', {}, [
+			const manager = new EntryManager({
+				className: 'team-manager',
+				extraColumns: teamViewColumns,
+				showTeams: teamType !== 'free_for_all',
+			});
+			manager.addEventListener('change', ({entry, title, code, pauseOnError}) => {
+				entry.title = title;
+				entry.code = code;
+				entry.pauseOnError = pauseOnError;
+				manager.rebuild();
+			});
+			manager.optionsDOM().appendChild(generalOptions);
+			manager.emptyStateDOM().appendChild(docutil.make('h1', {}, ['Online web player for ' + title]));
+			manager.emptyStateDOM().appendChild(docutil.make('ul', {}, [
 				docutil.make('li', {}, ['Watch a game by clicking "Begin Random Game" in the top-right']),
 				docutil.make('li', {}, [
 					'Run a tournament by clicking "Begin Random Tournament" in the top-right',
@@ -473,9 +335,12 @@ require([
 					docutil.make('div', {}, ['(Changes will apply to games and tournaments within your browser session. Modified entries are marked in yellow)']),
 				]),
 			]));
-			welcomePage.appendChild(manager);
-			welcomePage.addEventListener('enter', onEnter);
-			onEnter();
+
+			welcomePage.appendChild(manager.dom());
+			welcomePage.addEventListener('enter', () => {
+				manager.rerender();
+			});
+			manager.setTeams(allTeams);
 
 			window.addEventListener('hashchange', handleHashChange);
 			handleHashChange();

@@ -45,6 +45,10 @@ define([
 //				'marginRight': -((this.canvas.width * (1 - this.scaleX * 2) / 2)|0) + 'px',
 //				'marginBottom': -((this.canvas.height * (1 - this.scaleY * 2) / 2)|0) + 'px',
 			});
+			docutil.updateStyle(this.board, {
+				'width': ((this.canvas.width * this.scaleX)|0) + 'px',
+				'height': ((this.canvas.height * this.scaleY)|0) + 'px',
+			});
 			docutil.updateStyle(this.boardClip, {
 				'width': ((this.canvas.width * this.scaleX)|0) + 'px',
 				'height': ((this.canvas.height * this.scaleY)|0) + 'px',
