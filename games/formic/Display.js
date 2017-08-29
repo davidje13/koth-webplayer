@@ -1,5 +1,6 @@
 define([
 	'core/EventObject',
+	'core/array_utils',
 	'3d/ModelPoint',
 	'3d/ModelTorus',
 	'display/document_utils',
@@ -14,6 +15,7 @@ define([
 	'./style.css',
 ], (
 	EventObject,
+	array_utils,
 	ModelPoint,
 	ModelTorus,
 	docutil,
@@ -140,12 +142,12 @@ define([
 
 			this.latestAnts = null;
 			this.latestBoard = null;
-			this.latestEntries = new Map();
 			this.latestW = 0;
 			this.latestH = 0;
 			this.queenMarkerType = '';
 			this.workerMarkerType = '';
 			this.foodMarkerType = '';
+			this.focussed = [];
 
 			this.markerTypes3D.registerPointer('queen-locator-ring', {
 				model: new ModelTorus({
@@ -216,7 +218,6 @@ define([
 		clear() {
 			this.latestAnts = null;
 			this.latestBoard = null;
-			this.latestEntries.clear();
 
 			this.renderer.clear();
 			this.table.clear();
@@ -236,12 +237,6 @@ define([
 			this.latestW = config.width;
 			this.latestH = config.height;
 
-			this.latestEntries.clear();
-			config.teams.forEach((team) => team.entries.forEach((entry) => {
-				this.latestEntries.set(entry.id, entry);
-			}));
-
-			this.repositionMarkers();
 			this.board.repaint();
 		}
 
@@ -256,11 +251,13 @@ define([
 			if(
 				config.queenMarkerType !== this.queenMarkerType ||
 				config.workerMarkerType !== this.workerMarkerType ||
-				config.foodMarkerType !== this.foodMarkerType
+				config.foodMarkerType !== this.foodMarkerType ||
+				!array_utils.shallowEqual(config.focussed, this.focussed)
 			) {
 				this.queenMarkerType = config.queenMarkerType;
 				this.workerMarkerType = config.workerMarkerType;
 				this.foodMarkerType = config.foodMarkerType;
+				this.focussed = config.focussed.slice();
 				this.repositionMarkers();
 			}
 
@@ -301,16 +298,9 @@ define([
 				}
 			}
 			if((this.queenMarkerType || this.workerMarkerType) && this.latestAnts) {
-				let anyFocussed = false;
-				this.latestEntries.forEach((entry) => {
-					if(entry.focussed) {
-						anyFocussed = true;
-					}
-				});
 				this.latestAnts.forEach((ant) => {
-					if(anyFocussed) {
-						const entry = this.latestEntries.get(ant.entry);
-						if(!entry || !entry.focussed) {
+					if(this.focussed.length) {
+						if(this.focussed.indexOf(ant.entry) === -1) {
 							return;
 						}
 					}

@@ -86,4 +86,44 @@ define(['./array_utils'], (array_utils) => {
 			}
 		});
 	});
+
+	describe('shallowEqual', () => {
+		it('returns true if the given arrays compare equal by shallow comparison', () => {
+			expect(
+				array_utils.shallowEqual(['a', 'b'], ['a', 'b']),
+				equals(true)
+			);
+		});
+
+		it('returns true for 2 empty lists', () => {
+			expect(
+				array_utils.shallowEqual([], []),
+				equals(true)
+			);
+		});
+
+		it('returns false if the given arrays have different elements', () => {
+			expect(
+				array_utils.shallowEqual(['a', 'b'], ['a', 'c']),
+				equals(false)
+			);
+
+			expect(
+				array_utils.shallowEqual(['a', 'b'], ['c', 'b']),
+				equals(false)
+			);
+		});
+
+		it('returns false if the given arrays have different lengths', () => {
+			expect(
+				array_utils.shallowEqual(['a', 'b', 'c'], ['a', 'b']),
+				equals(false)
+			);
+
+			expect(
+				array_utils.shallowEqual(['a', 'b'], ['a', 'b', 'c']),
+				equals(false)
+			);
+		});
+	});
 });

@@ -114,7 +114,7 @@ define([
 			}
 		}
 
-		updateGameConfig(delta, {updateGame = true} = {}) {
+		updateGameConfig(delta) {
 			if(this.dead) {
 				throw new Error('Attempt to use terminated game');
 			}
@@ -122,7 +122,7 @@ define([
 			if(this.display) {
 				this.display.updateGameConfig(this.config.game);
 			}
-			if(this.gameStarted && updateGame) {
+			if(this.gameStarted) {
 				this.parent.sandbox.postMessage({
 					action: 'UPDATE_GAME_CONFIG',
 					token: this.token,
@@ -342,6 +342,7 @@ define([
 					maxTime: 500,
 				}, basePlayConfig),
 				display: Object.assign({
+					focussed: [],
 				}, baseDisplayConfig),
 			};
 

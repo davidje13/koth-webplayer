@@ -24,5 +24,12 @@ define(() => {
 			shuffleInPlace(copy, random);
 			return copy;
 		},
+
+		shallowEqual: (a1, a2) => {
+			return (
+				a1.length === a2.length &&
+				a1.every((v, i) => (a2[i] === v))
+			);
+		},
 	};
 });

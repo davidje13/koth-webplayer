@@ -164,11 +164,8 @@ require([
 			if(!singleGame) {
 				return;
 			}
-			const teams = singleGame.getTeams();
-			teams.forEach((team) => team.entries.forEach((entry) => {
-				entry.focussed = (focussedEntry && entry.id === focussedEntry.id);
-			}));
-			singleGame.updateGameConfig({teams}, {updateGame: false});
+			const focussed = focussedEntry ? [focussedEntry.id] : [];
+			singleGame.updateDisplayConfig({focussed});
 		}
 
 		popupManager.addEventListener('change', ({entry, title, code, pauseOnError}) => {
