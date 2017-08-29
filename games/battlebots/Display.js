@@ -1,6 +1,8 @@
 define([
 	'core/EventObject',
+	'core/array_utils',
 	'display/document_utils',
+	'display/MarkerStore',
 	'display/Full2DBoard',
 	'display/OptionsBar',
 	'games/common/components/StepperOptions',
@@ -10,7 +12,9 @@ define([
 	'./style.css',
 ], (
 	EventObject,
+	array_utils,
 	docutil,
+	MarkerStore,
 	Full2DBoard,
 	OptionsBar,
 	StepperOptions,
@@ -113,8 +117,10 @@ define([
 					{value: 5, label: '1:5'},
 				]},
 			]);
+			this.markers = new MarkerStore();
 			this.board = new Full2DBoard({
 				renderer: this.renderer,
+				markerStore: this.markers,
 				scaleX: 0
 			});
 			this.table = new LeaderboardDisplay();
@@ -123,6 +129,9 @@ define([
 
 			this.options.addEventForwarding(this);
 			this.visualOptions.addEventForwarding(this);
+
+			this.latestTeamStatuses = null;
+			this.focussed = [];
 
 			const entryEditButton = docutil.make('button', {'class': 'entry-edit-button'}, ['Edit Entries']);
 			entryEditButton.addEventListener('click', () => {
@@ -141,6 +150,8 @@ define([
 		}
 
 		clear() {
+			this.latestTeamStatuses = null;
+
 			this.renderer.clear();
 			this.table.clear();
 
@@ -165,6 +176,13 @@ define([
 
 			this.board.setScale(config.scale);
 
+			if(
+				!array_utils.shallowEqual(config.focussed, this.focussed)
+			) {
+				this.focussed = config.focussed.slice();
+				this.repositionMarkers();
+			}
+
 			this.board.repaint();
 		}
 
@@ -173,7 +191,31 @@ define([
 			this.renderer.updateState(state);
 			this.table.updateState(state);
 
+			this.latestTeamStatuses = state.teams;
+
+			this.repositionMarkers();
 			this.board.repaint();
+		}
+
+		repositionMarkers() {
+			this.markers.clear();
+
+			if(this.focussed.length && this.latestTeamStatuses) {
+				this.latestTeamStatuses.forEach((teamStatus) => {
+					teamStatus.entries.forEach((entryStatus) => {
+						if(this.focussed.indexOf(entryStatus.id) === -1) {
+							return;
+						}
+						this.markers.mark('bot-' + entryStatus.id, {
+							x: entryStatus.x,
+							y: entryStatus.y,
+							className: 'bot-locator-pointer' + (entryStatus.alive ? '' : ' dead'),
+							wrap: false,
+							clip: false,
+						});
+					});
+				});
+			}
 		}
 
 		dom() {

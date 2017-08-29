@@ -61,7 +61,12 @@ define([
 			markers.forEach((mark, key) => {
 				let dom = this.renderedMarks.get(key);
 				if(!dom) {
-					dom = {element: docutil.make('div')};
+					dom = {
+						element: docutil.make('div'),
+						textHold: docutil.make('span'),
+						text: docutil.text(),
+					};
+					dom.textHold.appendChild(dom.text);
 					this.renderedMarks.set(key, dom);
 				}
 				const x1 = (((mark.x + 0.5) * this.scaleX)|0);
@@ -73,6 +78,14 @@ define([
 					'left': x1 + 'px',
 					'top': y1 + 'px',
 				});
+				if(typeof mark.content === 'string') {
+					docutil.updateText(dom.text, mark.content);
+					docutil.setParent(dom.textHold, dom.element);
+				} else if(mark.content) {
+					docutil.setParent(mark.content, dom.element);
+				} else {
+					docutil.empty(dom.element);
+				}
 				if(mark.w !== null && mark.h !== null) {
 					// TODO: wrapping
 					const x2 = (((mark.x + mark.w) * this.scaleX)|0);

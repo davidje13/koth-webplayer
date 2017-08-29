@@ -19,3 +19,40 @@
 	vertical-align: center;
 	margin-right: 5px;
 }
+
+.game-board .mark.bot-locator-pointer {
+	background: #EEEEEE;
+	border: 1px solid rgba(0, 0, 0, 0.3);
+	border-radius: 100%;
+	border-top-left-radius: 0;
+	text-align: center;
+	opacity: 0.9;
+	overflow: hidden;
+}
+
+.game-board .mark.bot-locator-pointer {
+	font-size: 12px;
+	width: 14px;
+	height: 14px;
+	z-index: 3;
+}
+
+.game-board .mark.bot-locator-pointer span {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	color: #CC0000;
+	text-shadow: 0 1px #FFFFFF, 1px 0 #FFFFFF, 0 -1px #FFFFFF, -1px 0 #FFFFFF;
+	font-size: 0.7em;
+}
+
+.game-board .mark.bot-locator-pointer:before {
+	content: "\01F916";
+	position: relative;
+	top: -3px;
+}
+
+.game-board .mark.bot-locator-pointer.wall {
+	background: #888888;
+}

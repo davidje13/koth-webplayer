@@ -1,5 +1,6 @@
 define([
 	'core/EventObject',
+	'core/array_utils',
 	'display/document_utils',
 	'display/MarkerStore',
 	'display/Full2DBoard',
@@ -11,6 +12,7 @@ define([
 	'./style.css',
 ], (
 	EventObject,
+	array_utils,
 	docutil,
 	MarkerStore,
 	Full2DBoard,
@@ -139,8 +141,10 @@ define([
 			this.options.addEventForwarding(this);
 			this.visualOptions.addEventForwarding(this);
 
+			this.latestTeamStatuses = null;
 			this.latestTarget = null;
 			this.targetMarkerType = '';
+			this.focussed = [];
 
 			const entryEditButton = docutil.make('button', {'class': 'entry-edit-button'}, ['Edit Entries']);
 			entryEditButton.addEventListener('click', () => {
@@ -187,8 +191,12 @@ define([
 
 			this.board.setScale(config.scale);
 
-			if(config.targetMarkerType !== this.targetMarkerType) {
+			if(
+				config.targetMarkerType !== this.targetMarkerType ||
+				!array_utils.shallowEqual(config.focussed, this.focussed)
+			) {
 				this.targetMarkerType = config.targetMarkerType;
+				this.focussed = config.focussed.slice();
 				this.repositionMarkers();
 			}
 
@@ -200,9 +208,10 @@ define([
 			this.renderer.updateState(state);
 			this.table.updateState(state);
 
+			this.latestTeamStatuses = state.teams;
 			this.latestTarget = state.target;
-			this.repositionMarkers();
 
+			this.repositionMarkers();
 			this.board.repaint();
 		}
 
@@ -216,6 +225,26 @@ define([
 					className: 'target-locator-' + this.targetMarkerType,
 					wrap: false,
 					clip: false,
+				});
+			}
+
+			if(this.focussed.length && this.latestTeamStatuses) {
+				this.latestTeamStatuses.forEach((teamStatus) => {
+					teamStatus.entries.forEach((entryStatus) => {
+						if(this.focussed.indexOf(entryStatus.id) === -1) {
+							return;
+						}
+						entryStatus.bots.forEach((bot, index) => {
+							this.markers.mark('bot-' + entryStatus.id + '-' + index, {
+								x: bot.x,
+								y: bot.y,
+								className: 'bot-locator-pointer' + (bot.hasWall ? ' wall' : ''),
+								content: String(index),
+								wrap: false,
+								clip: false,
+							});
+						});
+					});
 				});
 			}
 		}
