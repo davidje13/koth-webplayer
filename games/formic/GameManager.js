@@ -387,11 +387,11 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 				try {
 					const apiView = viewToAPI(view);
 					const begin = performance.now();
-					action = entry.fn(apiView);
+					action = entry.fn({view: apiView});
 					elapsed = performance.now() - begin;
 					error = checkError(action, ant, view);
 				} catch(e) {
-					error = 'Threw ' + e.toString();
+					error = entry_utils.stringifyEntryError(e);
 				}
 				if(error) {
 					entry.errorInput = JSON.stringify(viewToAPI(view));

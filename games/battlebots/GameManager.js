@@ -91,21 +91,17 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 				throw new Error('Attempt to modify an entry which was not registered in the game');
 			}
 			if(code !== null) {
-				const compiledCode = entry_utils.compile(
-					'Math.random = MathRandom;' + code,
-					[
-						'move',
-						'x',
-						'y',
-						'tCount',
-						'eCount',
-						'tNear',
-						'eNear',
-						'setMsg',
-						'getMsg',
-						'MathRandom',
-					]
-				);
+				const compiledCode = entry_utils.compile(code, [
+					'move',
+					'x',
+					'y',
+					'tCount',
+					'eCount',
+					'tNear',
+					'eNear',
+					'setMsg',
+					'getMsg',
+				], 'Math.random = extras.MathRandom;');
 				entry.fn = compiledCode.fn;
 				if(compiledCode.compileError) {
 					entry.disqualified = true;
@@ -224,26 +220,21 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			};
 			try {
 				const begin = performance.now();
-				action = entry.fn(
-					params.move,
-					params.x,
-					params.y,
-					params.tCount,
-					params.eCount,
-					params.tNear,
-					params.eNear,
-					(msg) => { // setMsg(message)
+				action = entry.fn({
+					...params,
+					setMsg: (msg) => {
 						if(typeof msg === 'string') {
 							messages[entry.user_id] = bot.message = msg.substr(0, 64);
 						}
 					},
-					(id) => { // getMsg(ppcg_user_id)
+					getMsg: (id) => {
 						return messages[id];
 					},
-					() => { // Math.random replacement
+				}, {
+					MathRandom: () => {
 						return this.random.next(0x100000000) / 0x100000000;
 					},
-				);
+				});
 				elapsed = performance.now() - begin;
 
 				if((action|0) !== action || action < 0 || action > 6) {
@@ -252,7 +243,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					error = 'Too long to respond: ' + elapsed + 'ms';
 				}
 			} catch(e) {
-				error = 'Threw ' + e.toString();
+				error = entry_utils.stringifyEntryError(e);
 			}
 			Math.random = oldRandom;
 

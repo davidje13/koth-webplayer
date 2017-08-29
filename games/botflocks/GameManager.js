@@ -94,22 +94,18 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 				throw new Error('Attempt to modify an entry which was not registered in the game');
 			}
 			if(code !== null) {
-				const compiledCode = entry_utils.compile(
-					'Math.random = MathRandom;\n' + code,
-					[
-						'p1',
-						'id',
-						'eid',
-						'move',
-						'goal',
-						'grid',
-						'bots',
-						'ebots',
-						'getMem',
-						'setMem',
-						'MathRandom',
-					]
-				);
+				const compiledCode = entry_utils.compile(code, [
+					'p1',
+					'id',
+					'eid',
+					'move',
+					'goal',
+					'grid',
+					'bots',
+					'ebots',
+					'getMem',
+					'setMem',
+				], 'Math.random = extras.MathRandom;');
 				entry.fn = compiledCode.fn;
 				if(compiledCode.compileError) {
 					entry.disqualified = true;
@@ -257,13 +253,9 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			};
 			try {
 				const begin = performance.now();
-				action = entry.fn(
-					params.p1,
-					params.id,
-					params.eid,
-					params.move,
-					params.goal,
-					(x, y) => { // grid(x, y)
+				action = entry.fn({
+					...params,
+					grid: (x, y) => { // grid(x, y)
 						if((x|0) !== x || (y|0) !== y) {
 							return -1;
 						}
@@ -277,20 +269,19 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 							return -1;
 						}
 					},
-					params.bots,
-					params.ebots,
-					() => { // getMem()
+					getMem: () => {
 						return entry.memory;
 					},
-					(msg) => { // setMem(message)
+					setMem: (msg) => {
 						if(typeof msg === 'string' && msg.length <= 256) {
 							entry.memory = msg;
 						}
 					},
-					() => { // Math.random replacement
+				}, {
+					MathRandom: () => {
 						return this.random.next(0x100000000) / 0x100000000;
 					},
-				);
+				});
 				elapsed = performance.now() - begin;
 
 				if(!Array.isArray(action) || action.length !== entry.bots.length) {
@@ -306,7 +297,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					error = 'Too long to respond: ' + elapsed + 'ms';
 				}
 			} catch(e) {
-				error = 'Threw ' + e.toString();
+				error = entry_utils.stringifyEntryError(e);
 			}
 			Math.random = oldRandom;
 

@@ -8,15 +8,30 @@ define(['core/EventObject', 'display/document_utils', 'display/TreeTable'], (Eve
 	// * Default code for new entries (via meta tag)
 	// * Persist in local storage (maybe use answer_id as unique refs)
 
+	function buildEntryRow(team, entry) {
+		const changed = entry.code !== entry.originalCode;
+		return {
+			key: team.id + '-' + entry.id,
+			className: changed ? 'changed' : '',
+			label: {
+				value: entry.title,
+				title: entry.title + (changed ? ' (changed)' : ''),
+			},
+			user_id: entry.user_id,
+			answer_id: entry.answer_id,
+			enabled: docutil.make('input', {type: 'checkbox', checked: 'checked', disabled: 'disabled'}),
+			baseEntry: entry,
+		};
+	}
+
 	return class EntryManager extends EventObject {
-		constructor({className = '', extraColumns = [], showTeams = true, allowTeamModification = true, allowAdd = true} = {}) {
+		constructor({className = '', extraColumns = [], showTeams = true, allowTeamModification = true} = {}) {
 			super();
 
 			this.teams = null;
 			this.teamStatuses = null;
 			this.showTeams = showTeams;
 			this.allowTeamModification = allowTeamModification;
-			this.allowAdd = allowAdd;
 
 			this._triggerChange = this._triggerChange.bind(this);
 
@@ -135,22 +150,8 @@ define(['core/EventObject', 'display/document_utils', 'display/TreeTable'], (Eve
 			let treeData = [];
 			if(this.showTeams) {
 				treeData = this.teams.map((team) => {
-					const nested = team.entries.map((entry) => {
-						const changed = entry.code !== entry.originalCode;
-						return {
-							key: team.id + '-' + entry.id,
-							className: changed ? 'changed' : '',
-							label: {
-								value: entry.title,
-								title: entry.title + (changed ? ' (changed)' : ''),
-							},
-							user_id: entry.user_id,
-							answer_id: entry.answer_id,
-							enabled: docutil.make('input', {type: 'checkbox', checked: 'checked', disabled: 'disabled'}),
-							baseEntry: entry,
-						};
-					});
-					if(this.allowAdd) {
+					const nested = team.entries.map((entry) => buildEntryRow(team, entry));
+					if(this.allowTeamModification) {
 						nested.push({label: docutil.make('button', {disabled: 'disabled'}, ['+ Add Entry']), selectable: false});
 					}
 					return {
@@ -162,26 +163,16 @@ define(['core/EventObject', 'display/document_utils', 'display/TreeTable'], (Eve
 						baseTeam: team,
 					};
 				});
-				if(this.allowAdd) {
+				if(this.allowTeamModification) {
 					treeData.push({label: docutil.make('button', {disabled: 'disabled'}, ['+ Add Team']), selectable: false});
 				}
 			} else {
 				this.teams.forEach((team) => team.entries.forEach((entry) => {
-					const changed = entry.code !== entry.originalCode;
-					treeData.push({
-						key: team.id + '-' + entry.id,
-						className: changed ? 'changed' : '',
-						label: {
-							value: entry.title,
-							title: entry.title + (changed ? ' (changed)' : ''),
-						},
-						user_id: entry.user_id,
-						answer_id: entry.answer_id,
-						enabled: docutil.make('input', {type: 'checkbox', checked: 'checked', disabled: 'disabled'}),
-						baseEntry: entry,
+					team.entries.map((entry) => {
+						treeData.push(buildEntryRow(team, entry));
 					});
 				}));
-				if(this.allowAdd) {
+				if(this.allowTeamModification) {
 					treeData.push({label: docutil.make('button', {disabled: 'disabled'}, ['+ Add Entry']), selectable: false});
 				}
 			}

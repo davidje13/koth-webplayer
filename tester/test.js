@@ -155,7 +155,7 @@ require(['document', 'tester/test.css'], (document) => {
 		if(e.error) {
 			msg = e.error.toString();
 			if(e.error.stack) {
-				msg = e.stack;
+				msg = e.error.stack;
 			}
 		} else {
 			msg = e.message;

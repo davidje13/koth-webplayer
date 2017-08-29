@@ -21,26 +21,32 @@ define(['core/worker_utils', 'path:./loader_worker'], (worker_utils, loader_work
 	}
 
 	return {
-		compile: (code, parameters) => {
+		compile: (code, parameters, pre = '') => {
 			// Wrap code in function which blocks access to obviously dangerous
 			// globals (this wrapping cannot be relied on as there may be other
 			// ways to access global scope, but should prevent accidents - other
 			// measures must be used to prevent malice)
 			const src = (
-				'self.tempFn = function(' + parameters.join(',') + ') {' +
+				// All prelude is rendered on 1 line so that line numbers in
+				// reported errors are easy to rectify
 				'"use strict";' +
-				'const self = undefined;' +
-				'const window = undefined;' +
-				'const Date = undefined;' +
-				'const performance = undefined;' +
-				'const console = undefined;' +
-				'const require = undefined;' +
-				'const require_factory = undefined;' +
-				'const define = undefined;' +
-				'const addEventListener = undefined;' +
-				'const removeEventListener = undefined;' +
-				'const postMessage = undefined;' +
-				'return ((() => {' + code + '})());' +
+				'self.tempFn = function(parameters, extras) {' +
+					'const self = undefined;' +
+					'const window = undefined;' +
+					'const require = undefined;' +
+					'const require_factory = undefined;' +
+					'const define = undefined;' +
+					'const addEventListener = undefined;' +
+					'const removeEventListener = undefined;' +
+					'const postMessage = undefined;' +
+					'const Date = undefined;' +
+					'const performance = undefined;' +
+					'const console = undefined;' +
+					pre +
+					'extras = undefined;' +
+					'return (({' + parameters.join(',') + '}) => {\n' +
+						code + '\n' +
+					'})(parameters);' +
 				'};\n'
 			);
 
@@ -64,15 +70,34 @@ define(['core/worker_utils', 'path:./loader_worker'], (worker_utils, loader_work
 						fn = self.tempFn.bind({});
 						self.tempFn = null;
 					} catch(e2) {
-						compileError = e2.toString();
+						compileError = e2.message || e2.toString();
 					}
 				} else {
-					compileError = e.toString();
+					compileError = e.message || e.toString();
 				}
 			}
 			const compileTime = performance.now() - begin;
 
 			return {fn, compileError, compileTime};
+		},
+
+		stringifyEntryError: (e) => {
+			if(typeof e !== 'object') {
+				return 'Threw ' + String(e);
+			}
+			if(e.stack) {
+				const stack = e.stack;
+				const m = stack.match(/:([0-9]+):([0-9]+)?/);
+				if(m) {
+					return 'Threw ' + e.message + ' (line ' + (m[1] - 1) + ' column ' + (m[2] || 0) + ')';
+				} else {
+					return 'Threw ' + e.stack;
+				}
+			}
+			if(e.message) {
+				return 'Threw ' + e.message;
+			}
+			return 'Threw ' + e.toString();
 		},
 
 		load: (site, qid, progressCallback) => {

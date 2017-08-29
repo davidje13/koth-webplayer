@@ -50,6 +50,8 @@ define(['fetch/entry_utils'], (entry_utils) => {
 				throw new Error('Attempt to modify an entry which was not registered in the game');
 			}
 			if(code !== null) {
+				// These parameter names match the key values given to fn() in
+				// step(type) below
 				const compiledCode = entry_utils.compile(code, [
 					'my',
 					'parameters',
@@ -98,14 +100,18 @@ define(['fetch/entry_utils'], (entry_utils) => {
 				// For an example of how to allow competitors to use Math.random
 				// without becoming non-deterministic, see battlebots/botflocks
 				const begin = performance.now();
-				action = entry.fn('foo', 'bar', 'baz');
+				action = entry.fn({
+					my: 'foo',
+					parameters: 'bar',
+					here: 'baz'
+				});
 				elapsed = performance.now() - begin;
 
 				if(action_is_bad) {
 					error = 'Oh no!';
 				}
 			} catch(e) {
-				error = 'Threw ' + e.toString();
+				error = entry_utils.stringifyEntryError(e);
 			}
 
 			entry.elapsedTime += elapsed;

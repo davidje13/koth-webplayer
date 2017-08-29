@@ -150,7 +150,6 @@ require([
 			extraColumns: teamViewColumns,
 			showTeams: teamType !== 'free_for_all',
 			allowTeamModification: false,
-			allowAdd: false,
 		});
 
 		const popupClose = docutil.make('button', {'class': 'close'}, ['Close']);
