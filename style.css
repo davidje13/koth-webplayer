@@ -161,14 +161,7 @@ h4 a:active, h4 a:hover {
 }
 
 .popup-team-manager {
-	position: fixed;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	height: 50%;
-	min-height: 100px;
 	border-top: 1px solid #333333;
-	z-index: 10;
 }
 
 .team-table-hold {
@@ -246,6 +239,19 @@ h4 a:active, h4 a:hover {
 
 .team-table .disqualified td:first-child:after {
 	background: #EE0000;
+}
+
+.game-page.fixed-size {
+	position: absolute;
+	top: 40px;
+	left: 0;
+	right: 0;
+	bottom: 0;
+}
+
+.game-page.fixed-size .game-page-content {
+	padding-top: 20px;
+	overflow: auto;
 }
 
 .entry-editor {

@@ -1,4 +1,4 @@
-define(['display/document_utils', './style.css'], (docutil) => {
+define(['./document_utils', './style.css'], (docutil) => {
 	'use strict';
 
 	return class NestedNav {

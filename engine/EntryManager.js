@@ -1,4 +1,14 @@
-define(['core/EventObject', 'display/document_utils', 'display/TreeTable'], (EventObject, docutil, TreeTable) => {
+define([
+	'core/EventObject',
+	'display/document_utils',
+	'display/SplitView',
+	'display/TreeTable',
+], (
+	EventObject,
+	docutil,
+	SplitView,
+	TreeTable,
+) => {
 	'use strict';
 
 	// TODO:
@@ -182,9 +192,12 @@ define(['core/EventObject', 'display/document_utils', 'display/TreeTable'], (Eve
 
 		rerender() {
 			this._update();
-//			if(this.codeEditor.refresh) {
-//				this.codeEditor.refresh();
-//			}
+		}
+
+		refresh() {
+			if(this.codeEditor.refresh) {
+				this.codeEditor.refresh();
+			}
 		}
 
 		setTeams(teams) {

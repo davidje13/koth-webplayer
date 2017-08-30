@@ -78,6 +78,7 @@ require([
 		'engine/GameOrchestrator',
 		'engine/EntryManager',
 		'core/sandbox_utils',
+		'display/SplitView',
 		'display/MatchSummary', // TODO: game-customisable
 		'teams/' + teamType,
 		'tournaments/' + tournamentType,
@@ -91,6 +92,7 @@ require([
 		GameOrchestrator,
 		EntryManager,
 		sandbox_utils,
+		SplitView,
 		MatchSummary,
 		TeamMaker,
 		Tournament,
@@ -135,15 +137,13 @@ require([
 		const tournamentPage = docutil.make('div', {}, [tournamentDisplay]);
 
 		const singleGameDisplay = new Display();
-		const gamePage = docutil.make('div', {}, [singleGameDisplay.dom()]);
-		let singleGame = null;
-
-		gamePage.addEventListener('pop', () => {
-			if(singleGame) {
-				singleGame.terminate();
-			}
-			singleGame = null;
+		const gamePageContent = docutil.make('div', {'class': 'game-page-content'}, [singleGameDisplay.dom()]);
+		const gamePage = new SplitView([gamePageContent], {
+			direction: SplitView.VERTICAL,
+			fixedSize: false,
+			className: 'game-page',
 		});
+		let singleGame = null;
 
 		const popupManager = new EntryManager({
 			className: 'popup-team-manager',
@@ -153,10 +153,6 @@ require([
 		});
 
 		const popupClose = docutil.make('button', {'class': 'close'}, ['Close']);
-		popupClose.addEventListener('click', () => {
-			docutil.setParent(popupManager.dom(), null);
-			updateEntryFocus(null);
-		});
 		popupManager.optionsDOM().appendChild(popupClose);
 
 		function updateEntryFocus(focussedEntry) {
@@ -186,22 +182,39 @@ require([
 			backgroundGames.terminateAll();
 		});
 
+		function updateEntryManager({teams}) {
+			popupManager.setTeamStatuses(teams);
+		}
+
 		singleGameDisplay.addEventListener('editentries', () => {
 			if(!singleGame) {
 				return;
 			}
 			popupManager.setTeams(singleGame.getTeams());
-			docutil.setParent(popupManager.dom(), docutil.body);
+			gamePage.setPanes([gamePageContent, popupManager.dom()], {
+				fixedSize: true,
+			});
 			updateEntryFocus(popupManager.getSelectedEntry());
 		});
 
-		function updateEntryManager({teams}) {
-			popupManager.setTeamStatuses(teams);
+		gamePage.addEventListener('resize', () => {
+			popupManager.refresh();
+		});
+
+		function hidePopupTeamManager() {
+			gamePage.setPanes([gamePageContent], {
+				fixedSize: false,
+			});
+			updateEntryFocus(null);
 		}
 
-		gamePage.addEventListener('leave', () => {
-			docutil.setParent(popupManager.dom(), null);
-			updateEntryFocus(null);
+		popupClose.addEventListener('click', hidePopupTeamManager);
+		gamePage.dom().addEventListener('leave', hidePopupTeamManager);
+		gamePage.dom().addEventListener('pop', () => {
+			if(singleGame) {
+				singleGame.terminate();
+			}
+			singleGame = null;
 		});
 
 		// TODO: extract all of this & improve separation / APIs
@@ -296,7 +309,7 @@ require([
 				return {
 					navElements: ['Game', docutil.make('p', {}, [singleGame.getSeed()])],
 					hash: singleGame.getSeed(),
-					page: gamePage,
+					page: gamePage.dom(),
 				};
 			}
 			const navPos = nav.push(makeNav());

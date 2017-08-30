@@ -79,3 +79,44 @@
 .tree-table {
 	border-collapse: collapse;
 }
+
+/* SplitView */
+
+.split-view.horiz > * {
+	display: inline-block;
+	height: 100%;
+	vertical-align: top;
+}
+
+.split-view.vert > * {
+	display: block;
+}
+
+.split-view.fixed-size > * {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+}
+
+.split-view > .handle {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.split-view.horiz > .handle {
+	width: 8px;
+	margin-left: -4px;
+	cursor: col-resize;
+}
+
+.split-view.vert > .handle {
+	height: 8px;
+	margin-top: -4px;
+	cursor: row-resize;
+}
