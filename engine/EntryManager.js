@@ -73,21 +73,26 @@ define([
 			this.infoBoxContent = docutil.text();
 			this.infoBox = docutil.make('div', {'class': 'info-box'}, [this.infoBoxContent]);
 
-			this.entryBox = docutil.make('div', {'class': 'code-editor'}, [this.codeEditor]);
-			docutil.updateStyle(this.entryBox, {'display': 'none'});
-			docutil.updateStyle(this.infoBox, {'display': 'none'});
+			this.entryHold = new SplitView([
+				docutil.make('div', {}, [this.codeEditor]),
+				{element: this.infoBox, fraction: 0.3},
+			], {direction: SplitView.HORIZONTAL, className: 'code-editor'});
+
 			docutil.updateStyle(this.entryOptions, {'display': 'none'});
+			docutil.updateStyle(this.entryHold.dom(), {'display': 'none'});
 
 			this.emptyState = docutil.make('div', {'class': 'entry-editor-empty'});
-			this.manager = docutil.make('div', {'class': className}, [
-				docutil.make('div', {'class': 'team-table-hold'}, [this.tree.dom()]),
+			this.manager = new SplitView([
+				{
+					element: docutil.make('div', {'class': 'team-table-hold'}, [this.tree.dom()]),
+					fraction: 0.3,
+				},
 				docutil.make('div', {'class': 'entry-editor'}, [
 					this.optionsBar,
-					this.entryBox,
-					this.infoBox,
+					this.entryHold.dom(),
 					this.emptyState,
 				]),
-			]);
+			], {direction: SplitView.HORIZONTAL, className}),
 
 			this.tree.addEventListener('select', () => {
 				this._update();
@@ -238,8 +243,7 @@ define([
 			if(selectedItem && selectedItem.datum.baseEntry) {
 				const entry = selectedItem.datum.baseEntry;
 				docutil.updateStyle(this.emptyState, {'display': 'none'});
-				docutil.updateStyle(this.entryBox, {'display': 'block'});
-				docutil.updateStyle(this.infoBox, {'display': 'block'});
+				docutil.updateStyle(this.entryHold.dom(), {'display': 'block'});
 				docutil.updateStyle(this.entryOptions, {'display': 'inline'});
 				this.setCode(entry.code);
 				this.titleEditor.value = entry.title;
@@ -247,8 +251,7 @@ define([
 				this._updateInfoBox();
 			} else {
 				docutil.updateStyle(this.emptyState, {'display': 'block'});
-				docutil.updateStyle(this.entryBox, {'display': 'none'});
-				docutil.updateStyle(this.infoBox, {'display': 'none'});
+				docutil.updateStyle(this.entryHold.dom(), {'display': 'none'});
 				docutil.updateStyle(this.entryOptions, {'display': 'none'});
 			}
 		}
@@ -302,7 +305,7 @@ define([
 		}
 
 		dom() {
-			return this.manager;
+			return this.manager.dom();
 		}
 	}
 });

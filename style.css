@@ -46,7 +46,7 @@ nav {
 	left: 0;
 	padding: 0 10px;
 	background: #333333;
-	z-index: 200;
+	z-index: 100;
 	user-select: none;
 	margin-bottom: 20px;
 }
@@ -165,13 +165,7 @@ h4 a:active, h4 a:hover {
 }
 
 .team-table-hold {
-	position: absolute;
-	top: 0;
-	left: 0;
-	bottom: 0;
-	width: 350px;
 	border-right: 1px solid #333333;
-	box-sizing: border-box;
 	overflow: auto;
 }
 
@@ -188,6 +182,7 @@ h4 a:active, h4 a:hover {
 	position: sticky;
 	padding: 4px 5px;
 	top: 0;
+	z-index: 1;
 }
 
 .team-table tbody tr {
@@ -254,15 +249,6 @@ h4 a:active, h4 a:hover {
 	overflow: auto;
 }
 
-.entry-editor {
-	position: absolute;
-	top: 0;
-	left: 350px;
-	right: 0;
-	bottom: 0;
-	font-size: 0.9em;
-}
-
 .options-bar {
 	position: absolute;
 	top: 0;
@@ -297,6 +283,10 @@ h4 a:active, h4 a:hover {
 	padding: 3px 5px;
 }
 
+.entry-editor {
+	font-size: 0.9em;
+}
+
 .entry-editor-empty {
 	position: absolute;
 	top: 30px;
@@ -306,17 +296,16 @@ h4 a:active, h4 a:hover {
 	color: #666666;
 	font-size: 1.2em;
 	line-height: 1.5em;
-	padding: 50px;
 	overflow: auto;
 }
 
 .entry-editor-empty h1 {
 	font-size: 1.3em;
-	margin-bottom: 40px;
+	margin: 50px 50px 40px;
 }
 
 .entry-editor-empty ul {
-	margin-left: 30px;
+	margin: 0 50px 30px 80px;
 }
 
 .entry-editor-empty li {
@@ -333,7 +322,7 @@ h4 a:active, h4 a:hover {
 	position: absolute;
 	top: 30px;
 	left: 0;
-	right: 300px;
+	right: 0;
 	bottom: 0;
 }
 
@@ -343,16 +332,11 @@ h4 a:active, h4 a:hover {
 }
 
 .info-box {
-	position: absolute;
-	top: 30px;
-	right: 0;
-	bottom: 0;
-	width: 300px;
 	padding: 5px;
 	border-left: 1px solid #333333;
-	box-sizing: border-box;
 	word-wrap: break-word;
 	font-family: monospace;
+	overflow: auto;
 }
 
 .cm-trailingspace {

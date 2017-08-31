@@ -34,7 +34,7 @@
 	font-size: 12px;
 	width: 14px;
 	height: 14px;
-	z-index: 3;
+	z-index: 1;
 }
 
 .game-board .mark.bot-locator-pointer span {

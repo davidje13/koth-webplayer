@@ -29,12 +29,20 @@ define(['core/EventObject', './document_utils', './style.css'], (EventObject, do
 			this.setPanes(panes, config);
 		}
 
+		_totalFrac() {
+			let sum = 0;
+			for(let i = 0; i < this.panes.length; ++ i) {
+				sum += this.sizes[i];
+			}
+			return sum;
+		}
+
 		_beginDrag(e) {
 			const size = this.hold.getBoundingClientRect();
 			const sz = ((this.direction === VERTICAL) ? size.height : size.width);
 			if(sz > 0) {
 				this.dragPos = ((this.direction === VERTICAL) ? e.pageY : e.pageX);
-				const sum = this.sizes.reduce((r, v) => (r + v), 0);
+				const sum = this._totalFrac();
 				this.dragScale = sum / sz;
 				this.dragMin = this.minFrac * sum;
 				this.dragIndex = e.target.getAttribute('data-index')|0;
@@ -94,7 +102,7 @@ define(['core/EventObject', './document_utils', './style.css'], (EventObject, do
 				clearTimeout(this.debouncedRedraw);
 				this.debouncedRedraw = null;
 			}
-			const totalSize = this.sizes.reduce((r, v) => (r + v), 0);
+			const totalSize = this._totalFrac();
 			let sum = 0;
 			this.panes.forEach((element, index) => {
 				const cur = this.sizes[index] / totalSize;
@@ -142,9 +150,6 @@ define(['core/EventObject', './document_utils', './style.css'], (EventObject, do
 					(this.direction === VERTICAL ? ' vert' : ' horiz')
 				),
 			});
-			while(this.sizes.length < this.panes.length) {
-				this.sizes.push(1);
-			}
 			this.panes.forEach((element) => this.hold.appendChild(element));
 			if(this.fixedSize) {
 				for(let index = 0; index < this.panes.length - 1; ++ index) {
@@ -158,7 +163,20 @@ define(['core/EventObject', './document_utils', './style.css'], (EventObject, do
 		}
 
 		setPanes(panes, {direction, fixedSize, className} = {}) {
-			this.panes = panes.slice();
+			this.panes.length = 0;
+			panes.forEach((pane, index) => {
+				let element = pane;
+				if(pane.element) {
+					element = pane.element;
+					if(pane.fraction) {
+						this.sizes[index] = pane.fraction;
+					}
+				}
+				this.panes.push(element);
+				if(this.sizes.length <= index) {
+					this.sizes.push(1);
+				}
+			});
 			if(direction !== undefined) {
 				this.direction = direction;
 			}

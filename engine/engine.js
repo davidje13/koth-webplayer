@@ -151,6 +151,21 @@ require([
 			showTeams: teamType !== 'free_for_all',
 			allowTeamModification: false,
 		});
+		popupManager.emptyStateDOM().appendChild(docutil.make('h1', {}, ['Live Entry Editor / Debugger']));
+		popupManager.emptyStateDOM().appendChild(docutil.make('ul', {}, [
+			docutil.make('li', {}, [
+				'Select an entry on the left to begin',
+				docutil.make('div', {}, ['While an entry is selected, you will see it highlighted in the game view.']),
+			]),
+			docutil.make('li', {}, [
+				'Changes will take effect when the code editor loses focus',
+				docutil.make('div', {}, ['You do not need to restart the current game.']),
+			]),
+			docutil.make('li', {}, [
+				'Entries with yellow or red dots have encountered issues',
+				docutil.make('div', {}, ['You can see the details in the pane on the right once you have selected the entry.']),
+			]),
+		]));
 
 		const popupClose = docutil.make('button', {'class': 'close'}, ['Close']);
 		popupManager.optionsDOM().appendChild(popupClose);
