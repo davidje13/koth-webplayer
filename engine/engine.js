@@ -4,11 +4,11 @@
 // * remember display config in local storage / cookies
 // * remember custom entries in local storage (maybe)
 // * permalinks need to store which entries were chosen (& ordering)
-// * add drag-resizing of entry editor popup (and columns within it)
-// * fix page scrolling when entry editor popup is visible (body margin? move into new scrolling div?)
 // * jump-to-entry in editor when pausing due to an error
-// * why are the entry table headers not visible in the popup version of the entry editor?
-// * currently using the code editor mutates the original team object state; it should be considered immutable, and copies made (will need some thought on how to handle propagating changes made in a game back to tournaments/welcome screen)
+// * currently using the code editor mutates the original team object state; it
+//   should be considered immutable, and copies made (will need some thought on
+//   how to handle propagating changes made in a game back to tournaments /
+//   welcome screen)
 
 require([
 	'display/document_utils',
@@ -35,6 +35,7 @@ require([
 	const basePlayHiddenConfig = JSON.parse(docutil.getMetaTagValue('play-hidden-config', '{"speed": -1, "maxTime": 250}'));
 	const baseDisplayConfig = JSON.parse(docutil.getMetaTagValue('display-config', '{}'));
 	const teamViewColumns = JSON.parse(docutil.getMetaTagValue('team-view-columns', '[]'));
+	const defaultCode = docutil.getMetaTagValue('default-code', '// Code here\n');
 	const site = docutil.getMetaTagValue('stack-exchange-site');
 	const qid = docutil.getMetaTagValue('stack-exchange-qid');
 	const questionURL = docutil.getMetaTagValue(
@@ -354,6 +355,7 @@ require([
 				className: 'team-manager',
 				extraColumns: teamViewColumns,
 				showTeams: teamType !== 'free_for_all',
+				defaultCode,
 			});
 			manager.addEventListener('change', ({entry, title, code, pauseOnError}) => {
 				entry.title = title;

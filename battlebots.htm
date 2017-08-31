@@ -54,6 +54,30 @@
 	"colourscheme": "redblue"
 }'>
 
+<meta name="default-code" content="/*
+ * Inputs:
+ * move   - move number (starts at 1)
+ * x      - x coordinate of bot
+ * y      - y coordinate of bot
+ * tCount - total friendly bots remaining (including out-of-sight)
+ * eCount - total enemy bots remaining (including out-of-sight)
+ * tNear  - array of {x, y, id} for all visible friendly bots
+ * eNear  - array of {x, y, id} for all visible enemy bots
+ * setMsg - function(message) sets the message attached to your bot
+ * getMsg - function(userID) gets the latest message attached to the given bot
+ *
+ * Return: integer [0-6] to move bot:
+ *
+ *   Red Team:   Blue team:
+ *    4   3       4 2 3
+ *    2 0 1         0
+ *    5   6       5 1 6
+ *
+ */
+
+return 0;
+">
+
 <script src="core/require.js"></script>
 <script src="engine/engine.js" async></script>
 </head>

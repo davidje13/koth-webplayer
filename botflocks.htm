@@ -58,6 +58,33 @@
 	"targetMarkerType": "ring"
 }'>
 
+<meta name="default-code" content="/*
+ * Inputs:
+ * p1     - are we player 1? (player 1 starts on the left)
+ * id     - our answer ID
+ * eid    - our current opponent's answer id
+ * move   - move number (starts at 1)
+ * goal   - object containing {x, y} giving the current location of the goal
+ * grid   - function(x, y) which returns 1 if there is a wall at the requested
+ *          location, 0 if there is no wall, and -1 if the location is not
+ *          visible (or out-of-bounds)
+ * bots   - list of {x, y, hasWall} for own bots
+ * ebots  - list of {x, y, hasWall} for enemy bots
+ * getMem - function() which returns the current state of your entry's memory
+ * setMem - function(message) which sets your entry's memory
+ *
+ * Return: integer [0-24] to move/pick-up-wall/drop-wall:
+ *
+ *   Move:       Grab:       Place:
+ *    1  2  3     9 10 11    17 18 19
+ *    4  0  5    12    13    20    21
+ *    6  7  8    14 15 16    22 23 24
+ *
+ */
+
+return 0;
+">
+
 <script src="core/require.js"></script>
 <script src="engine/engine.js" async></script>
 </head>

@@ -14,8 +14,6 @@ define([
 	// TODO:
 	// * Allow drag+drop to reorder teams & entries, and switch entry teams
 	// * Add change handler to 'enabled' chekboxes & reordering to update managedTeams
-	// * Handle "+ Add" buttons
-	// * Default code for new entries (via meta tag)
 	// * Persist in local storage (maybe use answer_id as unique refs)
 
 	function buildEntryRow(team, entry) {
@@ -35,15 +33,24 @@ define([
 	}
 
 	return class EntryManager extends EventObject {
-		constructor({className = '', extraColumns = [], showTeams = true, allowTeamModification = true} = {}) {
+		constructor({
+			className = '',
+			extraColumns = [],
+			showTeams = true,
+			allowTeamModification = true,
+			defaultCode = ''
+		} = {}) {
 			super();
 
 			this.teams = null;
 			this.teamStatuses = null;
+			this.defaultCode = defaultCode;
 			this.showTeams = showTeams;
 			this.allowTeamModification = allowTeamModification;
 
 			this._triggerChange = this._triggerChange.bind(this);
+			this.addTeam = this.addTeam.bind(this);
+			this.addEntry = this.addEntry.bind(this);
 
 			this.titleEditor = docutil.make('input', {'type': 'text'});
 			this.pauseToggle = docutil.make('input', {'type': 'checkbox'});
@@ -167,7 +174,9 @@ define([
 				treeData = this.teams.map((team) => {
 					const nested = team.entries.map((entry) => buildEntryRow(team, entry));
 					if(this.allowTeamModification) {
-						nested.push({label: docutil.make('button', {disabled: 'disabled'}, ['+ Add Entry']), selectable: false});
+						const button = docutil.make('button', {'data-team': team.id}, ['+ Add Entry']);
+						button.addEventListener('click', this.addEntry);
+						nested.push({label: button, selectable: false});
 					}
 					return {
 						key: team.id,
@@ -179,7 +188,9 @@ define([
 					};
 				});
 				if(this.allowTeamModification) {
-					treeData.push({label: docutil.make('button', {disabled: 'disabled'}, ['+ Add Team']), selectable: false});
+					const button = docutil.make('button', {}, ['+ Add Team']);
+					button.addEventListener('click', this.addTeam);
+					treeData.push({label: button, selectable: false});
 				}
 			} else {
 				this.teams.forEach((team) => team.entries.forEach((entry) => {
@@ -188,7 +199,9 @@ define([
 					});
 				}));
 				if(this.allowTeamModification) {
-					treeData.push({label: docutil.make('button', {disabled: 'disabled'}, ['+ Add Entry']), selectable: false});
+					const button = docutil.make('button', {'data-team': ''}, ['+ Add Entry']);
+					button.addEventListener('click', this.addEntry);
+					treeData.push({label: button, selectable: false});
 				}
 			}
 			this.tree.setData(treeData);
@@ -208,6 +221,48 @@ define([
 		setTeams(teams) {
 			this.teams = teams;
 			this.rebuild();
+		}
+
+		addTeam() {
+			const id = 'T' + this.teams.length;
+			this.teams.push({id, entries: []});
+			this.rebuild();
+			return id;
+		}
+
+		addEntry(teamID) {
+			if(teamID.target) {
+				teamID = teamID.target.getAttribute('data-team');
+			}
+			let team = null;
+			if(teamID) {
+				team = this.teams.find((curTeam) => (curTeam.id === teamID));
+			} else {
+				teamID = 'T' + this.teams.length;
+				team = {id: teamID, entries: []};
+				this.teams.push(team);
+			}
+			if(!team) {
+				return null;
+			}
+			const entry = {
+				id: 'N' + Date.now(),
+				answer_id: 'new',
+				user_name: 'Me',
+				user_id: 'me',
+				link: '',
+				title: 'New Entry',
+				code: this.defaultCode,
+			};
+			team.entries.push(entry);
+			this.rebuild();
+			const item = this.tree.getItemWhere((item) => (item.datum.baseEntry === entry));
+			if(item) {
+				this.tree.select(item.datum);
+				// Fix strange codemirror behaviour where gutter is not shown if
+				// this makes it appear (should be identical to other selection types?)
+				this.refresh();
+			}
 		}
 
 		setTeamStatuses(teamStatuses) {

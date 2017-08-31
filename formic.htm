@@ -55,6 +55,27 @@
 	"wireframe": false
 }'>
 
+<meta name="default-code" content="/*
+ * Input:
+ * view - array of 9 objects, each containing:
+ * - color: integer [1-8]
+ * - ant: null or {type: [1-5], food: [0+), friend: true/false}
+ * - food: 0 or 1
+ *
+ * Return: object containing:
+ * - cell: integer [0-8] denoting the cell to move to, or perform an action on
+ * - type: type of worker ant to create on cell
+ * - color: new cell colour to apply
+ *
+ * Element order: (but note that direction is randomised each turn)
+ * 0 1 2
+ * 3 4 5
+ * 6 7 8
+ */
+
+return {cell: 4};
+">
+
 <script src="core/require.js"></script>
 <script src="engine/engine.js" async></script>
 </head>

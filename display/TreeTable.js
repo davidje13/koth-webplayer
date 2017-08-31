@@ -81,7 +81,9 @@ define(['core/EventObject', './document_utils', './style.css'], (EventObject, do
 
 	function buildRows(target, output, cols, datum, nesting = 0) {
 		const row = docutil.make('tr', {'class': datum.className});
-		row.addEventListener('click', () => target.select(datum));
+		if(datum.selectable !== false) {
+			row.addEventListener('click', () => target.select(datum));
+		}
 		cols.forEach(({attribute, columnClass}, index) => {
 			let v = datum[attribute];
 			let className = columnClass;
@@ -146,6 +148,16 @@ define(['core/EventObject', './document_utils', './style.css'], (EventObject, do
 
 		getItemByKey(key) {
 			return this.rowLookup.get(key) || null;
+		}
+
+		getItemWhere(predicate) {
+			let found = null;
+			this.rowLookup.forEach((item) => {
+				if(predicate(item)) {
+					found = item;
+				}
+			});
+			return found;
 		}
 
 		getSelectedItem() {
