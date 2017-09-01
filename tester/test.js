@@ -1,16 +1,13 @@
 'use strict';
 
 require(['document', 'tester/test.css'], (document) => {
-	const testedModules = [];
 	const originalTitle = document.title;
 
-	const elements = document.getElementsByTagName('meta');
-	for(let i = 0; i < elements.length; ++ i) {
-		const meta = elements[i];
-		if(meta.getAttribute('name') === 'module') {
-			testedModules.push(meta.getAttribute('content'));
-		}
-	}
+	let globalErrorExpected = false;
+	let activeFailPath = null;
+	let queue = [];
+	const scopes = [{description: '', skip: false, test: false}];
+	let scopeDepth = 1;
 
 	self.not = (submatch) => (actual) => {
 		const result = submatch(actual);
@@ -39,24 +36,29 @@ require(['document', 'tester/test.css'], (document) => {
 	self.expect = (value, matcher, extraDesc) => {
 		const result = matcher(value);
 		if(!result.match) {
-			throw new Error((extraDesc ? extraDesc + ': ' : '') + result.message);
+			self.fail(new Error((extraDesc ? extraDesc + ': ' : '') + result.message));
 		}
 	};
 
 	self.fail = (reason) => {
-		throw new Error(reason);
+		if(typeof reason !== 'object') {
+			reason = new Error(reason);
+		}
+		if(activeFailPath) {
+			activeFailPath(reason);
+			globalErrorExpected = true;
+			throw 'CAPTURED FAILURE'; // Escape current test
+		} else {
+			throw reason;
+		}
 	};
 
-	let running = false;
-	let skipping = false;
 	let count = 0;
 	let skipped = 0;
 	let failed = 0;
 	let totalCount = 0;
 	let totalSkipped = 0;
 	let totalFailed = 0;
-	const describeQueue = [];
-	const path = [];
 
 	function log(type, message, subMessage) {
 		const element = document.createElement('div');
@@ -71,86 +73,147 @@ require(['document', 'tester/test.css'], (document) => {
 		document.body.appendChild(element);
 	}
 
-	function logFailure(e) {
+	function currentPath() {
+		let path = '';
+		for(let i = 0; i < scopeDepth; ++ i) {
+			if(path) {
+				path += ' \u203A ';
+			}
+			path += scopes[i].description;
+		}
+		return path;
+	}
+
+	function stringifyError(e) {
 		let msg = '';
 		if(e) {
 			msg = e.toString();
 			if(e.stack) {
-				msg = e.stack;
+				// WORKAROUND (Safari): e.stack is not string-like unless it
+				// has a non-empty string appended
+				const stack = e.stack + '.';
+				if(stack.indexOf(msg) !== -1) {
+					msg = stack;
+				} else {
+					msg += ' : ' + stack;
+				}
 			}
 		}
-		log('failure', path.join(' \u203A '), msg);
+		return msg;
+	}
+
+	function logFailure(e) {
+		log('failure', currentPath(), stringifyError(e));
 	}
 
 	function logTestFailure(e) {
-		let msg = '';
-		if(e) {
-			msg = e.toString();
-			if(e.stack) {
-				msg = e.stack;
-			}
-		}
-		log('test-failure', path.join(' \u203A '), msg);
+		log('test-failure', currentPath(), stringifyError(e));
 	}
 
-	function invokeDescribe({object, fn, skip}) {
-		const wasSkipping = skipping;
-		if(skip) {
-			skipping = skip;
+	function invokeNextSynchronously(queue) {
+		if(!queue.length) {
+			return Promise.resolve();
 		}
-		path.push(object);
-		try {
-			fn();
-		} catch(e) {
-			logFailure(e);
-		}
-		skipping = wasSkipping;
-		path.pop();
+		return invoke(queue.shift()).then(() => invokeNextSynchronously(queue));
 	}
 
-	self.describe = (object, fn) => {
-		if(running) {
-			invokeDescribe({object, fn, skip: false});
-		} else {
-			describeQueue.push({object, fn, skip: false});
-		}
-	};
+	function invokeQueueSynchronously() {
+		const currentQueue = queue;
+		queue = [];
+		return invokeNextSynchronously(currentQueue);
+	}
 
-	self.xdescribe = (object, fn) => {
-		if(running) {
-			invokeDescribe({object, fn, skip: true});
-		} else {
-			describeQueue.push({object, fn, skip: true});
-		}
-	};
+	function currentScope() {
+		return scopes[scopeDepth - 1];
+	}
 
-	self.it = (behaviour, fn) => {
-		if(!running) {
-			throw new Error('it() must be inside describe()!');
-		}
-		if(skipping) {
-			++ skipped;
-			return;
-		}
-		path.push(behaviour);
-		++ count;
-		try {
-			fn();
-		} catch(e) {
-			logTestFailure(e);
+	function enterScope(description) {
+		const scope = {
+			description,
+			skip: currentScope().skip,
+			test: false,
+		};
+		scopes[scopeDepth] = scope;
+		++ scopeDepth;
+		return scope;
+	}
+
+	function leaveScope() {
+		-- scopeDepth;
+	}
+
+	function invoke({description, fn, skip, test}) {
+		if(currentScope().test) {
+			logTestFailure('attempt to nest inside it() block: ' + description);
 			++ failed;
 		}
-		path.pop();
+
+		const scope = enterScope(description);
+		if(skip) {
+			scope.skip = true;
+		}
+
+		if(test) {
+			scope.test = true;
+			if(scope.skip) {
+				++ skipped;
+				leaveScope();
+				return Promise.resolve();
+			}
+			++ count;
+		}
+
+		return (
+			new Promise((resolve, reject) => {
+				activeFailPath = reject;
+				Promise.all([fn()]).then(resolve);
+			})
+			.then(invokeQueueSynchronously)
+			.then(leaveScope)
+			.catch((e) => {
+				if(test) {
+					logTestFailure(e);
+					++ failed;
+				} else {
+					logFailure(e);
+				}
+				leaveScope();
+			})
+		);
+	}
+
+	self.describe = (description, fn) => {
+		queue.push({description, fn, skip: false, test: false});
 	};
 
-	self.xit = (behaviour, fn) => {
-		if(!running) {
-			throw new Error('it() must be inside describe()!');
-		}
-		++ skipped;
+	self.xdescribe = (description, fn) => {
+		queue.push({description, fn, skip: true, test: false});
+	};
+
+	self.it = (description, fn) => {
+		queue.push({description, fn, skip: false, test: true});
+	};
+
+	self.xit = (description, fn) => {
+		queue.push({description, fn, skip: true, test: true});
+	};
+
+	self.itAsynchronously = (description, fn) => {
+		queue.push({description, fn: () => {
+			return new Promise((resolve, reject) => fn(resolve));
+		}, skip: false, test: true});
+	};
+
+	self.xitAsynchronously = (description, fn) => {
+		queue.push({description, fn: null, skip: true, test: true});
 	};
 
 	self.addEventListener('error', (e) => {
+		if(globalErrorExpected) {
+			globalErrorExpected = false;
+			e.preventDefault();
+			return;
+		}
 		let msg = '';
 		if(e.error) {
 			msg = e.error.toString();
@@ -163,20 +226,14 @@ require(['document', 'tester/test.css'], (document) => {
 		log('compile-failure', 'Compilation error', msg);
 	});
 
-	document.title = originalTitle + ' \u2014 Running\u2026';
-	Promise.all(testedModules.map((module) => require([module + '_test']).then(() => {
+	function beginModule(module) {
 		log('module-begin', module + '_test');
-
-		path.push(module + '_test');
 		count = 0;
 		skipped = 0;
 		failed = 0;
-		running = true;
-		describeQueue.forEach((desc) => invokeDescribe(desc));
-		describeQueue.length = 0;
-		running = false;
-		path.pop();
+	}
 
+	function completeModule(module) {
 		totalCount += count;
 		totalSkipped += skipped;
 		totalFailed += failed;
@@ -197,11 +254,31 @@ require(['document', 'tester/test.css'], (document) => {
 				log('failure', module + ' has no tests!');
 			}
 		}
-	}).catch((e) => {
-		path.push(module + '_test');
-		logFailure(e);
-		path.pop();
-	}))).then(() => {
+	}
+
+	document.title = originalTitle + ' \u2014 Running\u2026';
+
+	const testedModules = [];
+	const elements = document.getElementsByTagName('meta');
+	for(let i = 0; i < elements.length; ++ i) {
+		const meta = elements[i];
+		if(meta.getAttribute('name') === 'module') {
+			const module = meta.getAttribute('content');
+			queue.push({
+				description: module + '_test',
+				fn: () => (
+					require([module + '_test'])
+					.then(() => beginModule(module))
+					.then(invokeQueueSynchronously)
+					.then(() => completeModule(module))
+				),
+				skip: false,
+				test: false,
+			});
+		}
+	}
+
+	invokeQueueSynchronously().then(() => {
 		const label = 'All done (' + totalCount + ')';
 		if(totalFailed) {
 			log('fail', label + '; skipped ' + totalSkipped + '; failed ' + totalFailed);
