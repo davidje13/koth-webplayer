@@ -220,8 +220,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			};
 			try {
 				const begin = performance.now();
-				action = entry.fn({
-					...params,
+				action = entry.fn(Object.assign({
 					setMsg: (msg) => {
 						if(typeof msg === 'string') {
 							messages[entry.user_id] = bot.message = msg.substr(0, 64);
@@ -230,7 +229,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					getMsg: (id) => {
 						return messages[id];
 					},
-				}, {
+				}, params), {
 					MathRandom: () => {
 						return this.random.next(0x100000000) / 0x100000000;
 					},

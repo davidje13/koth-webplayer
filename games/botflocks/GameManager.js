@@ -253,8 +253,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			};
 			try {
 				const begin = performance.now();
-				action = entry.fn({
-					...params,
+				action = entry.fn(Object.assign({
 					grid: (x, y) => { // grid(x, y)
 						if((x|0) !== x || (y|0) !== y) {
 							return -1;
@@ -277,7 +276,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 							entry.memory = msg;
 						}
 					},
-				}, {
+				}, params), {
 					MathRandom: () => {
 						return this.random.next(0x100000000) / 0x100000000;
 					},
