@@ -63,7 +63,7 @@ define(['require', './EventObject', 'def:./EventObject', 'def:./worker_utils_inn
 		let ready = false;
 		const queueOut = [];
 
-		worker.addEventListener('message', () => {
+		worker.addEventListener('message', (event) => {
 			if(event.data && event.data.require_script_src !== undefined) {
 				const src = event.data.require_script_src;
 				if(!src) {

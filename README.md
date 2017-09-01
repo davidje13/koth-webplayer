@@ -51,9 +51,9 @@ architectural choice, just that I felt like working from the lowest level
 familiar).
 
 Modern Javascript syntax and APIs are used throughout and no polyfils are
-included, so don't expect this to work in Internet Explorer. So far it's only
-been tested in Google Chrome & Safari (iOS), but in theory it should also work
-in Mozilla Firefox (perhaps with some minor fixes).
+included, so don't expect this to work in Internet Explorer. So far it's been
+tested in Google Chrome, Mozilla Firefox, and Safari (including on iOS), but in
+theory it should work on any modern browser.
 
 Unit tests (few though they are) can be run by opening the `test.htm` file in
 the root (see the current test status on master at:
