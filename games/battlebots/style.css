@@ -1,4 +1,5 @@
 .game-board canvas {
+	image-rendering: -moz-crisp-edges; /* WORKAROUND (Firefox) */
 	image-rendering: pixelated;
 }
 
