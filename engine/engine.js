@@ -410,9 +410,16 @@ require([
 
 			case 'LOAD_FAILED':
 				docutil.body.removeChild(loader.dom());
-				docutil.body.appendChild(docutil.make('div', {'class': 'error'}, [
-					'Failed to load entries: ' + data.error
-				]));
+				const ignoreBtn = docutil.make('button', {}, ['Continue Anyway']);
+				const errorDom = docutil.make('div', {'class': 'error'}, [
+					'Failed to load entries: ' + data.error,
+					ignoreBtn
+				]);
+				ignoreBtn.addEventListener('click', () => {
+					docutil.body.removeChild(errorDom);
+					begin([]);
+				});
+				docutil.body.appendChild(errorDom);
 				break;
 			}
 		});
