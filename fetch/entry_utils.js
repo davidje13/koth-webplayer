@@ -18,6 +18,7 @@ define(['core/worker_utils', 'path:./loader_worker'], (worker_utils, loader_work
 			title: unescapeHTML(entry.title),
 			code: unescapeHTML(entry.code),
 			enabled: entry.enabled,
+			pauseOnError: false,
 		};
 	}
 
@@ -42,7 +43,30 @@ define(['core/worker_utils', 'path:./loader_worker'], (worker_utils, loader_work
 					'const postMessage = undefined;' +
 					'const Date = undefined;' +
 					'const performance = undefined;' +
-					'const console = undefined;' +
+					'const console = (extras.consoleTarget ? (((target, limit = 100, itemLimit = 1024) => {' +
+						'const dolog = (type, values) => {' +
+							'target.push({type, values: Array.prototype.map.call(values, (v) => {' +
+								'if(v && v.message) {' +
+									'return String(v.message).substr(0, itemLimit);' +
+								'}' +
+								'try {' +
+									'return JSON.stringify(v).substr(0, itemLimit);' +
+								'} catch(e) {' +
+									'return String(v).substr(0, itemLimit);' +
+								'}' +
+							'})});' +
+							'if(target.length > limit) {' +
+								'target.shift();' +
+							'}' +
+						'};' +
+						'return {' +
+							'clear: () => {target.length = 0;},' +
+							'info: function() {dolog("info", arguments);},' +
+							'log: function() {dolog("log", arguments);},' +
+							'warn: function() {dolog("warn", arguments);},' +
+							'error: function() {dolog("error", arguments);},' +
+						'};' +
+					'})(extras.consoleTarget, extras.consoleLimit, extras.consoleItemLimit)) : undefined);' +
 					pre +
 					'extras = undefined;' +
 					'return (({' + parameters.join(',') + '}) => {\n' +

@@ -98,10 +98,15 @@ define([
 
 			this.optionsBar = docutil.make('div', {'class': 'options-bar'}, [this.entryOptions]);
 			this.infoBoxContent = docutil.text();
+			this.consoleBoxContent = docutil.text();
 			this.infoBox = docutil.make('div', {'class': 'info-box'}, [this.infoBoxContent]);
+			this.consoleBox = docutil.make('div', {'class': 'console-box'}, [this.consoleBoxContent]);
 
 			this.entryHold = new SplitView([
-				docutil.make('div', {}, [this.codeEditor]),
+				new SplitView([
+					docutil.make('div', {}, [this.codeEditor]),
+					{element: this.consoleBox, fraction: 0.2},
+				], {direction: SplitView.VERTICAL}).dom(),
 				{element: this.infoBox, fraction: 0.3},
 			], {direction: SplitView.HORIZONTAL, className: 'code-editor'});
 
@@ -202,7 +207,7 @@ define([
 			if(
 				entry.title !== title ||
 				entry.code !== code ||
-				entry.pauseOnError !== pauseOnError
+				entry.pauseOnError !== this.pauseToggle.checked
 			) {
 				this.trigger('change', [{
 					entry,
@@ -303,6 +308,7 @@ define([
 				title: 'New Entry',
 				code: this.defaultCode,
 				enabled: true,
+				pauseOnError: false,
 			};
 			team.entries.push(entry);
 			this.rebuild();
@@ -339,8 +345,9 @@ define([
 				item.datum.error = entryStatus.error;
 				item.datum.errorInput = entryStatus.errorInput;
 				item.datum.errorOutput = entryStatus.errorOutput;
+				item.datum.console = entryStatus.console;
 			}));
-			this._updateInfoBox();
+			this._updateInfo();
 		}
 
 		_update() {
@@ -353,7 +360,7 @@ define([
 				this.setCode(entry.code, entry.id);
 				this.titleEditor.value = entry.title;
 				this.pauseToggle.checked = entry.pauseOnError;
-				this._updateInfoBox();
+				this._updateInfo();
 			} else {
 				docutil.updateStyle(this.emptyState, {'display': 'block'});
 				docutil.updateStyle(this.entryHold.dom(), {'display': 'none'});
@@ -361,21 +368,31 @@ define([
 			}
 		}
 
-		_updateInfoBox() {
+		_updateInfo() {
 			const selectedItem = this.tree.getSelectedItem();
 			if(!selectedItem) {
 				docutil.updateText(this.infoBoxContent, '');
+				docutil.updateText(this.consoleBoxContent, '');
 			} else {
-				let content = '';
-				if(selectedItem.datum.disqualified) {
-					content += 'Disqualified: ';
-				} else if(selectedItem.datum.error) {
-					content += 'Warning: ';
+				const datum = selectedItem.datum;
+				let info = '';
+				if(datum.disqualified) {
+					info += 'Disqualified: ';
+				} else if(datum.error) {
+					info += 'Warning: ';
 				}
-				if(selectedItem.datum.error) {
-					content += selectedItem.datum.error;
+				if(datum.error) {
+					info += datum.error;
 				}
-				docutil.updateText(this.infoBoxContent, content);
+				let logs = '';
+				if(datum.console) {
+					logs = (datum.console
+						.map((ln) => (ln.type + ': ' + ln.values.join(' ')))
+						.join('\n')
+					);
+				}
+				docutil.updateText(this.infoBoxContent, info);
+				docutil.updateText(this.consoleBoxContent, logs);
 			}
 		}
 

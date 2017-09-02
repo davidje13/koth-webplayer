@@ -70,6 +70,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 							error: null,
 							errorInput: null,
 							errorOutput: null,
+							console: [],
 							p1: sideInfos.p1,
 							answer_id: null,
 							bots,
@@ -280,6 +281,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					MathRandom: () => {
 						return this.random.next(0x100000000) / 0x100000000;
 					},
+					consoleTarget: entry.console,
 				});
 				elapsed = performance.now() - begin;
 
@@ -362,20 +364,21 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 				simulationTime: this.simulationTime,
 				board: this.board,
 				target: this.goal,
-				teams: this.teams.map((team) => ({
-					id: team.id,
-					entries: team.entries.map((entry) => {
+				teams: this.teams.map((teamState) => ({
+					id: teamState.id,
+					entries: teamState.entries.map((entryState) => {
 						return {
-							id: entry.id,
-							codeSteps: entry.codeSteps,
-							elapsedTime: entry.elapsedTime,
-							disqualified: entry.disqualified,
-							error: entry.error,
-							errorInput: entry.errorInput,
-							errorOutput: entry.errorOutput,
+							id: entryState.id,
+							codeSteps: entryState.codeSteps,
+							elapsedTime: entryState.elapsedTime,
+							disqualified: entryState.disqualified,
+							error: entryState.error,
+							errorInput: entryState.errorInput,
+							errorOutput: entryState.errorOutput,
+							console: entryState.console,
 
-							points: entry.points,
-							bots: entry.bots,
+							points: entryState.points,
+							bots: entryState.bots,
 						};
 					}),
 				})),

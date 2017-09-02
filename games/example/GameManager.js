@@ -34,6 +34,7 @@ define(['fetch/entry_utils'], (entry_utils) => {
 //					error: null,
 //					errorInput: null,
 //					errorOutput: null,
+//					console: [],
 //					// anything else you want to store
 //					codeSteps: 0,
 //					elapsedTime: 0,
@@ -104,7 +105,7 @@ define(['fetch/entry_utils'], (entry_utils) => {
 					my: 'foo',
 					parameters: 'bar',
 					here: 'baz'
-				});
+				}, {consoleTarget: entry.console});
 				elapsed = performance.now() - begin;
 
 				if(action_is_bad) {
@@ -171,6 +172,7 @@ define(['fetch/entry_utils'], (entry_utils) => {
 							error: entryState.error,
 							errorInput: entryState.errorInput,
 							errorOutput: entryState.errorOutput,
+							console: entryState.console,
 //							codeSteps: entryState.codeSteps,
 //							elapsedTime: entryState.elapsedTime,
 //

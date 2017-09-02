@@ -75,6 +75,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					error: null,
 					errorInput: null,
 					errorOutput: null,
+					console: [],
 					bot,
 					user_id: null,
 					codeSteps: 0,
@@ -233,6 +234,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					MathRandom: () => {
 						return this.random.next(0x100000000) / 0x100000000;
 					},
+					consoleTarget: entry.console,
 				});
 				elapsed = performance.now() - begin;
 
@@ -321,6 +323,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 							error: entryState.error,
 							errorInput: entryState.errorInput,
 							errorOutput: entryState.errorOutput,
+							console: entryState.console,
 
 							teamIndex: entryState.bot.teamIndex,
 							alive: entryState.bot.alive,

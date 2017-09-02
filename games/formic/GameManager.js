@@ -220,6 +220,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					error: null,
 					errorInput: null,
 					errorOutput: null,
+					console: [],
 					queen,
 					workerCounts: array_utils.makeList(WORKER_TYPES, 0),
 					cacheView: array_utils.makeList(CACHE_SIZE, null),
@@ -387,7 +388,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 				try {
 					const apiView = viewToAPI(view);
 					const begin = performance.now();
-					action = entry.fn({view: apiView});
+					action = entry.fn({view: apiView}, {consoleTarget: entry.console});
 					elapsed = performance.now() - begin;
 					error = checkError(action, ant, view);
 				} catch(e) {
@@ -492,6 +493,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 							error: entryState.error,
 							errorInput: entryState.errorInput,
 							errorOutput: entryState.errorOutput,
+							console: entryState.console,
 						};
 					}),
 				})),

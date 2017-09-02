@@ -350,6 +350,15 @@ h4 a:active, h4 a:hover {
 	overflow: auto;
 }
 
+.console-box {
+	padding: 5px;
+	border-top: 1px solid #333333;
+	word-wrap: break-word;
+	font-family: monospace;
+	overflow: auto;
+	white-space: pre-wrap;
+}
+
 .cm-trailingspace {
 	background: rgba(255, 0, 0, 0.5);
 }
