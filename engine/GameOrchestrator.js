@@ -91,7 +91,7 @@ define([
 				throw new Error('Attempt to use terminated game');
 			}
 			Object.assign(this.config.play, {
-				delta: 0,
+				delay: 0,
 				speed: 0,
 			});
 			if(this.display) {
@@ -280,7 +280,7 @@ define([
 					if(game) {
 						game.updateState(data.state);
 						if(data.pauseTriggered) {
-							game.updatePlayConfig({speed: 0, delta: 0});
+							game.updatePlayConfig({delay: 0, speed: 0});
 						}
 					}
 					break;

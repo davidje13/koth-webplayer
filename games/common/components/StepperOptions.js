@@ -38,40 +38,10 @@ define([
 			event: 'step',
 			params: [null, 1],
 		}, {
-			label: '\u215B',
-			title: 'Play 1/8 Speed',
-			event: 'changeplay',
-			params: [{delay: 1000, speed: 1}],
-		}, {
-			label: '\u00BC',
-			title: 'Play 1/4 Speed',
-			event: 'changeplay',
-			params: [{delay: 500, speed: 1}],
-		}, {
-			label: '\u00BD',
-			title: 'Play 1/2 Speed',
-			event: 'changeplay',
-			params: [{delay: 250, speed: 1}],
-		}, {
 			label: '\u25B6',
 			title: 'Play',
 			event: 'changeplay',
 			params: [{delay: 0, speed: 1}],
-		}, {
-			label: '\u25B6\u25B6',
-			title: 'Play Fast',
-			event: 'changeplay',
-			params: [{delay: 0, speed: 10}],
-		}, {
-			label: '\u25B6\u25B6\u25B6',
-			title: 'Play Very Fast',
-			event: 'changeplay',
-			params: [{delay: 0, speed: 50}],
-		}, {
-			label: '\u25B6\u25B6\u25B6\u25B6',
-			title: 'Play Crazy Fast',
-			event: 'changeplay',
-			params: [{delay: 0, speed: 500}],
 		}, {
 			label: '\u25B6!',
 			title: 'Fastest Possible',

@@ -61,6 +61,11 @@ define([
 					event: 'changeplay',
 					params: [{delay: 0, speed: 0}],
 				}, {
+					label: '>',
+					title: 'Step',
+					event: 'step',
+					params: ['single', 1],
+				}, {
 					label: '>>',
 					title: 'Step Frame',
 					event: 'step',

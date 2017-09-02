@@ -84,6 +84,8 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 				this.bots.push(bot);
 				this.updateEntry(entry);
 			}));
+
+			this.beginFrame();
 		}
 
 		updateEntry({id, code = null, pauseOnError = null, disqualified = null, user_id = null}) {
@@ -174,10 +176,11 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 		}
 
 		stepBot(index) {
+			this.random.save();
 			const bot = this.bots[index];
 			const entry = this.entryLookup.get(bot.entry);
 			if(entry.disqualified || !bot.alive) {
-				return;
+				return false;
 			}
 			const counts = [0, 0];
 			const nearby = [[], []];
@@ -258,13 +261,46 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					error + ' (gave ' + entry.errorOutput +
 					' for ' + entry.errorInput + ')'
 				);
+				if(entry.pauseOnError) {
+					this.random.rollback();
+					throw 'PAUSE';
+				}
 			} else {
 				this.moveBot(bot, action);
 			}
+
+			return true;
+		}
+
+		beginFrame() {
+			// Randomise order
+			array_utils.shuffleInPlace(this.bots, this.random);
+			this.currentBot = 0;
 		}
 
 		stepOneBot() {
-			// TODO
+			if(this.frame >= this.maxFrame) {
+				return;
+			}
+			const begin = performance.now();
+
+			let moved = false;
+			for(; !moved; ++ this.currentBot) {
+				if(this.currentBot === this.bots.length) {
+					this.beginFrame();
+					++ this.frame;
+					if(this.frame >= this.maxFrame) {
+						return;
+					}
+				}
+
+				const movingTeamIndex = (this.frame % 2);
+				if(this.bots[this.currentBot].teamIndex === movingTeamIndex) {
+					moved = this.stepBot(this.currentBot);
+				}
+			}
+
+			this.simulationTime += performance.now() - begin;
 		}
 
 		stepAllBots() {
@@ -273,19 +309,21 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			}
 			const begin = performance.now();
 
-			const movingTeamIndex = (this.frame % 2);
-
-			// Randomise order
-			array_utils.shuffleInPlace(this.bots, this.random);
-
-			// Step all bots
-			for(let i = 0; i < this.bots.length; ++ i) {
-				if(this.bots[i].teamIndex === movingTeamIndex) {
-					this.stepBot(i);
+			if(this.currentBot === this.bots.length) {
+				this.beginFrame();
+				++ this.frame;
+				if(this.frame >= this.maxFrame) {
+					return;
 				}
 			}
 
-			++ this.frame;
+			const movingTeamIndex = (this.frame % 2);
+			for(; this.currentBot < this.bots.length; ++ this.currentBot) {
+				if(this.bots[this.currentBot].teamIndex === movingTeamIndex) {
+					this.stepBot(this.currentBot);
+				}
+			}
+
 			this.simulationTime += performance.now() - begin;
 		}
 
@@ -309,6 +347,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 
 				// Game specific data
 				frame: this.frame,
+				currentBot: this.currentBot,
 				simulationTime: this.simulationTime,
 				teams: this.teams.map((team) => ({
 					id: team.id,
