@@ -61,7 +61,12 @@ define([
 			this.allowTeamModification = allowTeamModification;
 			this.entryHistories = new Map();
 
+			this.triggerChangeTm = null;
 			this._triggerChange = this._triggerChange.bind(this);
+			this._triggerChangeDebounced = () => {
+				clearTimeout(this.triggerChangeTm);
+				this.triggerChangeTm = setTimeout(this._triggerChange, 500);
+			};
 			this.addTeam = this.addTeam.bind(this);
 			this.addEntry = this.addEntry.bind(this);
 
@@ -81,8 +86,10 @@ define([
 			});
 
 			this.titleEditor.addEventListener('change', this._triggerChange);
+			this.titleEditor.addEventListener('input', this._triggerChangeDebounced);
 			this.pauseToggle.addEventListener('change', this._triggerChange);
 			this.codeEditor.addEventListener('change', this._triggerChange);
+			this.codeEditor.addEventListener('input', this._triggerChangeDebounced);
 
 			this.entryOptions = docutil.make('span', {}, [
 				docutil.make('label', {}, ['Title ', this.titleEditor]),
@@ -153,6 +160,7 @@ define([
 				});
 				this.setCode(code, null);
 				this.codeEditor.on('blur', this._triggerChange);
+				this.codeEditor.on('change', this._triggerChangeDebounced);
 			});
 		}
 
@@ -162,13 +170,17 @@ define([
 		}
 
 		_triggerEnabledChange(entry, enabled) {
-			this.trigger('change', [{
-				entry,
-				enabled,
-			}]);
+			if(entry.enabled !== enabled) {
+				this.trigger('change', [{
+					entry,
+					enabled,
+				}]);
+			}
 		}
 
 		_triggerChange() {
+			clearTimeout(this.triggerChangeTm);
+			this.triggerChangeTm = null;
 			const selectedItem = this.tree.getSelectedItem();
 			if(!selectedItem) {
 				return;
@@ -187,12 +199,18 @@ define([
 					history: this.codeEditor.getDoc().getHistory(),
 				});
 			}
-			this.trigger('change', [{
-				entry,
-				title,
-				code,
-				pauseOnError: this.pauseToggle.checked,
-			}]);
+			if(
+				entry.title !== title ||
+				entry.code !== code ||
+				entry.pauseOnError !== pauseOnError
+			) {
+				this.trigger('change', [{
+					entry,
+					title,
+					code,
+					pauseOnError: this.pauseToggle.checked,
+				}]);
+			}
 		}
 
 		rebuild() {
