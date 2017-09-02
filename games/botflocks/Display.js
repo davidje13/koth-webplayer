@@ -33,6 +33,9 @@ define([
 				[255, 255,   0, 255], // Unknown entry
 				[  0,   0, 255, 255], // Player 1
 				[255,   0,   0, 255], // Player 2
+				[  0, 255,   0, 255], // Extra player 3
+				[  0, 255, 255, 255], // Extra player 4
+				[255,   0, 255, 255], // Extra player 5
 			],
 		},
 		bluered: {
@@ -44,6 +47,9 @@ define([
 				[255, 255,   0, 255], // Unknown entry
 				[ 32,  64, 255, 255], // Player 1
 				[255,  64,  32, 255], // Player 2
+				[ 64, 255,  32, 255], // Extra player 3
+				[ 32, 224, 255, 255], // Extra player 4
+				[255,  32, 224, 255], // Extra player 5
 			],
 		},
 	};

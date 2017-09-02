@@ -263,6 +263,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 				);
 				if(entry.pauseOnError) {
 					this.random.rollback();
+					-- bot.moves;
 					throw 'PAUSE';
 				}
 			} else {

@@ -27,6 +27,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			this.maxFrame = Math.max(maxFrame|0, 1);
 			this.visibilityDist = Math.max(((visibilitySquare - 1) / 2)|0, 1);
 			this.goalTimeLimit = Math.max(goalTimeLimit|0, 1);
+			this.currentEntry = 0;
 			this.frame = 0;
 			this.simulationTime = 0;
 			this.goal = {x: 0, y: 0};
@@ -207,8 +208,9 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 		}
 
 		stepEntry(entry, enemyTeams) {
+			this.random.save();
 			if(entry.disqualified) {
-				return;
+				return false;
 			}
 
 			let error = null;
@@ -312,6 +314,11 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					error + ' (gave ' + entry.errorOutput +
 					' for ' + entry.errorInput + ')'
 				);
+				if(entry.pauseOnError) {
+					this.random.rollback();
+					-- entry.moves;
+					throw 'PAUSE';
+				}
 			} else {
 				action.forEach((act, i) => {
 					this.moveBot(entry, entry.bots[i], act);
@@ -320,6 +327,16 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					this.pickNewGoal();
 				}
 			}
+
+			return true;
+		}
+
+		endFrame() {
+			if((-- this.goalLife) === 0) {
+				this.pickNewGoal();
+			}
+			++ this.frame;
+			this.currentEntry = 0;
 		}
 
 		step(type) {
@@ -336,16 +353,17 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 				}
 			});
 
-			// Step all entries for team
+			// Step entries for team
 			const team = this.teams[movingTeamIndex];
-			for(let i = 0; i < team.entries.length; ++ i) {
-				this.stepEntry(team.entries[i], enemyTeams);
+			for(; this.currentEntry < team.entries.length; ++ this.currentEntry) {
+				const moved = this.stepEntry(team.entries[this.currentEntry], enemyTeams);
+				if(moved && type === 'single') {
+					break;
+				}
 			}
-			if((-- this.goalLife) === 0) {
-				this.pickNewGoal();
+			if(this.currentEntry === team.entries.length) {
+				this.endFrame();
 			}
-
-			++ this.frame;
 			this.simulationTime += performance.now() - begin;
 		}
 
