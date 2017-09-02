@@ -145,6 +145,7 @@ define(() => {
 
 		det() {
 			const d = this.data;
+			/* jshint -W014 */
 			return (
 				+ d[ 0]*d[ 5]*d[10]*d[15] + d[ 0]*d[ 9]*d[14]*d[ 7] + d[ 0]*d[13]*d[ 6]*d[11]
 				+ d[ 4]*d[ 1]*d[14]*d[11] + d[ 4]*d[ 9]*d[ 2]*d[15] + d[ 4]*d[13]*d[10]*d[ 3]
@@ -161,6 +162,7 @@ define(() => {
 			// Thanks, http://www.cg.info.hiroshima-cu.ac.jp/~miyazaki/knowledge/teche23.html
 			const d = this.data;
 			const det = this.det();
+			/* jshint -W014 */
 			return Mat4.of([
 				+ d[ 5]*d[10]*d[15] + d[ 9]*d[14]*d[ 7] + d[13]*d[ 6]*d[11]
 				- d[ 5]*d[14]*d[11] - d[ 9]*d[ 6]*d[15] - d[13]*d[10]*d[ 7],
@@ -254,7 +256,7 @@ define(() => {
 				0, 0, -1, 0,
 			]);
 		}
-	};
+	}
 
 	Mat4.Vec3 = Vec3;
 

@@ -1,9 +1,9 @@
 define([
 	'core/EventObject',
-	'core/array_utils',
+	'core/arrayUtils',
 	'3d/ModelPoint',
 	'3d/ModelTorus',
-	'display/document_utils',
+	'display/documentUtils',
 	'display/MarkerStore',
 	'display/MarkerTypes3D',
 	'display/FullSwitchingBoard',
@@ -15,7 +15,7 @@ define([
 	'./style.css',
 ], (
 	EventObject,
-	array_utils,
+	arrayUtils,
 	ModelPoint,
 	ModelTorus,
 	docutil,
@@ -309,7 +309,7 @@ define([
 				config.queenMarkerType !== this.queenMarkerType ||
 				config.workerMarkerType !== this.workerMarkerType ||
 				config.foodMarkerType !== this.foodMarkerType ||
-				!array_utils.shallowEqual(config.focussed, this.focussed)
+				!arrayUtils.shallowEqual(config.focussed, this.focussed)
 			) {
 				this.queenMarkerType = config.queenMarkerType;
 				this.workerMarkerType = config.workerMarkerType;

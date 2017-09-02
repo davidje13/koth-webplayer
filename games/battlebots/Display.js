@@ -1,7 +1,7 @@
 define([
 	'core/EventObject',
-	'core/array_utils',
-	'display/document_utils',
+	'core/arrayUtils',
+	'display/documentUtils',
 	'display/MarkerStore',
 	'display/Full2DBoard',
 	'display/OptionsBar',
@@ -12,7 +12,7 @@ define([
 	'./style.css',
 ], (
 	EventObject,
-	array_utils,
+	arrayUtils,
 	docutil,
 	MarkerStore,
 	Full2DBoard,
@@ -182,7 +182,7 @@ define([
 			this.board.setScale(config.scale);
 
 			if(
-				!array_utils.shallowEqual(config.focussed, this.focussed)
+				!arrayUtils.shallowEqual(config.focussed, this.focussed)
 			) {
 				this.focussed = config.focussed.slice();
 				this.repositionMarkers();

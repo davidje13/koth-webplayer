@@ -1,9 +1,9 @@
-define(['./worker_utils'], (worker_utils) => {
+define(['./workerUtils'], (workerUtils) => {
 	'use strict';
 
 	describe('make', () => {
 		itAsynchronously('runs the given code in a web worker thread', (done) => {
-			const thread = worker_utils.make(() => {
+			const thread = workerUtils.make(() => {
 				self.addEventListener('message', (o) => {
 					self.postMessage(o.data + '-processed');
 				});
@@ -16,9 +16,9 @@ define(['./worker_utils'], (worker_utils) => {
 		});
 
 		itAsynchronously('loads the requested dependencies', (done) => {
-			const thread = worker_utils.make(['core/array_utils'], (array_utils) => {
+			const thread = workerUtils.make(['core/arrayUtils'], (arrayUtils) => {
 				self.addEventListener('message', (o) => {
-					self.postMessage(array_utils.makeList(o.data.length, o.data.content));
+					self.postMessage(arrayUtils.makeList(o.data.length, o.data.content));
 				});
 			});
 			thread.addEventListener('message', (o) => {
@@ -29,15 +29,15 @@ define(['./worker_utils'], (worker_utils) => {
 		});
 
 		itAsynchronously('blocks post-initialisation requests for more dependencies', (done) => {
-			const thread = worker_utils.make(() => {
+			const thread = workerUtils.make(() => {
 				const capturedRequire = self.require;
-				self.addEventListener('message', (o) => {
+				self.addEventListener('message', () => {
 					if(typeof self.require === 'function') {
 						self.postMessage('self.require was not removed');
 						return;
 					}
 					try {
-						capturedRequire(['core/array_utils'], (array_utils) => {
+						capturedRequire(['core/arrayUtils'], () => {
 							self.postMessage('require call was not blocked');
 						});
 					} catch(e) {

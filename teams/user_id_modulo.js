@@ -11,7 +11,7 @@ define(() => {
 				};
 			}
 			entries.forEach((entry) => {
-				teams[entry.user_id % count].entries.push(entry);
+				teams[entry.userID % count].entries.push(entry);
 			});
 			return teams;
 		},

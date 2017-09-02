@@ -1,8 +1,14 @@
-'use strict';
+define([
+	'core/workerUtils',
+	'path:./gameWorker',
+], (
+	workerUtils,
+	pathGameWorker
+) => {
+	'use strict';
 
-define(['core/worker_utils', 'path:./game_worker'], (worker_utils, game_worker_path) => {
 	class GameStepper {
-		constructor(token, gameManagerPath, playConfig, gameConfig) {
+		constructor(token, pathGameManager, playConfig, gameConfig) {
 			this.playConfig = playConfig;
 			this.token = token;
 			this.timeout = null;
@@ -10,10 +16,10 @@ define(['core/worker_utils', 'path:./game_worker'], (worker_utils, game_worker_p
 			this._advance = this._advance.bind(this);
 			this._handleMessage = this._handleMessage.bind(this);
 
-			this.gameWorker = worker_utils.make([
-				gameManagerPath,
-				game_worker_path,
-			], (GameManager, game_worker) => game_worker(GameManager));
+			this.gameWorker = workerUtils.make([
+				pathGameManager,
+				pathGameWorker,
+			], (GameManager, gameWorker) => gameWorker(GameManager));
 			this.gameWorker.addEventListener('message', this._handleMessage);
 
 			this.waiting = true;
@@ -117,7 +123,7 @@ define(['core/worker_utils', 'path:./game_worker'], (worker_utils, game_worker_p
 				entry,
 			});
 		}
-	};
+	}
 
 	const runningGames = new Map();
 
@@ -132,7 +138,7 @@ define(['core/worker_utils', 'path:./game_worker'], (worker_utils, game_worker_p
 			}
 			runningGames.set(data.token, new GameStepper(
 				data.token,
-				data.gameManagerPath,
+				data.pathGameManager,
 				data.playConfig,
 				data.gameConfig
 			));
@@ -160,7 +166,7 @@ define(['core/worker_utils', 'path:./game_worker'], (worker_utils, game_worker_p
 			break;
 
 		case 'STOP_ALL':
-			runningGames.forEach((game) => game.terminate());
+			runningGames.forEach((runningGame) => runningGame.terminate());
 			runningGames.clear();
 			break;
 		}

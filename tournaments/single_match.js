@@ -1,15 +1,27 @@
-define(['core/EventObject', 'core/array_utils', 'math/Random'], (EventObject, array_utils, Random) => {
+define([
+	'core/EventObject',
+	'core/arrayUtils',
+	'math/Random',
+], (
+	EventObject,
+	arrayUtils,
+	Random
+) => {
 	'use strict';
 
 	const SHUFFLES = {
-		none: (list, index, random) => list,
-		random: (list, index, random) => {
-			return array_utils.shuffle(list, new Random(random));
+		none: (list) => list,
+		random: (list, {random}) => {
+			return arrayUtils.shuffle(list, new Random(random));
 		},
-		roundRobin: (list, index, random) => {
+		roundRobin: (list, {index}) => {
 			return list.map((item, i) => list[(i + index) % list.length]);
 		},
 	};
+
+	function applyShuffle(type, list, details) {
+		return SHUFFLES[type](list, details);
+	}
 
 	return class Tournament extends EventObject {
 		constructor({
@@ -43,14 +55,23 @@ define(['core/EventObject', 'core/array_utils', 'math/Random'], (EventObject, ar
 			const random = new Random(this.seed);
 
 			const matches = [];
-			for(let i = 0; i < this.matchCount; ++ i) {
+			for(let index = 0; index < this.matchCount; ++ index) {
 				const matchSeed = random.makeRandomSeed('M');
+				/* jshint -W083 */
 				const matchTeams = teams.map((team) => {
 					return Object.assign({}, team, {
-						entries: SHUFFLES[this.matchEntryShuffle](team.entries, i, random),
+						entries: applyShuffle(
+							this.matchEntryShuffle,
+							team.entries,
+							{index, random}
+						),
 					});
 				});
-				const shuffledMatchTeams = SHUFFLES[this.matchTeamShuffle](matchTeams, i, random);
+				const shuffledMatchTeams = applyShuffle(
+					this.matchTeamShuffle,
+					matchTeams,
+					{index, random}
+				);
 				if(this.matchTeamLimit && this.matchTeamLimit < shuffledMatchTeams.length) {
 					shuffledMatchTeams.length = this.matchTeamLimit;
 				}

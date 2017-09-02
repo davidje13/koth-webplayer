@@ -1,4 +1,11 @@
-define(['core/EventObject', './document_utils', './style.css'], (EventObject, docutil) => {
+define([
+	'core/EventObject',
+	'./documentUtils',
+	'./style.css',
+], (
+	EventObject,
+	docutil
+) => {
 	'use strict';
 
 	const VERTICAL = {};
@@ -45,7 +52,7 @@ define(['core/EventObject', './document_utils', './style.css'], (EventObject, do
 				const sum = this._totalFrac();
 				this.dragScale = sum / sz;
 				this.dragMin = this.minFrac * sum;
-				this.dragIndex = e.target.getAttribute('data-index')|0;
+				this.dragIndex = Number(e.target.getAttribute('data-index'));
 				window.addEventListener('mousemove', this._drag);
 				window.addEventListener('mouseup', this._endDrag);
 			}

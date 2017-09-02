@@ -1,4 +1,4 @@
-define(['./array_utils'], (array_utils) => {
+define(['./arrayUtils'], (arrayUtils) => {
 	'use strict';
 
 	const rnd = {
@@ -7,19 +7,19 @@ define(['./array_utils'], (array_utils) => {
 
 	describe('makeList', () => {
 		it('generates a list of the requested length', () => {
-			const list = array_utils.makeList(5, null);
+			const list = arrayUtils.makeList(5, null);
 			expect(list.length, equals(5));
 		});
 
 		it('populates the array with the requested default value', () => {
-			const list = array_utils.makeList(5, 7);
+			const list = arrayUtils.makeList(5, 7);
 			for(let i = 0; i < 5; ++ i) {
 				expect(list[i], equals(7));
 			}
 		});
 
 		it('can generate empty lists', () => {
-			const list = array_utils.makeList(0);
+			const list = arrayUtils.makeList(0);
 			expect(list.length, equals(0));
 		});
 	});
@@ -28,7 +28,7 @@ define(['./array_utils'], (array_utils) => {
 		it('shuffles the given list using the given random source', () => {
 			const list = [1, 2, 3, 4];
 
-			array_utils.shuffleInPlace(list, {
+			arrayUtils.shuffleInPlace(list, {
 				next: () => 0,
 			});
 
@@ -42,7 +42,7 @@ define(['./array_utils'], (array_utils) => {
 			const original = [5, 11, 'foo', 0.1];
 			const list = original.slice();
 
-			array_utils.shuffleInPlace(list, rnd);
+			arrayUtils.shuffleInPlace(list, rnd);
 
 			expect(list.length, equals(original.length));
 			for(let i = 0; i < original.length; ++ i) {
@@ -55,7 +55,7 @@ define(['./array_utils'], (array_utils) => {
 		it('leaves empty lists unchanged', () => {
 			const list = [];
 
-			array_utils.shuffleInPlace(list, rnd);
+			arrayUtils.shuffleInPlace(list, rnd);
 
 			expect(list.length, equals(0));
 		});
@@ -65,7 +65,7 @@ define(['./array_utils'], (array_utils) => {
 		it('shuffles a copy of the given list using the given random source', () => {
 			const list = [1, 2, 3, 4];
 
-			const list2 = array_utils.shuffle(list, {
+			const list2 = arrayUtils.shuffle(list, {
 				next: () => 0,
 			});
 
@@ -78,7 +78,7 @@ define(['./array_utils'], (array_utils) => {
 		it('does not modify the input', () => {
 			const list = [1, 2, 3, 4];
 
-			array_utils.shuffle(list, rnd);
+			arrayUtils.shuffle(list, rnd);
 
 			expect(list.length, equals(4));
 			for(let i = 0; i < 4; ++ i) {
@@ -90,38 +90,38 @@ define(['./array_utils'], (array_utils) => {
 	describe('shallowEqual', () => {
 		it('returns true if the given arrays compare equal by shallow comparison', () => {
 			expect(
-				array_utils.shallowEqual(['a', 'b'], ['a', 'b']),
+				arrayUtils.shallowEqual(['a', 'b'], ['a', 'b']),
 				equals(true)
 			);
 		});
 
 		it('returns true for 2 empty lists', () => {
 			expect(
-				array_utils.shallowEqual([], []),
+				arrayUtils.shallowEqual([], []),
 				equals(true)
 			);
 		});
 
 		it('returns false if the given arrays have different elements', () => {
 			expect(
-				array_utils.shallowEqual(['a', 'b'], ['a', 'c']),
+				arrayUtils.shallowEqual(['a', 'b'], ['a', 'c']),
 				equals(false)
 			);
 
 			expect(
-				array_utils.shallowEqual(['a', 'b'], ['c', 'b']),
+				arrayUtils.shallowEqual(['a', 'b'], ['c', 'b']),
 				equals(false)
 			);
 		});
 
 		it('returns false if the given arrays have different lengths', () => {
 			expect(
-				array_utils.shallowEqual(['a', 'b', 'c'], ['a', 'b']),
+				arrayUtils.shallowEqual(['a', 'b', 'c'], ['a', 'b']),
 				equals(false)
 			);
 
 			expect(
-				array_utils.shallowEqual(['a', 'b'], ['a', 'b', 'c']),
+				arrayUtils.shallowEqual(['a', 'b'], ['a', 'b', 'c']),
 				equals(false)
 			);
 		});

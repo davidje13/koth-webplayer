@@ -5,18 +5,57 @@
 <title>Unit Tests</title>
 
 <script src="core/require.js"></script>
-<script src="tester/test.js" async></script>
+<script src="tester/entry.js" async></script>
 
-<meta name="module" content="core/array_utils">
+<!-- Modules to test and lint (test files are suffixed with _test) -->
+<meta name="module" content="core/arrayUtils">
 <meta name="module" content="core/EventObject">
-<meta name="module" content="core/sandbox_utils">
-<meta name="module" content="core/worker_utils">
+<meta name="module" content="core/sandboxUtils">
+<meta name="module" content="core/workerUtils">
 <meta name="module" content="math/Ellipse">
 <meta name="module" content="math/Mat4">
 
+<!-- Extra modules to lint -->
+<meta name="lint-module" content="3d/ModelPoint">
+<meta name="lint-module" content="3d/ModelTorus">
+<meta name="lint-module" content="3d/webglUtils">
+<meta name="lint-module" content="display/documentUtils">
+<meta name="lint-module" content="display/Full2DBoard">
+<meta name="lint-module" content="display/Full3DBoard">
+<meta name="lint-module" content="display/FullSwitchingBoard">
+<meta name="lint-module" content="display/HierarchyTable">
+<meta name="lint-module" content="display/Loader">
+<meta name="lint-module" content="display/MarkerStore">
+<meta name="lint-module" content="display/MarkerTypes3D">
+<meta name="lint-module" content="display/MatchSummary">
+<meta name="lint-module" content="display/NestedNav">
+<meta name="lint-module" content="display/OptionsBar">
+<meta name="lint-module" content="display/SplitView">
+<meta name="lint-module" content="display/TreeTable">
+<meta name="lint-module" content="engine/engine">
+<meta name="lint-module" content="engine/EntryManager">
+<meta name="lint-module" content="engine/gameWorker">
+<meta name="lint-module" content="engine/GameOrchestrator">
+<meta name="lint-module" content="engine/MatchScorer">
+<meta name="lint-module" content="engine/sandboxedGames">
+<meta name="lint-module" content="engine/sandboxedLoader">
+<meta name="lint-module" content="fetch/entryUtils">
+<meta name="lint-module" content="fetch/loaderWorker">
+<meta name="lint-module" content="fetch/StackExchangeAPI">
+<meta name="lint-module" content="matches/brawl">
+<meta name="lint-module" content="math/Random">
+<meta name="lint-module" content="teams/free_for_all">
+<meta name="lint-module" content="teams/round_robin">
+<meta name="lint-module" content="teams/user_id_modulo">
+<meta name="lint-module" content="tournaments/all_v_all">
+<meta name="lint-module" content="tournaments/single_match">
+
+<!-- non-module files cannot be tested/linted, so keep content to a minimum! -->
+<!--<meta name="lint-module" content="engine/entry">-->
+<!--<meta name="lint-module" content="tester/entry">-->
+
 </head>
 <body>
-<h1>Unit Tests</h1>
 
 <noscript>These tests require Javascript!</noscript>
 

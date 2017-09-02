@@ -17,5 +17,5 @@ define(() => {
 		clear() {
 			this.marks.clear();
 		}
-	}
+	};
 });

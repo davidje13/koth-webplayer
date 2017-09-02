@@ -1,8 +1,8 @@
-'use strict';
+define(['fetch/entryUtils'], (entryUtils) => {
+	'use strict';
 
-define(['fetch/entry_utils'], (entry_utils) => {
 	function loadEntries(site, qid) {
-		entry_utils.load(site, qid, (loaded, total) => {
+		entryUtils.load(site, qid, (loaded, total) => {
 			self.postMessage({
 				action: 'LOADING',
 				loaded,

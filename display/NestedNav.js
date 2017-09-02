@@ -1,4 +1,4 @@
-define(['./document_utils', './style.css'], (docutil) => {
+define(['./documentUtils', './style.css'], (docutil) => {
 	'use strict';
 
 	return class NestedNav {
@@ -57,7 +57,7 @@ define(['./document_utils', './style.css'], (docutil) => {
 			let clickHandler = null;
 			if(page) {
 				navDOM = docutil.make('a', {'href': '#' + (hash || '')}, [
-					docutil.make('li', {}, navElements)
+					docutil.make('li', {}, navElements),
 				]);
 				clickHandler = (e) => {
 					if(e.target.tagName.toUpperCase() === 'A') {
@@ -160,5 +160,5 @@ define(['./document_utils', './style.css'], (docutil) => {
 		pageDOM() {
 			return this.hold;
 		}
-	}
+	};
 });

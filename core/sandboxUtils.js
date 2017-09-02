@@ -1,10 +1,22 @@
-// Usage: sandbox_utils.make(myFunction / myScriptName);
-// myFunction executes inside the sandbox
-// Returns a worker-like object which permits communication
-// (addEventListener & sendMessage), and destruction (terminate)
-
-define(['require', 'document', './EventObject', 'def:./EventObject', 'def:./sandbox_utils_inner'], (require, document, EventObject, EventObject_def, inner_def) => {
+define([
+	'require',
+	'document',
+	'./EventObject',
+	'def:./EventObject',
+	'def:./sandboxUtilsInner',
+], (
+	require,
+	document,
+	EventObject,
+	defEventObject,
+	defInner
+) => {
 	'use strict';
+
+	// Usage: sandboxUtils.make(myFunction / myScriptName);
+	// myFunction executes inside the sandbox
+	// Returns a worker-like object which permits communication
+	// (addEventListener & sendMessage), and destruction (terminate)
 
 	const STATE_LOADING = 0;
 	const STATE_READY = 1;
@@ -21,6 +33,16 @@ define(['require', 'document', './EventObject', 'def:./EventObject', 'def:./sand
 		return r;
 	}
 
+	function buildInvocation(dependencies, fn) {
+		if(fn && dependencies.length > 0) {
+			return '() => require(' + JSON.stringify(dependencies) + ', ' + fn.toString() + ')';
+		} else if(fn) {
+			return fn.toString();
+		} else {
+			return '() => require(' + JSON.stringify(dependencies) + ')';
+		}
+	}
+
 	class IFrame extends EventObject {
 		constructor(postMessageFn, terminateFn) {
 			super();
@@ -35,7 +57,7 @@ define(['require', 'document', './EventObject', 'def:./EventObject', 'def:./sand
 		terminate() {
 			this.terminateFn();
 		}
-	};
+	}
 
 	function make(dependencies, fn) {
 		if(typeof dependencies === 'function') {
@@ -83,34 +105,26 @@ define(['require', 'document', './EventObject', 'def:./EventObject', 'def:./sand
 			} else {
 				queueIn.push(message);
 			}
-		}
-
-		const terminate = () => {
-			state = STATE_KILLED;
-			if(iframe && iframe.parentNode) {
-				iframe.parentNode.removeChild(iframe);
-				window.removeEventListener('message', messageListener);
-			}
-		}
-
-		const o = new IFrame(postMessage, terminate);
+		};
 
 		function handleScriptRequest(event) {
-			const src = event.data.require_script_src;
-			if(!src) {
+			const path = event.data.requireScriptPath;
+			if(!path) {
 				blockRequire = true;
 				return;
 			}
 			if(blockRequire) {
-				throw new Error('Blocked late sandbox require() call: ' + src);
+				throw new Error('Blocked late sandbox require() call: ' + path);
 			}
-			require(['def:' + src], (def) => {
+			require(['def:' + path], (def) => {
 				postMessage({
-					require_script_src: src,
-					require_script_blob: def.code(),
+					requireScriptPath: path,
+					requireScriptCode: def.code(),
 				});
 			});
 		}
+
+		let o = null;
 
 		function messageListener(event) {
 			if(
@@ -119,31 +133,33 @@ define(['require', 'document', './EventObject', 'def:./EventObject', 'def:./sand
 			) {
 				return;
 			}
-			if(event.data && event.data.require_script_src !== undefined) {
+			if(event.data && event.data.requireScriptPath !== undefined) {
 				return handleScriptRequest(event);
 			}
 			o.trigger('message', [event]);
 		}
 
-		let invocation;
-		if(fn && dependencies.length > 0) {
-			invocation = '() => require(' + JSON.stringify(dependencies) + ', ' + fn.toString() + ')';
-		} else if(fn) {
-			invocation = fn.toString();
-		} else {
-			invocation = '() => require(' + JSON.stringify(dependencies) + ')';
-		}
+		const terminate = () => {
+			state = STATE_KILLED;
+			if(iframe && iframe.parentNode) {
+				iframe.parentNode.removeChild(iframe);
+				window.removeEventListener('message', messageListener);
+			}
+		};
 
+		o = new IFrame(postMessage, terminate);
+
+		/* globals requireFactory */
 		const src = (
 			'self.rootProtocol = ' + JSON.stringify(protocol) + ';\n' +
 			'self.rootHref = ' + JSON.stringify(href) + ';\n' +
-			'self.restrictedScriptSrc = ' + JSON.stringify(!blockRequire) + ';\n' +
-			'const require_factory = ' + require_factory.toString() + ';\n' +
-			'require_factory();\n' +
-			EventObject_def.code() + '\n' +
-			inner_def.code() + '\n' +
-			'require([' + JSON.stringify(inner_def.src) + '])' +
-			'.then(' + invocation + ');\n'
+			'self.restrictedRequire = ' + JSON.stringify(!blockRequire) + ';\n' +
+			'const requireFactory = ' + requireFactory.toString() + ';\n' +
+			'requireFactory();\n' +
+			defEventObject.code() + '\n' +
+			defInner.code() + '\n' +
+			'require([' + JSON.stringify(defInner.src) + '])' +
+			'.then(' + buildInvocation(dependencies, fn) + ');\n'
 		);
 
 		const nonce = makeNonce();
@@ -153,9 +169,9 @@ define(['require', 'document', './EventObject', 'def:./EventObject', 'def:./sand
 			'<head>\n' +
 			'<meta charset="utf-8">\n' +
 			'<meta http-equiv="content-security-policy" content="' +
-			"script-src 'nonce-" + nonce + "' " + remoteDomain +
-			(needUnsafeEval ? " 'unsafe-eval'" : '') + ";" +
-			"style-src 'none';" +
+			'script-src \'nonce-' + nonce + '\' ' + remoteDomain +
+			(needUnsafeEval ? ' \'unsafe-eval\'' : '') + ';' +
+			'style-src \'none\';' +
 			'">\n' +
 			'<script nonce="' + nonce + '">' + src + '</script>\n' +
 			'</head>\n' +
@@ -184,13 +200,13 @@ define(['require', 'document', './EventObject', 'def:./EventObject', 'def:./sand
 				return;
 			}
 			state = STATE_READY;
-			postMessage({sandbox_connected: true});
+			postMessage({sandboxConnected: true});
 			queueIn.forEach(postMessage);
 			queueIn.length = 0;
 		}, {once: true});
 
 		window.addEventListener('message', messageListener, {
-			_no_sandbox_intercept: true,
+			_noSandboxIntercept: true,
 		});
 
 		document.body.appendChild(iframe);

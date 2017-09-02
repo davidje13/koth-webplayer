@@ -10,5 +10,5 @@ define(() => {
 		registerPointer(className, {model = null, prog = null, params = null}) {
 			this.pointerTypes.set(className, {model, prog, params});
 		}
-	}
+	};
 });

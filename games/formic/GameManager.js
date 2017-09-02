@@ -1,4 +1,4 @@
-define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => {
+define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 	'use strict';
 
 	const QUEEN = 5;
@@ -177,7 +177,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			this.currentAnt = 0;
 			this.simulationTime = 0;
 			this.board = new Uint8Array(area);
-			this.antGrid = array_utils.makeList(area, null);
+			this.antGrid = arrayUtils.makeList(area, null);
 			this.entryLookup = new Map();
 			this.ants = [];
 			this.nextAntID = 0;
@@ -222,9 +222,9 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					errorOutput: null,
 					console: [],
 					queen,
-					workerCounts: array_utils.makeList(WORKER_TYPES, 0),
-					cacheView: array_utils.makeList(CACHE_SIZE, null),
-					cacheAct: array_utils.makeList(CACHE_SIZE, null),
+					workerCounts: arrayUtils.makeList(WORKER_TYPES, 0),
+					cacheView: arrayUtils.makeList(CACHE_SIZE, null),
+					cacheAct: arrayUtils.makeList(CACHE_SIZE, null),
 					codeSteps: 0,
 					elapsedTime: 0,
 				});
@@ -234,7 +234,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			}));
 
 			// Ensure random competitor order
-			array_utils.shuffleInPlace(this.ants, this.random);
+			arrayUtils.shuffleInPlace(this.ants, this.random);
 
 			// All remaining positions are food
 			for(let i = 0; i < positions.length; ++ i) {
@@ -248,7 +248,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 				throw new Error('Attempt to modify an entry which was not registered in the game');
 			}
 			if(code !== null) {
-				const compiledCode = entry_utils.compile(code, ['view']);
+				const compiledCode = entryUtils.compile(code, ['view']);
 				entry.fn = compiledCode.fn;
 				if(compiledCode.compileError) {
 					entry.disqualified = true;
@@ -392,7 +392,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					elapsed = performance.now() - begin;
 					error = checkError(action, ant, view);
 				} catch(e) {
-					error = entry_utils.stringifyEntryError(e);
+					error = entryUtils.stringifyEntryError(e);
 				}
 				if(error) {
 					entry.errorInput = JSON.stringify(viewToAPI(view));

@@ -1,4 +1,4 @@
-define(['fetch/entry_utils'], (entry_utils) => {
+define(['fetch/entryUtils'], (entryUtils) => {
 	'use strict';
 
 	// This is the core runner for your game.
@@ -53,7 +53,7 @@ define(['fetch/entry_utils'], (entry_utils) => {
 			if(code !== null) {
 				// These parameter names match the key values given to fn() in
 				// step(type) below
-				const compiledCode = entry_utils.compile(code, [
+				const compiledCode = entryUtils.compile(code, [
 					'my',
 					'parameters',
 					'here',
@@ -112,7 +112,7 @@ define(['fetch/entry_utils'], (entry_utils) => {
 					error = 'Oh no!';
 				}
 			} catch(e) {
-				error = entry_utils.stringifyEntryError(e);
+				error = entryUtils.stringifyEntryError(e);
 			}
 
 			entry.elapsedTime += elapsed;

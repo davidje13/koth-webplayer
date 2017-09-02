@@ -1,4 +1,4 @@
-define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => {
+define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 	'use strict';
 
 	function botNear(x, y, dist) {
@@ -73,7 +73,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 							errorOutput: null,
 							console: [],
 							p1: sideInfos.p1,
-							answer_id: null,
+							answerID: null,
 							bots,
 							memory: '',
 							moves: 0,
@@ -90,13 +90,13 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			this.pickNewGoal();
 		}
 
-		updateEntry({id, code = null, pauseOnError = null, disqualified = null, answer_id = null}) {
+		updateEntry({id, code = null, pauseOnError = null, disqualified = null, answerID = null}) {
 			const entry = this.entryLookup.get(id);
 			if(!entry) {
 				throw new Error('Attempt to modify an entry which was not registered in the game');
 			}
 			if(code !== null) {
-				const compiledCode = entry_utils.compile(code, [
+				const compiledCode = entryUtils.compile(code, [
 					'p1',
 					'id',
 					'eid',
@@ -126,8 +126,8 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			if(disqualified !== null) {
 				entry.disqualified = disqualified;
 			}
-			if(answer_id !== null) {
-				entry.answer_id = answer_id;
+			if(answerID !== null) {
+				entry.answerID = answerID;
 			}
 		}
 
@@ -236,11 +236,11 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					})
 				})
 			);
-			array_utils.shuffleInPlace(enemyBots, this.random);
+			arrayUtils.shuffleInPlace(enemyBots, this.random);
 			const params = {
 				p1: entry.p1,
-				id: entry.answer_id,
-				eid: anyEnemyEntry.answer_id,
+				id: entry.answerID,
+				eid: anyEnemyEntry.answerID,
 				move: ++ entry.moves,
 				goal: {
 					x: this.goal.x,
@@ -300,7 +300,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					error = 'Too long to respond: ' + elapsed + 'ms';
 				}
 			} catch(e) {
-				error = entry_utils.stringifyEntryError(e);
+				error = entryUtils.stringifyEntryError(e);
 			}
 			Math.random = oldRandom;
 

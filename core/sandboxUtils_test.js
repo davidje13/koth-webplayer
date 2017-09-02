@@ -1,9 +1,9 @@
-define(['./sandbox_utils'], (sandbox_utils) => {
+define(['./sandboxUtils'], (sandboxUtils) => {
 	'use strict';
 
 	describe('make', () => {
 		itAsynchronously('runs the given code in an iframe', (done) => {
-			const sandboxed = sandbox_utils.make(() => {
+			const sandboxed = sandboxUtils.make(() => {
 				self.addEventListener('message', (o) => {
 					self.postMessage(o.data + '-processed');
 				});
@@ -24,9 +24,9 @@ define(['./sandbox_utils'], (sandbox_utils) => {
 		});
 
 		itAsynchronously('loads the requested dependencies', (done) => {
-			const sandboxed = sandbox_utils.make(['core/array_utils'], (array_utils) => {
+			const sandboxed = sandboxUtils.make(['core/arrayUtils'], (arrayUtils) => {
 				self.addEventListener('message', (o) => {
-					self.postMessage(array_utils.makeList(o.data.length, o.data.content));
+					self.postMessage(arrayUtils.makeList(o.data.length, o.data.content));
 				});
 			});
 			sandboxed.addEventListener('message', (o) => {

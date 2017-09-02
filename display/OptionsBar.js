@@ -1,4 +1,4 @@
-define(['core/EventObject', './document_utils'], (EventObject, docutil) => {
+define(['core/EventObject', './documentUtils'], (EventObject, docutil) => {
 	'use strict';
 
 	function makeSelect(eventObj, eventType, options, key) {
@@ -42,7 +42,11 @@ define(['core/EventObject', './document_utils'], (EventObject, docutil) => {
 			this.optPickers = opts.map((opt) => {
 				const picker = makeSelect(this, eventType, opt.values, opt.attribute);
 				if(opt.label) {
-					this.bar.appendChild(docutil.make('label', {}, [opt.label, ' ', picker.select]));
+					this.bar.appendChild(docutil.make('label', {}, [
+						opt.label,
+						' ',
+						picker.select,
+					]));
 				} else {
 					this.bar.appendChild(picker.select);
 				}
@@ -57,5 +61,5 @@ define(['core/EventObject', './document_utils'], (EventObject, docutil) => {
 		dom() {
 			return this.bar;
 		}
-	}
+	};
 });

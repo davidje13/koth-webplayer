@@ -1,6 +1,6 @@
 define([
 	'core/EventObject',
-	'./document_utils',
+	'./documentUtils',
 	'./HierarchyTable',
 	'./Loader',
 	'./style.css',
@@ -8,7 +8,7 @@ define([
 	EventObject,
 	docutil,
 	HierarchyTable,
-	Loader,
+	Loader
 ) => {
 	'use strict';
 
@@ -83,7 +83,10 @@ define([
 				className: 'result',
 			}, {
 				title: 'K-S',
-				tooltip: 'distinctness from next-highest entry (two-sample Kolmogorov-Smirnov test)',
+				tooltip: (
+					'distinctness from next-highest entry' +
+					' (two-sample Kolmogorov-Smirnov test)'
+				),
 				attribute: 'certainty',
 				className: 'certainty',
 			}]);
@@ -132,5 +135,5 @@ define([
 		dom() {
 			return this.table.dom();
 		}
-	}
+	};
 });

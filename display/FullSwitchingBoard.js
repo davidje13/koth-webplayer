@@ -1,18 +1,25 @@
 define([
 	'core/EventObject',
-	'./document_utils',
+	'./documentUtils',
 	'./Full2DBoard',
 	'./Full3DBoard',
 ], (
 	EventObject,
 	docutil,
 	Full2DBoard,
-	Full3DBoard,
+	Full3DBoard
 ) => {
 	'use strict';
 
 	return class FullSwitchingBoard extends EventObject {
-		constructor({renderer, markerStore = null, markerTypes3D = null, begin3D = false, scaleX = 1, scaleY = null}) {
+		constructor({
+			renderer,
+			markerStore = null,
+			markerTypes3D = null,
+			begin3D = false,
+			scaleX = 1,
+			scaleY = null,
+		}) {
 			super();
 
 			this.renderer = renderer;
@@ -44,8 +51,8 @@ define([
 
 		_updateSizes() {
 			if(this.board3D) {
-				const ww = (this.latestWidth * this.scaleX)|0;
-				const hh = (this.latestHeight * this.scaleY)|0;
+				const ww = Math.round(this.latestWidth * this.scaleX);
+				const hh = Math.round(this.latestHeight * this.scaleY);
 				this.board3D.resize(ww, hh);
 			}
 			if(this.board2D) {
@@ -59,21 +66,21 @@ define([
 					renderer: this.renderer,
 					markerStore: this.markerStore,
 					scaleX: this.scaleX,
-					scaleY: this.scaleY
+					scaleY: this.scaleY,
 				});
 			}
 		}
 
 		_make3DBoard() {
 			if(!this.board3D) {
-				const ww = (this.latestWidth * this.scaleX)|0;
-				const hh = (this.latestHeight * this.scaleY)|0;
+				const ww = Math.round(this.latestWidth * this.scaleX);
+				const hh = Math.round(this.latestHeight * this.scaleY);
 				this.board3D = new Full3DBoard({
 					renderer: this.renderer,
 					markerStore: this.markerStore,
 					markerTypes: this.markerTypes3D,
 					width: ww,
-					height: hh
+					height: hh,
 				});
 				this.board3D.setWireframe(this.wireframe);
 			}
@@ -220,5 +227,5 @@ define([
 		dom() {
 			return this.container;
 		}
-	}
+	};
 });

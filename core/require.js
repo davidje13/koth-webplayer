@@ -1,4 +1,4 @@
-const require_factory = () => {
+const requireFactory = () => {
 	'use strict';
 
 	const DEFINITION_PREFIX = 'def:';
@@ -10,22 +10,22 @@ const require_factory = () => {
 			this.chained = [];
 			this.v = null;
 
-			const resolve = (v) => {
+			const fullResolve = (v) => {
 				this.v = v;
 				this.state = 1;
 				this.chained.forEach(({resolve}) => resolve(v));
 			};
 
-			const reject = (v) => {
+			const fullReject = (v) => {
 				this.v = v;
 				this.state = 2;
 				this.chained.forEach(({reject}) => reject(v));
 			};
 
 			if(typeof promise === 'function') {
-				promise(resolve, reject);
+				promise(fullResolve, fullReject);
 			} else {
-				promise.then(resolve).catch(reject);
+				promise.then(fullResolve).catch(fullReject);
 			}
 		}
 
@@ -66,6 +66,7 @@ const require_factory = () => {
 				factory: null,
 				building: null,
 				module: null,
+				noFactoryCode: false,
 			});
 		}
 		return state;
@@ -73,9 +74,10 @@ const require_factory = () => {
 
 	const KEY_DOCUMENT = stateOf('document');
 	const KEY_REQUIRE = stateOf('require');
+	KEY_DOCUMENT.noFactoryCode = true;
 
 	if(self.window) {
-		KEY_DOCUMENT.building = new SharedPromise((resolve, reject) => {
+		KEY_DOCUMENT.building = new SharedPromise((resolve) => {
 			window.addEventListener('load', () => {
 				KEY_DOCUMENT.building = null;
 				KEY_DOCUMENT.module = window.document;
@@ -86,10 +88,19 @@ const require_factory = () => {
 		KEY_DOCUMENT.building = SharedPromise.reject('DOM not available');
 	}
 
+	function getExports() {
+		for(let key in self.exports) {
+			if(self.exports.hasOwnProperty(key)) {
+				return self.exports;
+			}
+		}
+		return null;
+	}
+
 	function loadFactory(src) {
 		const state = stateOf(src);
 
-		if(state.factory) {
+		if(state.factory || state.noFactoryCode) {
 			return Promise.resolve(src);
 		}
 
@@ -97,15 +108,25 @@ const require_factory = () => {
 			const lastSlash = src.lastIndexOf('/');
 			state.base = (lastSlash === -1) ? '' : src.substr(0, lastSlash);
 
-			state.loading = new SharedPromise((resolve, reject) => {
+			state.loading = new SharedPromise((resolve) => {
+				self.exports = {}; // Ensure no leakage
 				hooks.performLoad(src, () => {
 					if(unnamedDef) {
 						Object.assign(state, unnamedDef);
 						unnamedDef = null;
 					}
 					if(!state.factory) {
-						throw new Error(src + ' did not define a module!');
+						const exports = getExports();
+						if(exports) {
+							/* globals console */
+							console.warn(src + ' used exports; prefer define');
+							state.factory = () => exports;
+							state.noFactoryCode = true;
+						} else {
+							throw new Error(src + ' did not define a module!');
+						}
 					}
+					self.exports = {};
 					resolve(src);
 				});
 			});
@@ -119,7 +140,7 @@ const require_factory = () => {
 			return Promise.resolve();
 		}
 
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve) => {
 			loadedStyles.add(src);
 			const link = document.createElement('link');
 			link.setAttribute('rel', 'stylesheet');
@@ -136,21 +157,43 @@ const require_factory = () => {
 		document.getElementsByTagName('head')[0].appendChild(script);
 	};
 
+	function stringifySingle(o, multiline) {
+		// Reformat module requirements to better fit the originals for the
+		// linter (keeps line numbers correct and prevents initial line being
+		// too long)
+		let r = JSON.stringify(o).replace(/'/g, '\\\'').replace(/"/g, '\'');
+		if(multiline && r[0] === '[') {
+			r = (r
+				.replace(/^\[/, '[\n')
+				.replace(/','/g, '\',\n\'')
+				.replace(/\]$/, ',\n]')
+			);
+		}
+		return r;
+	}
+
 	function wrapDefinition(src) {
 		return {
 			src,
 			code: () => {
 				const state = stateOf(src);
+				if(state.noFactoryCode) {
+					return null;
+				}
+				const content = state.factory.toString();
 				return (
 					'require.define(' +
-					JSON.stringify(src) + ', ' +
-					JSON.stringify(state.depends) + ', ' +
-					state.factory.toString() +
+					stringifySingle(src, false) + ', ' +
+					stringifySingle(
+						state.depends,
+						content.startsWith('(\n')
+					) + ', ' +
+					content +
 					');'
 				);
 			},
 		};
-	};
+	}
 
 	function resolvePath(base, src) {
 		if(!src.startsWith('./') && !src.startsWith('../')) {
@@ -171,6 +214,21 @@ const require_factory = () => {
 			}
 		}
 		return path.join('/');
+	}
+
+	let require = null;
+
+	function applyDefinition(src) {
+		const state = stateOf(src);
+		if(state.module) {
+			return Promise.resolve(state.module);
+		}
+
+		return require(state.depends, state.factory, state.base).then((o) => {
+			state.building = null;
+			state.module = o;
+			return o;
+		});
 	}
 
 	function requireOne(base, src) {
@@ -206,23 +264,10 @@ const require_factory = () => {
 		return state.building.promise();
 	}
 
-	function applyDefinition(src) {
-		const state = stateOf(src);
-		if(state.module) {
-			return Promise.resolve(state.module);
-		}
-
-		return require(state.depends, state.factory, state.base).then((o) => {
-			state.building = null;
-			state.module = o;
-			return o;
-		});
-	}
-
-	function require(sources, fn, base) {
+	require = (sources, fn, base) => {
 		return Promise.all(sources.map(requireOne.bind(null, base))).then((deps) =>
 			fn && fn.apply(null, deps));
-	}
+	};
 
 	require.replaceLoader = function(loader) {
 		hooks.performLoad = loader;
@@ -250,22 +295,32 @@ const require_factory = () => {
 		}
 	};
 
+	require.getAllPaths = () => {
+		const paths = [];
+		states.forEach((state, path) => {
+			paths.push(path);
+		});
+		return paths;
+	};
+
 	// Disguise ourselves so that third-party libraries will integrate nicely
 	// (we're a pretty close API anyway)
 	require.define.amd = true;
 
 	require.shed = function() {
 		self.require = {define: require.define};
-		self.require_factory = undefined;
+		self.requireFactory = undefined;
 		blocked = true;
 	};
 
-	KEY_REQUIRE.factory = require_factory;
+	/* globals requireFactory */
+	KEY_REQUIRE.factory = requireFactory;
 	KEY_REQUIRE.module = require;
 
 	self.require = require;
 	self.define = require.define;
+	self.exports = {};
 
 	return require;
 };
-require_factory();
+requireFactory();

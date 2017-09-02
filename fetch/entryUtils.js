@@ -1,5 +1,13 @@
-define(['core/worker_utils', 'path:./loader_worker'], (worker_utils, loader_worker_path) => {
+define([
+	'core/workerUtils',
+	'path:./loaderWorker',
+], (
+	workerUtils,
+	pathLoaderWorker
+) => {
 	'use strict';
+
+	/* jshint worker: true */
 
 	function unescapeHTML(code) {
 		// TODO: ideally would not require access to the DOM
@@ -7,14 +15,14 @@ define(['core/worker_utils', 'path:./loader_worker'], (worker_utils, loader_work
 		const o = document.createElement('textarea');
 		o.innerHTML = code;
 		return o.value;
-	};
+	}
 
 	function parseEntry(entry, index) {
 		return {
 			id: 'E' + index,
-			answer_id: entry.answer_id,
-			user_name: entry.user_name,
-			user_id: entry.user_id,
+			answerID: entry.answerID,
+			userName: entry.userName,
+			userID: entry.userID,
 			title: unescapeHTML(entry.title),
 			code: unescapeHTML(entry.code),
 			enabled: entry.enabled,
@@ -36,37 +44,41 @@ define(['core/worker_utils', 'path:./loader_worker'], (worker_utils, loader_work
 					'const self = undefined;' +
 					'const window = undefined;' +
 					'const require = undefined;' +
-					'const require_factory = undefined;' +
+					'const requireFactory = undefined;' +
 					'const define = undefined;' +
 					'const addEventListener = undefined;' +
 					'const removeEventListener = undefined;' +
 					'const postMessage = undefined;' +
 					'const Date = undefined;' +
 					'const performance = undefined;' +
-					'const console = (extras.consoleTarget ? (((target, limit = 100, itemLimit = 1024) => {' +
+					'const console = (extras.consoleTarget ?' +
+					'((({consoleTarget, consoleLimit = 100, consoleItemLimit = 1024}) => {' +
 						'const dolog = (type, values) => {' +
-							'target.push({type, value: Array.prototype.map.call(values, (v) => {' +
-								'if(v && v.message) {' +
-									'return String(v.message);' +
-								'}' +
-								'try {' +
-									'return JSON.stringify(v);' +
-								'} catch(e) {' +
-									'return String(v);' +
-								'}' +
-							'}).join(" ").substr(0, itemLimit)});' +
-							'if(target.length > limit) {' +
-								'target.shift();' +
+							'consoleTarget.push({' +
+								'type,' +
+								'value: Array.prototype.map.call(values, (v) => {' +
+									'if(v && v.message) {' +
+										'return String(v.message);' +
+									'}' +
+									'try {' +
+										'return JSON.stringify(v);' +
+									'} catch(e) {' +
+										'return String(v);' +
+									'}' +
+								'}).join(" ").substr(0, consoleItemLimit),' +
+							'});' +
+							'if(consoleTarget.length > consoleLimit) {' +
+								'consoleTarget.shift();' +
 							'}' +
 						'};' +
 						'return {' +
-							'clear: () => {target.length = 0;},' +
+							'clear: () => {consoleTarget.length = 0;},' +
 							'info: function() {dolog("info", arguments);},' +
 							'log: function() {dolog("log", arguments);},' +
 							'warn: function() {dolog("warn", arguments);},' +
 							'error: function() {dolog("error", arguments);},' +
 						'};' +
-					'})(extras.consoleTarget, extras.consoleLimit, extras.consoleItemLimit)) : undefined);' +
+					'})(extras)) : undefined);' +
 					pre +
 					'extras = undefined;' +
 					'return (({' + parameters.join(',') + '}) => {\n' +
@@ -91,6 +103,7 @@ define(['core/worker_utils', 'path:./loader_worker'], (worker_utils, loader_work
 				// from the filesystem, so fall-back to a nasty eval
 				if(e.toString().includes('DOM Exception 19')) {
 					try {
+						/* jshint evil: true */
 						eval(src);
 						fn = self.tempFn.bind({});
 						self.tempFn = null;
@@ -114,7 +127,10 @@ define(['core/worker_utils', 'path:./loader_worker'], (worker_utils, loader_work
 				const stack = e.stack;
 				const m = stack.match(/:([0-9]+):([0-9]+)?/);
 				if(m) {
-					return 'Threw ' + e.message + ' (line ' + (m[1] - 1) + ' column ' + (m[2] || 0) + ')';
+					return (
+						'Threw ' + e.message +
+						' (line ' + (m[1] - 1) + ' column ' + (m[2] || 0) + ')'
+					);
 				} else {
 					return 'Threw ' + e.stack;
 				}
@@ -126,7 +142,7 @@ define(['core/worker_utils', 'path:./loader_worker'], (worker_utils, loader_work
 		},
 
 		load: (site, qid, progressCallback) => {
-			const loaderWorker = worker_utils.make(loader_worker_path);
+			const loaderWorker = workerUtils.make(pathLoaderWorker);
 
 			return new Promise((resolve, reject) => {
 				loaderWorker.addEventListener('message', (event) => {
@@ -137,7 +153,9 @@ define(['core/worker_utils', 'path:./loader_worker'], (worker_utils, loader_work
 						return;
 					}
 					if(!data.entries) {
-						progressCallback && progressCallback(data.loaded, data.total);
+						if(progressCallback) {
+							progressCallback(data.loaded, data.total);
+						}
 						return;
 					}
 					loaderWorker.terminate();

@@ -1,6 +1,6 @@
 define([
 	'core/EventObject',
-	'display/document_utils',
+	'display/documentUtils',
 	// You can also include stylesheets if you want to (e.g. ./style.css)
 ], (
 	EventObject,

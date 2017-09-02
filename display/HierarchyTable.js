@@ -1,4 +1,4 @@
-define(['./document_utils', './style.css'], (docutil) => {
+define(['./documentUtils', './style.css'], (docutil) => {
 	'use strict';
 
 	function countNesting(items) {
@@ -40,9 +40,7 @@ define(['./document_utils', './style.css'], (docutil) => {
 			const tooltip = column.tooltip || '';
 			const autohide = autohideAll || column.autohide;
 			const classes = (
-				column.className
-				? [...commonClasses, column.className]
-				: commonClasses
+				column.className ? [...commonClasses, column.className] : commonClasses
 			);
 
 			const className = (autohide ? [...classes, 'autohide'] : classes).join(' ');
@@ -109,9 +107,7 @@ define(['./document_utils', './style.css'], (docutil) => {
 
 	function createRows(output, datum, commonClasses = []) {
 		const classes = (
-			datum.className
-			? [...commonClasses, datum.className]
-			: commonClasses
+			datum.className ? [...commonClasses, datum.className] : commonClasses
 		);
 
 		if(datum.nested) {
@@ -191,5 +187,5 @@ define(['./document_utils', './style.css'], (docutil) => {
 		dom() {
 			return this.table;
 		}
-	}
+	};
 });

@@ -19,7 +19,7 @@ define(['document'], (document) => {
 			return fallback;
 		},
 
-		getTitle: () => {
+		getTitle: (fallback = null) => {
 			const elements = document.getElementsByTagName('title');
 			if(elements.length > 0) {
 				return elements[0].innerText;

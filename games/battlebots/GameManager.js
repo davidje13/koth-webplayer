@@ -1,4 +1,4 @@
-define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => {
+define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 	'use strict';
 
 	const MOVES = {
@@ -77,7 +77,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					errorOutput: null,
 					console: [],
 					bot,
-					user_id: null,
+					userID: null,
 					codeSteps: 0,
 					elapsedTime: 0,
 				});
@@ -88,13 +88,13 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			this.beginFrame();
 		}
 
-		updateEntry({id, code = null, pauseOnError = null, disqualified = null, user_id = null}) {
+		updateEntry({id, code = null, pauseOnError = null, disqualified = null, userID = null}) {
 			const entry = this.entryLookup.get(id);
 			if(!entry) {
 				throw new Error('Attempt to modify an entry which was not registered in the game');
 			}
 			if(code !== null) {
-				const compiledCode = entry_utils.compile(code, [
+				const compiledCode = entryUtils.compile(code, [
 					'move',
 					'x',
 					'y',
@@ -123,13 +123,13 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 			if(disqualified !== null) {
 				entry.disqualified = disqualified;
 			}
-			if(user_id !== null) {
-				entry.user_id = user_id;
+			if(userID !== null) {
+				entry.userID = userID;
 			}
 			this.entryLookup.forEach((otherEntry) => {
 				if(
 					otherEntry !== entry &&
-					otherEntry.user_id === entry.user_id &&
+					otherEntry.userID === entry.userID &&
 					!otherEntry.disqualified
 				) {
 					entry.disqualified = true;
@@ -198,12 +198,12 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 						nearby[team].push({
 							x: otherBot.x,
 							y: otherBot.y,
-							id: otherEntry.user_id,
+							id: otherEntry.userID,
 						});
 					}
-					messages[otherEntry.user_id] = otherBot.message;
+					messages[otherEntry.userID] = otherBot.message;
 				} else {
-					messages[otherEntry.user_id] = 'X';
+					messages[otherEntry.userID] = 'X';
 				}
 			});
 
@@ -227,7 +227,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 				action = entry.fn(Object.assign({
 					setMsg: (msg) => {
 						if(typeof msg === 'string') {
-							messages[entry.user_id] = bot.message = msg.substr(0, 64);
+							messages[entry.userID] = bot.message = msg.substr(0, 64);
 						}
 					},
 					getMsg: (id) => {
@@ -247,7 +247,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 					error = 'Too long to respond: ' + elapsed + 'ms';
 				}
 			} catch(e) {
-				error = entry_utils.stringifyEntryError(e);
+				error = entryUtils.stringifyEntryError(e);
 			}
 			Math.random = oldRandom;
 
@@ -275,7 +275,7 @@ define(['core/array_utils', 'fetch/entry_utils'], (array_utils, entry_utils) => 
 
 		beginFrame() {
 			// Randomise order
-			array_utils.shuffleInPlace(this.bots, this.random);
+			arrayUtils.shuffleInPlace(this.bots, this.random);
 			this.currentBot = 0;
 		}
 

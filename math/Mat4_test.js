@@ -1,9 +1,9 @@
 define(['./Mat4'], (Mat4) => {
 	'use strict';
 
+	// Thanks, https://math.dartmouth.edu/archive/m8s00/public_html/handouts/matrices3/node7.html
 	describe('det', () => {
 		it('calculates the determinant of the matrix', () => {
-			// Thanks, https://math.dartmouth.edu/archive/m8s00/public_html/handouts/matrices3/node7.html
 			const data = [
 				1, 0, 2, -1,
 				3, 0, 0, 5,

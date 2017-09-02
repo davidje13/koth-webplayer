@@ -1,9 +1,23 @@
-// Usage: worker_utils.make(myFunction / myScriptName);
-// myFunction executes inside the worker
-// returns the new worker (addEventListener & sendMessage to communicate)
-
-define(['require', './EventObject', 'def:./EventObject', 'def:./worker_utils_inner'], (require, EventObject, EventObject_def, inner_def) => {
+define([
+	'require',
+	'./EventObject',
+	'def:./EventObject',
+	'def:./workerUtilsInner',
+], (
+	require,
+	EventObject,
+	defEventObject,
+	defInner
+) => {
 	'use strict';
+
+	// Usage: workerUtils.make(myFunction / myScriptName);
+	// myFunction executes inside the worker
+	// returns the new worker (addEventListener & sendMessage to communicate)
+
+	function escape(v) {
+		return JSON.stringify(v);
+	}
 
 	function make(dependencies, fn) {
 		if(typeof dependencies === 'function') {
@@ -18,26 +32,28 @@ define(['require', './EventObject', 'def:./EventObject', 'def:./worker_utils_inn
 		const listeners = new EventObject();
 
 		let invocation;
+		const depstr = escape(dependencies);
 		if(fn && dependencies.length > 0) {
-			invocation = '() => require(' + JSON.stringify(dependencies) + ', ' + fn.toString() + ')';
+			invocation = '() => require(' + depstr + ', ' + fn.toString() + ')';
 		} else if(fn) {
 			invocation = fn.toString();
 		} else {
-			invocation = '() => require(' + JSON.stringify(dependencies) + ')';
+			invocation = '() => require(' + depstr + ')';
 		}
 
 		const protocol = self.rootProtocol || window.location.protocol;
 		const href = self.rootHref || window.location.href;
 
+		/* globals requireFactory */
 		const src = (
-			'self.rootProtocol = ' + JSON.stringify(protocol) + ';\n' +
-			'self.rootHref = ' + JSON.stringify(href) + ';\n' +
-			'self.restrictedScriptSrc = ' + JSON.stringify(self.restrictedScriptSrc || false) + ';\n' +
-			'const require_factory = ' + require_factory.toString() + ';\n' +
-			'require_factory();\n' +
-			EventObject_def.code() + '\n' +
-			inner_def.code() + '\n' +
-			'require([' + JSON.stringify(inner_def.src) + '])' +
+			'self.rootProtocol = ' + escape(protocol) + ';\n' +
+			'self.rootHref = ' + escape(href) + ';\n' +
+			'self.restrictedRequire = ' + escape(self.restrictedRequire || false) + ';\n' +
+			'const requireFactory = ' + requireFactory.toString() + ';\n' +
+			'requireFactory();\n' +
+			defEventObject.code() + '\n' +
+			defInner.code() + '\n' +
+			'require([' + escape(defInner.src) + '])' +
 			'.then(' + invocation + ')' +
 			'.then(() => require.shed());\n'
 		);
@@ -46,7 +62,10 @@ define(['require', './EventObject', 'def:./EventObject', 'def:./worker_utils_inn
 
 		let worker = null;
 		if(safari && protocol === 'https:') {
-			worker = new Worker(href.substr(0, href.lastIndexOf('/') + 1) + 'core/worker_utils_loader.js');
+			worker = new Worker(
+				href.substr(0, href.lastIndexOf('/') + 1) +
+				'core/workerUtilsLoader.js'
+			);
 			worker.postMessage({src});
 		} else {
 			worker = new Worker(URL.createObjectURL(new Blob(
@@ -59,29 +78,29 @@ define(['require', './EventObject', 'def:./EventObject', 'def:./worker_utils_inn
 
 		// WORKAROUND (Safari): messages aren't queued properly, so we have
 		// to queue them ourselves until the worker declares itself ready
-		// (this also now ties in to the use of worker_utils_loader)
+		// (this also now ties in to the use of workerUtilsLoader)
 		let ready = false;
 		const queueOut = [];
 
 		worker.addEventListener('message', (event) => {
-			if(event.data && event.data.require_script_src !== undefined) {
-				const src = event.data.require_script_src;
-				if(!src) {
+			if(event.data && event.data.requireScriptPath !== undefined) {
+				const modulePath = event.data.requireScriptPath;
+				if(!modulePath) {
 					blockRequire = true;
 					return;
 				}
 				if(blockRequire) {
-					throw new Error('Blocked late worker require() call: ' + src);
+					throw new Error('Blocked late worker require() call: ' + modulePath);
 				}
-				require(['def:' + src], (def) => {
+				require(['def:' + modulePath], (def) => {
 					worker.postMessage({
-						require_script_src: src,
-						require_script_blob: def.code(),
+						requireScriptPath: modulePath,
+						requireScriptCode: def.code(),
 					});
 				});
 				return;
 			}
-			if(!ready && event.data && event.data.worker_ready) {
+			if(!ready && event.data && event.data.workerReady) {
 				ready = true;
 				queueOut.forEach((message) => worker.postMessage(message));
 				queueOut.length = 0;
@@ -95,22 +114,22 @@ define(['require', './EventObject', 'def:./EventObject', 'def:./worker_utils_inn
 		});
 
 		const rawAddEventListener = worker.addEventListener;
-		worker.addEventListener = (type, fn, opts) => {
+		worker.addEventListener = (type, listener, opts) => {
 			if(type === 'message') {
-				listeners.addEventListener('message', fn);
+				listeners.addEventListener('message', listener);
 				if(queueIn.length > 0) {
 					queueIn.forEach((message) => listeners.trigger('message', [message]));
 					queueIn.length = 0;
 				}
 			} else {
-				rawAddEventListener(type, fn, opts);
+				rawAddEventListener(type, listener, opts);
 			}
 		};
 
 		const rawRemoveEventListener = worker.removeEventListener;
-		worker.removeEventListener = (type, fn, opts) => {
-			listeners.removeEventListener(type, fn);
-			rawRemoveEventListener(type, fn, opts);
+		worker.removeEventListener = (type, listener, opts) => {
+			listeners.removeEventListener(type, listener);
+			rawRemoveEventListener(type, listener, opts);
 		};
 
 		// WORKAROUND (see 'ready' notes above for details)

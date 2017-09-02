@@ -1,24 +1,32 @@
-define(['require', 'document', './EventObject'], (require, document, EventObject) => {
+define([
+	'require',
+	'document',
+	'./EventObject',
+], (
+	require,
+	document,
+	EventObject
+) => {
 	'use strict';
 
 	const awaiting = new Map();
 
 	function handleScript(event) {
-		const src = event.data.require_script_src;
-		if(!self.restrictedScriptSrc) {
-			throw new Error('Unexpected script message for ' + src);
+		const path = event.data.requireScriptPath;
+		if(!self.restrictedRequire) {
+			throw new Error('Unexpected script message for ' + path);
 		}
-		const done = awaiting.get(src);
+		const done = awaiting.get(path);
 		if(!done) {
 			return;
 		}
 		const script = document.createElement('script');
 		script.setAttribute('src', URL.createObjectURL(new Blob(
-			[event.data.require_script_blob],
+			[event.data.requireScriptCode],
 			{type: 'text/javascript'}
 		)));
 		script.addEventListener('load', () => {
-			awaiting.delete(src);
+			awaiting.delete(path);
 			done();
 		}, {once: true});
 		document.getElementsByTagName('head')[0].appendChild(script);
@@ -41,10 +49,10 @@ define(['require', 'document', './EventObject'], (require, document, EventObject
 		if(event.source !== parent) {
 			return;
 		}
-		if(event.data && event.data.sandbox_connected) {
+		if(event.data && event.data.sandboxConnected) {
 			return;
 		}
-		if(event.data && event.data.require_script_blob) {
+		if(event.data && event.data.requireScriptCode) {
 			return handleScript(event);
 		}
 		if(listeners.countEventListeners('message') > 0) {
@@ -56,7 +64,7 @@ define(['require', 'document', './EventObject'], (require, document, EventObject
 
 	const rawAddEventListener = self.addEventListener;
 	self.addEventListener = (type, fn, opts) => {
-		if(opts && opts._no_sandbox_intercept) {
+		if(opts && opts._noSandboxIntercept) {
 			rawAddEventListener(type, fn, opts);
 		} else if(type === 'message') {
 			listeners.addEventListener(type, fn);
@@ -88,22 +96,22 @@ define(['require', 'document', './EventObject'], (require, document, EventObject
 	};
 
 	// Safari allows relaxing script-src rules inside iframes (Chrome doesn't)
-	if(self.restrictedScriptSrc) {
-		require.replaceLoader((src, done) => {
-			awaiting.set(src, done);
-			self.postMessage({require_script_src: src});
+	if(self.restrictedRequire) {
+		require.replaceLoader((path, done) => {
+			awaiting.set(path, done);
+			self.postMessage({requireScriptPath: path});
 		});
 
 		const originalShed = require.shed;
 		require.shed = () => {
-			self.postMessage({require_script_src: null});
+			self.postMessage({requireScriptPath: null});
 			originalShed();
 		};
 	} else {
-		require.replaceLoader((src, done) => {
+		require.replaceLoader((path, done) => {
 			const script = document.createElement('script');
 			const href = self.rootHref || window.location.href;
-			script.setAttribute('src', href.substr(0, href.lastIndexOf('/') + 1) + src + '.js');
+			script.setAttribute('src', href.substr(0, href.lastIndexOf('/') + 1) + path + '.js');
 			script.addEventListener('load', done, {once: true});
 			document.getElementsByTagName('head')[0].appendChild(script);
 		});

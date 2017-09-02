@@ -47,7 +47,7 @@ define(() => {
 			this.forwards.delete(target);
 		}
 
-		removeAllEventForwardings(target) {
+		removeAllEventForwardings() {
 			this.forwards.clear();
 		}
 
@@ -57,5 +57,5 @@ define(() => {
 			);
 			this.forwards.forEach((fwd) => fwd.trigger(type, params));
 		}
-	}
+	};
 });

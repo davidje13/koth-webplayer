@@ -30,7 +30,7 @@ define(() => {
 		let x = v;
 		for(let i = 0; i < l; ++ i) {
 			r = BASE[x % BASE.length] + r;
-			x = (x / BASE.length)|0;
+			x = Math.floor(x / BASE.length);
 		}
 		return r;
 	}
@@ -69,6 +69,7 @@ define(() => {
 		}
 
 		next(range = 0x100000000) {
+			/* jshint -W016 */
 			let x0 = this.s[0];
 			let x1 = this.s[1];
 			const y0 = this.s[2];
@@ -109,5 +110,5 @@ define(() => {
 			}
 			return seed;
 		}
-	}
+	};
 });

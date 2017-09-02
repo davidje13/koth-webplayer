@@ -1,4 +1,12 @@
-define(['core/EventObject', 'core/array_utils', 'math/Random'], (EventObject, array_utils, Random) => {
+define([
+	'core/EventObject',
+	'core/arrayUtils',
+	'math/Random',
+], (
+	EventObject,
+	arrayUtils,
+	Random
+) => {
 	'use strict';
 
 	// TODO: this is almost identical to tournament mode "single_match"
@@ -6,14 +14,18 @@ define(['core/EventObject', 'core/array_utils', 'math/Random'], (EventObject, ar
 	//   nested matches concept (how to handle configuration & defaults?)
 
 	const SHUFFLES = {
-		none: (list, index, random) => list,
-		random: (list, index, random) => {
-			return array_utils.shuffle(list, new Random(random));
+		none: (list) => list,
+		random: (list, {random}) => {
+			return arrayUtils.shuffle(list, new Random(random));
 		},
-		roundRobin: (list, index, random) => {
+		roundRobin: (list, {index}) => {
 			return list.map((item, i) => list[(i + index) % list.length]);
 		},
 	};
+
+	function applyShuffle(type, list, details) {
+		return SHUFFLES[type](list, details);
+	}
 
 	return class Match extends EventObject {
 		constructor({
@@ -47,14 +59,23 @@ define(['core/EventObject', 'core/array_utils', 'math/Random'], (EventObject, ar
 			const random = new Random(this.seed);
 
 			const games = [];
-			for(let i = 0; i < this.gameCount; ++ i) {
+			for(let index = 0; index < this.gameCount; ++ index) {
 				const gameSeed = random.makeRandomSeed('G');
+				/* jshint -W083 */
 				const gameTeams = teams.map((team) => {
 					return Object.assign({}, team, {
-						entries: SHUFFLES[this.gameEntryShuffle](team.entries, i, random),
+						entries: applyShuffle(
+							this.gameEntryShuffle,
+							team.entries,
+							{index, random}
+						),
 					});
 				});
-				const shuffledGameTeams = SHUFFLES[this.gameTeamShuffle](gameTeams, i, random);
+				const shuffledGameTeams = applyShuffle(
+					this.gameTeamShuffle,
+					gameTeams,
+					{index, random}
+				);
 				if(this.gameTeamLimit && this.gameTeamLimit < shuffledGameTeams.length) {
 					shuffledGameTeams.length = this.gameTeamLimit;
 				}

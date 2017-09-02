@@ -1,7 +1,15 @@
-define(['./webgl_utils', 'math/Mat4', 'math/Ellipse'], (webgl_utils, Mat4, Ellipse) => {
+define([
+	'./webglUtils',
+	'math/Mat4',
+	'math/Ellipse',
+], (
+	webglUtils,
+	Mat4,
+	Ellipse
+) => {
 	'use strict';
 
-	return class ModelTorus extends webgl_utils.ModelData {
+	return class ModelTorus extends webglUtils.ModelData {
 		constructor({
 			surfaceNormal = true,
 			uv = true,

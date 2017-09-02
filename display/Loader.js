@@ -1,4 +1,4 @@
-define(['./document_utils', './style.css'], (docutil) => {
+define(['./documentUtils', './style.css'], (docutil) => {
 	'use strict';
 
 	return class Loader {
@@ -40,5 +40,5 @@ define(['./document_utils', './style.css'], (docutil) => {
 		dom() {
 			return this.container;
 		}
-	}
+	};
 });

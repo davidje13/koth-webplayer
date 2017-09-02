@@ -44,7 +44,7 @@ define(['./EventObject'], (EventObject) => {
 		it('forwards to registered objects', () => {
 			const o = new EventObject();
 			let capturedType = null;
-			o.addEventForwarding({trigger: (type, params) => {
+			o.addEventForwarding({trigger: (type) => {
 				capturedType = type;
 			}});
 

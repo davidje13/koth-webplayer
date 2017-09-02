@@ -1,6 +1,6 @@
 define([
 	'core/EventObject',
-	'display/document_utils',
+	'display/documentUtils',
 	'display/HierarchyTable',
 	'../GameScorer',
 ], (

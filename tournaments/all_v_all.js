@@ -40,7 +40,7 @@ define(['core/EventObject', 'math/Random'], (EventObject, Random) => {
 				return this.matchHandler(
 					random.makeRandomSeed('M'),
 					teams,
-					0,
+					0
 				).then((matchScore) => this.trigger('complete', [[matchScore]]));
 			}
 

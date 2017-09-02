@@ -34,7 +34,7 @@ define(() => {
 			let r0 = 0;
 			let r1 = count;
 			while(r1 > r0 + 1) {
-				const mid = ((r0 + r1) / 2)|0;
+				const mid = Math.floor((r0 + r1) / 2);
 				if(this.cumulativeLengths[mid] >= l) {
 					r1 = mid;
 				} else {
@@ -59,12 +59,13 @@ define(() => {
 			const nt = t * iPI2;
 			let base = Math.floor(nt);
 			let p = (nt - base) * precision;
-			if((p|0) === precision) {
+			if(Math.floor(p) === precision) {
 				p = 0;
 				++ base;
 			}
-			const v0 = this.cumulativeLengths[ p|0   ];
-			const v1 = this.cumulativeLengths[(p|0)+1];
+			const pI = Math.floor(p);
+			const v0 = this.cumulativeLengths[pI    ];
+			const v1 = this.cumulativeLengths[pI + 1];
 			return (
 				(v0 + (v1 - v0) * (p % 1)) / this.circumference() +
 				base
@@ -77,5 +78,5 @@ define(() => {
 				this.fracFromTheta(theta1)
 			) * this.circumference();
 		}
-	}
+	};
 });

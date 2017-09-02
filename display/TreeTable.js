@@ -1,7 +1,15 @@
-define(['core/EventObject', './document_utils', './style.css'], (EventObject, docutil) => {
+define([
+	'core/EventObject',
+	'./documentUtils',
+	'./style.css',
+], (
+	EventObject,
+	docutil
+) => {
 	'use strict';
 
-	// TODO: might be possible to merge this with HierarchyTable, or at least share lots of functionality
+	// TODO: might be possible to merge this with HierarchyTable,
+	// or at least share lots of functionality
 
 	function countNesting(items) {
 		if(!items || !items.length) {
@@ -9,14 +17,6 @@ define(['core/EventObject', './document_utils', './style.css'], (EventObject, do
 		}
 
 		return 1 + items.reduce((max, child) => Math.max(max, countNesting(child.nested)), 0);
-	}
-
-	function countEntries(item) {
-		if(!item.nested) {
-			return 1;
-		}
-
-		return item.nested.reduce((total, child) => total + countEntries(child), 0);
 	}
 
 	function buildColumns(output, targetRows, columns, commonClasses = [], autohideAll = false) {
@@ -41,9 +41,7 @@ define(['core/EventObject', './document_utils', './style.css'], (EventObject, do
 			});
 			const autohide = autohideAll || column.autohide;
 			const classes = (
-				column.className
-				? [...commonClasses, column.className]
-				: commonClasses
+				column.className ? [...commonClasses, column.className] : commonClasses
 			);
 
 			const className = (autohide ? [...classes, 'autohide'] : classes).join(' ');
@@ -232,5 +230,5 @@ define(['core/EventObject', './document_utils', './style.css'], (EventObject, do
 		dom() {
 			return this.table;
 		}
-	}
+	};
 });

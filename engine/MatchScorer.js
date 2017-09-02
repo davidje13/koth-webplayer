@@ -4,7 +4,7 @@ define(() => {
 	const scoreSorter = (a, b) => b.score - a.score;
 
 	function ksTest(sortedResults1, sortedResults2) {
-		// Thanks, https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test#Two-sample_Kolmogorov.E2.80.93Smirnov_test
+		// Thanks, https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test
 		const l1 = sortedResults1.length;
 		const l2 = sortedResults2.length;
 		if(l1 + l2 === 0) {
@@ -37,7 +37,7 @@ define(() => {
 			const teamLookup = new Map();
 			const entryLookup = new Map();
 			const matchTeamScores = teams.map((team) => {
-				const o = {
+				const teamAgg = {
 					id: team.id,
 					winner: false,
 					total: 0,
@@ -46,18 +46,18 @@ define(() => {
 					certainty: null,
 					games: 0,
 					entries: team.entries.map((entry) => {
-						const o = {
+						const entryAgg = {
 							id: entry.id,
 							total: 0,
 							score: 0,
 							games: 0,
 						};
-						entryLookup.set(entry.id, o);
-						return o;
+						entryLookup.set(entry.id, entryAgg);
+						return entryAgg;
 					}),
 				};
-				teamLookup.set(team.id, o);
-				return o;
+				teamLookup.set(team.id, teamAgg);
+				return teamAgg;
 			});
 			gameScores.forEach((gameScore) => {
 				gameScore.teams.forEach((gameTeamScore) => {

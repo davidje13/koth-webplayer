@@ -1,23 +1,23 @@
 define([
-	'3d/webgl_utils',
+	'3d/webglUtils',
 	'3d/ModelPoint',
 	'3d/ModelTorus',
 	'core/EventObject',
 	'math/Mat4',
-	'./document_utils',
+	'./documentUtils',
 	'./style.css',
 ], (
-	webgl_utils,
+	webglUtils,
 	ModelPoint,
 	ModelTorus,
 	EventObject,
 	Mat4,
-	docutil,
+	docutil
 ) => {
 	'use strict';
 
 	// TODO:
-	// * move more low-level logic into webgl_utils
+	// * move more low-level logic into webglUtils
 	// * is mip-mapping enabled on the texture? occasionally tries to read
 	//   beyond provided data, causing a black mark at the wrap point
 	//   (and can't use non-PoT texture)
@@ -52,7 +52,7 @@ define([
 			gl.depthFunc(gl.LEQUAL);
 			gl.cullFace(gl.BACK);
 
-			this.texBoard = webgl_utils.makeTexture(gl, gl.TEXTURE_2D, {
+			this.texBoard = webglUtils.makeTexture(gl, gl.TEXTURE_2D, {
 				[gl.TEXTURE_MAG_FILTER]: gl.NEAREST,
 				[gl.TEXTURE_MIN_FILTER]: gl.LINEAR,
 				[gl.TEXTURE_WRAP_S]: gl.REPEAT,
@@ -61,8 +61,8 @@ define([
 
 			this.meshTorus = new ModelTorus();
 
-			this.canvasProg = new webgl_utils.Program(gl, [
-				webgl_utils.makeShader(gl, gl.VERTEX_SHADER, (
+			this.canvasProg = new webglUtils.Program(gl, [
+				webglUtils.makeShader(gl, gl.VERTEX_SHADER, (
 					'uniform mat4 matProj;\n' +
 					'uniform mat4 matMV;\n' +
 					'uniform mat3 matNorm;\n' +
@@ -77,7 +77,7 @@ define([
 					'  texp = uv;\n' +
 					'}\n'
 				)),
-				webgl_utils.makeShader(gl, gl.FRAGMENT_SHADER, (
+				webglUtils.makeShader(gl, gl.FRAGMENT_SHADER, (
 					'uniform sampler2D tex;\n' +
 					'uniform mediump vec2 texScale;\n' +
 					'uniform mediump float shadowStr;\n' +
@@ -100,7 +100,7 @@ define([
 					'    ), 1);\n' +
 					'  }\n' +
 					'}\n'
-				))
+				)),
 			]);
 
 			this.defaultPointerModel = new ModelPoint({
@@ -109,8 +109,8 @@ define([
 				radius: 0.02,
 				height: 0.05,
 			});
-			this.defaultPointerProg = new webgl_utils.Program(gl, [
-				webgl_utils.makeShader(gl, gl.VERTEX_SHADER, (
+			this.defaultPointerProg = new webglUtils.Program(gl, [
+				webglUtils.makeShader(gl, gl.VERTEX_SHADER, (
 					'uniform mat4 matProj;\n' +
 					'uniform mat4 matMV;\n' +
 					'uniform mat3 matNorm;\n' +
@@ -122,7 +122,7 @@ define([
 					'  light = dot(normalize(matNorm * norm), vec3(0, 0, 1));\n' +
 					'}\n'
 				)),
-				webgl_utils.makeShader(gl, gl.FRAGMENT_SHADER, (
+				webglUtils.makeShader(gl, gl.FRAGMENT_SHADER, (
 					'uniform mediump vec3 col;\n' +
 					'uniform mediump float shadowStr;\n' +
 					'uniform mediump vec3 shadowCol;\n' +
@@ -132,7 +132,7 @@ define([
 					'    shadowCol, col, mix(1.0, max(light, 0.0), shadowStr)\n' +
 					'  ), 1);\n' +
 					'}\n'
-				))
+				)),
 			]);
 			this.defaultPointerParams = {
 				shadowStr: 0.8,
@@ -184,8 +184,8 @@ define([
 				this.canvas.style.height = height + 'px';
 				this.context.viewport(0, 0, this.canvas.width, this.canvas.height);
 				docutil.updateStyle(this.board, {
-					'width': (width|0) + 'px',
-					'height': (height|0) + 'px',
+					'width': Math.round(width) + 'px',
+					'height': Math.round(height) + 'px',
 				});
 			}
 		}
@@ -307,7 +307,7 @@ define([
 					norm: {size: 3, type: gl.FLOAT, stride: model.stride * 4, offset: 3 * 4},
 				});
 
-				marks.forEach((mark, key) => {
+				marks.forEach((mark) => {
 					if(mark.className === className && (mark.w === null || mark.h === null)) {
 						const locn = board.find(
 							(mark.x + 0.5) / this.boardW,
@@ -316,7 +316,7 @@ define([
 						const matModelView = Mat4.lookObj(
 							locn.p,
 							locn.p.add(locn.n),
-							new Mat4.Vec3(0, 0, -1),
+							new Mat4.Vec3(0, 0, -1)
 						).mult(matView);
 						prog.uniform({
 							matMV: matModelView,
@@ -335,7 +335,7 @@ define([
 
 			const gl = this.context;
 
-			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+			gl.clear(gl.COLOR_BUFFER_BIT + gl.DEPTH_BUFFER_BIT);
 
 			if(!this.boardW) {
 				return;
@@ -376,7 +376,7 @@ define([
 					Math.sin(ang) * 0.1 * lift,
 					Math.cos(ang) * 0.1 * lift,
 					-1
-				),
+				)
 			);
 
 			this._renderBoard(matProjection, matView);
@@ -390,13 +390,23 @@ define([
 				gl.bindTexture(gl.TEXTURE_2D, this.texBoard);
 				const ww = data.width;
 				const hh = data.height;
-				const PoTx = webgl_utils.nextPoT(ww);
-				const PoTy = webgl_utils.nextPoT(hh);
+				const PoTx = webglUtils.nextPoT(ww);
+				const PoTy = webglUtils.nextPoT(hh);
 				if(ww === PoTx && hh === PoTy) {
 					gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data);
 				} else {
 					if(this.texWidth !== PoTx || this.texHeight !== PoTy) {
-						gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, PoTx, PoTy, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(PoTx * PoTy * 4));
+						gl.texImage2D(
+							gl.TEXTURE_2D,
+							0,
+							gl.RGBA,
+							PoTx,
+							PoTy,
+							0,
+							gl.RGBA,
+							gl.UNSIGNED_BYTE,
+							new Uint8Array(PoTx * PoTy * 4)
+						);
 						this.repXDat = new Uint8Array(hh * 4);
 						this.repYDat = new Uint8Array((ww + 1) * 4);
 					}
@@ -407,14 +417,30 @@ define([
 						this.repXDat[y * 4 + 2] = data.data[y * ww * 4 + 2];
 						this.repXDat[y * 4 + 3] = data.data[y * ww * 4 + 3];
 					}
-					gl.texSubImage2D(gl.TEXTURE_2D, 0, ww, 0, 1, hh, gl.RGBA, gl.UNSIGNED_BYTE, this.repXDat);
+					gl.texSubImage2D(
+						gl.TEXTURE_2D,
+						0,
+						ww, 0,
+						1, hh,
+						gl.RGBA,
+						gl.UNSIGNED_BYTE,
+						this.repXDat
+					);
 					for(let y = 0; y < hh; ++ y) {
 						this.repXDat[y * 4    ] = data.data[(y * ww + ww - 1) * 4    ];
 						this.repXDat[y * 4 + 1] = data.data[(y * ww + ww - 1) * 4 + 1];
 						this.repXDat[y * 4 + 2] = data.data[(y * ww + ww - 1) * 4 + 2];
 						this.repXDat[y * 4 + 3] = data.data[(y * ww + ww - 1) * 4 + 3];
 					}
-					gl.texSubImage2D(gl.TEXTURE_2D, 0, PoTx - 1, 0, 1, hh, gl.RGBA, gl.UNSIGNED_BYTE, this.repXDat);
+					gl.texSubImage2D(
+						gl.TEXTURE_2D,
+						0,
+						PoTx - 1, 0,
+						1, hh,
+						gl.RGBA,
+						gl.UNSIGNED_BYTE,
+						this.repXDat
+					);
 					for(let x = 0; x < ww * 4; ++ x) {
 						this.repYDat[x] = data.data[x];
 					}
@@ -422,11 +448,27 @@ define([
 					this.repYDat[ww * 4 + 1] = data.data[1];
 					this.repYDat[ww * 4 + 2] = data.data[2];
 					this.repYDat[ww * 4 + 3] = data.data[3];
-					gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, hh, ww + 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, this.repYDat);
+					gl.texSubImage2D(
+						gl.TEXTURE_2D,
+						0,
+						0, hh,
+						ww + 1, 1,
+						gl.RGBA,
+						gl.UNSIGNED_BYTE,
+						this.repYDat
+					);
 					for(let x = 0; x < ww * 4; ++ x) {
 						this.repYDat[x] = data.data[ww * (hh - 1) * 4 + x];
 					}
-					gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, PoTy - 1, ww + 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, this.repYDat);
+					gl.texSubImage2D(
+						gl.TEXTURE_2D,
+						0,
+						0, PoTy - 1,
+						ww + 1, 1,
+						gl.RGBA,
+						gl.UNSIGNED_BYTE,
+						this.repYDat
+					);
 				}
 				this.boardW = ww;
 				this.boardH = hh;
@@ -440,5 +482,5 @@ define([
 		dom() {
 			return this.board;
 		}
-	}
+	};
 });

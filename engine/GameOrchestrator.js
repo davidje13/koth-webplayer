@@ -1,13 +1,13 @@
 define([
 	'core/EventObject',
-	'core/sandbox_utils',
+	'core/sandboxUtils',
 	'math/Random',
-	'path:./sandboxed_games',
+	'path:./sandboxedGames',
 ], (
 	EventObject,
-	sandbox_utils,
+	sandboxUtils,
 	Random,
-	sandboxed_games_path,
+	pathSandboxedGames
 ) => {
 	'use strict';
 
@@ -224,7 +224,7 @@ define([
 				this.parent.sandbox.postMessage({
 					action: 'GAME',
 					token: this.token,
-					gameManagerPath: this.parent.gameManagerPath,
+					pathGameManager: this.parent.pathGameManager,
 					gameConfig: this.config.game,
 					playConfig: this.config.play,
 				});
@@ -261,14 +261,14 @@ define([
 		terminate() {
 			this.parent.terminate(this.token);
 		}
-	};
+	}
 
 	return class GameOrchestrator {
-		constructor(gameManagerPath, {maxConcurrency = 1} = {}) {
-			this.gameManagerPath = gameManagerPath;
+		constructor(pathGameManager, {maxConcurrency = 1} = {}) {
+			this.pathGameManager = pathGameManager;
 			this.maxConcurrency = maxConcurrency;
 			this.awaitingCapacity = [];
-			this.sandbox = sandbox_utils.make(sandboxed_games_path);
+			this.sandbox = sandboxUtils.make(pathSandboxedGames);
 			this.games = new Map();
 			this.nextToken = 0;
 
@@ -313,7 +313,10 @@ define([
 		checkCapacity() {
 			while(this.awaitingCapacity.length > 0) {
 				let used = 0;
-				this.games.forEach((game) => used += game.gameActive ? 1 : 0);
+				/* jshint -W083 */
+				this.games.forEach((game) => {
+					used += game.gameActive ? 1 : 0;
+				});
 				if(used >= this.maxConcurrency) {
 					break;
 				}

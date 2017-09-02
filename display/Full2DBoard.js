@@ -1,10 +1,10 @@
 define([
 	'core/EventObject',
-	'./document_utils',
+	'./documentUtils',
 	'./style.css',
 ], (
 	EventObject,
-	docutil,
+	docutil
 ) => {
 	'use strict';
 
@@ -36,22 +36,14 @@ define([
 			docutil.updateStyle(this.canvas, {
 				'width': (this.canvas.width * this.scaleX) + 'px',
 				'height': (this.canvas.height * this.scaleY) + 'px',
-//				'width': (this.canvas.width / 2) + 'px',
-//				'height': (this.canvas.height / 2) + 'px',
-//				'transform': (
-//					'scale(' + (this.scaleX * 2) + ',' + (this.scaleY * 2) + ') ' +
-//					'rotateX(0.0000001deg)'
-//				),
-//				'marginRight': -((this.canvas.width * (1 - this.scaleX * 2) / 2)|0) + 'px',
-//				'marginBottom': -((this.canvas.height * (1 - this.scaleY * 2) / 2)|0) + 'px',
 			});
 			docutil.updateStyle(this.board, {
-				'width': ((this.canvas.width * this.scaleX)|0) + 'px',
-				'height': ((this.canvas.height * this.scaleY)|0) + 'px',
+				'width': Math.round(this.canvas.width * this.scaleX) + 'px',
+				'height': Math.round(this.canvas.height * this.scaleY) + 'px',
 			});
 			docutil.updateStyle(this.boardClip, {
-				'width': ((this.canvas.width * this.scaleX)|0) + 'px',
-				'height': ((this.canvas.height * this.scaleY)|0) + 'px',
+				'width': Math.round(this.canvas.width * this.scaleX) + 'px',
+				'height': Math.round(this.canvas.height * this.scaleY) + 'px',
 			});
 		}
 
@@ -69,8 +61,8 @@ define([
 					dom.textHold.appendChild(dom.text);
 					this.renderedMarks.set(key, dom);
 				}
-				const x1 = (((mark.x + 0.5) * this.scaleX)|0);
-				const y1 = (((mark.y + 0.5) * this.scaleY)|0);
+				const x1 = Math.round((mark.x + 0.5) * this.scaleX);
+				const y1 = Math.round((mark.y + 0.5) * this.scaleY);
 				docutil.updateAttrs(dom.element, {
 					'class': 'mark ' + (mark.className || ''),
 				});
@@ -88,8 +80,8 @@ define([
 				}
 				if(mark.w !== null && mark.h !== null) {
 					// TODO: wrapping
-					const x2 = (((mark.x + mark.w) * this.scaleX)|0);
-					const y2 = (((mark.y + mark.h) * this.scaleY)|0);
+					const x2 = Math.round((mark.x + mark.w) * this.scaleX);
+					const y2 = Math.round((mark.y + mark.h) * this.scaleY);
 					docutil.updateStyle(dom.element, {
 						'width': (x2 - x1) + 'px',
 						'height': (y2 - y1) + 'px',
@@ -141,5 +133,5 @@ define([
 		dom() {
 			return this.board;
 		}
-	}
+	};
 });

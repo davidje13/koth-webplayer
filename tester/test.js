@@ -1,44 +1,20 @@
-'use strict';
-
-require(['document', 'tester/test.css'], (document) => {
-	const originalTitle = document.title;
+define([
+	'require',
+	'document',
+	'./matchers',
+	'./test.css',
+], (
+	require,
+	document,
+	matchers
+) => {
+	'use strict';
 
 	let globalErrorExpected = false;
 	let activeFailPath = null;
 	let queue = [];
 	const scopes = [{description: '', skip: false, test: false}];
 	let scopeDepth = 1;
-
-	self.not = (submatch) => (actual) => {
-		const result = submatch(actual);
-		return {
-			match: !result.match,
-			message: submatch.negatedMessage,
-			negatedMessage: submatch.message,
-		};
-	};
-
-	self.equals = (expected) => (actual) => ({
-		match: actual === expected,
-		message: 'Expected ' + expected + ' but got ' + actual,
-		negatedMessage: 'Expected not to get ' + expected,
-	});
-
-	self.isNear = (expected, tolerance) => (actual) => ({
-		match: (
-			actual >= expected - tolerance &&
-			actual <= expected + tolerance
-		),
-		message: 'Expected ' + expected + ' +/- ' + tolerance + ' but got ' + actual,
-		negatedMessage: 'Expected not to be within ' + tolerance + ' of ' + expected,
-	});
-
-	self.expect = (value, matcher, extraDesc) => {
-		const result = matcher(value);
-		if(!result.match) {
-			self.fail(new Error((extraDesc ? extraDesc + ': ' : '') + result.message));
-		}
-	};
 
 	self.fail = (reason) => {
 		if(typeof reason !== 'object') {
@@ -53,12 +29,22 @@ require(['document', 'tester/test.css'], (document) => {
 		}
 	};
 
+	matchers(self, self.fail);
+
 	let count = 0;
 	let skipped = 0;
 	let failed = 0;
 	let totalCount = 0;
 	let totalSkipped = 0;
 	let totalFailed = 0;
+
+	const baseTestElement = document.createElement('div');
+	baseTestElement.setAttribute('class', 'test-hold');
+	const testTitle = document.createElement('h1');
+	const testTitleText = document.createTextNode('Unit Tests');
+	testTitle.appendChild(testTitleText);
+	baseTestElement.appendChild(testTitle);
+	document.body.appendChild(baseTestElement);
 
 	function log(type, message, subMessage) {
 		const element = document.createElement('div');
@@ -70,7 +56,7 @@ require(['document', 'tester/test.css'], (document) => {
 			sub.appendChild(document.createTextNode(subMessage));
 			element.appendChild(sub);
 		}
-		document.body.appendChild(element);
+		baseTestElement.appendChild(element);
 	}
 
 	function currentPath() {
@@ -85,18 +71,18 @@ require(['document', 'tester/test.css'], (document) => {
 	}
 
 	function stringifyError(e) {
-		let msg = '';
-		if(e) {
-			msg = e.toString();
-			if(e.stack) {
-				// WORKAROUND (Safari): e.stack is not string-like unless it
-				// has a non-empty string appended
-				const stack = e.stack + '.';
-				if(stack.indexOf(msg) !== -1) {
-					msg = stack;
-				} else {
-					msg += ' : ' + stack;
-				}
+		if(!e) {
+			return '';
+		}
+		let msg = e.toString();
+		if(e.stack) {
+			// WORKAROUND (Safari): e.stack is not string-like unless it
+			// has a non-empty string appended
+			const stack = e.stack + '.';
+			if(stack.indexOf(msg) !== -1) {
+				msg = stack;
+			} else {
+				msg += ' : ' + stack;
 			}
 		}
 		return msg;
@@ -108,19 +94,6 @@ require(['document', 'tester/test.css'], (document) => {
 
 	function logTestFailure(e) {
 		log('test-failure', currentPath(), stringifyError(e));
-	}
-
-	function invokeNextSynchronously(queue) {
-		if(!queue.length) {
-			return Promise.resolve();
-		}
-		return invoke(queue.shift()).then(() => invokeNextSynchronously(queue));
-	}
-
-	function invokeQueueSynchronously() {
-		const currentQueue = queue;
-		queue = [];
-		return invokeNextSynchronously(currentQueue);
 	}
 
 	function currentScope() {
@@ -141,6 +114,8 @@ require(['document', 'tester/test.css'], (document) => {
 	function leaveScope() {
 		-- scopeDepth;
 	}
+
+	let invokeQueueSynchronously = null;
 
 	function invoke({description, fn, skip, test}) {
 		if(currentScope().test) {
@@ -182,6 +157,22 @@ require(['document', 'tester/test.css'], (document) => {
 		);
 	}
 
+	function invokeNextSynchronously(currentQueue) {
+		if(!currentQueue.length) {
+			return Promise.resolve();
+		}
+		return (
+			invoke(currentQueue.shift())
+			.then(() => invokeNextSynchronously(currentQueue))
+		);
+	}
+
+	invokeQueueSynchronously = () => {
+		const currentQueue = queue;
+		queue = [];
+		return invokeNextSynchronously(currentQueue);
+	};
+
 	self.describe = (description, fn) => {
 		queue.push({description, fn, skip: false, test: false});
 	};
@@ -199,13 +190,16 @@ require(['document', 'tester/test.css'], (document) => {
 	};
 
 	self.itAsynchronously = (description, fn) => {
-		queue.push({description, fn: () => {
-			return new Promise((resolve, reject) => fn(resolve));
-		}, skip: false, test: true});
+		queue.push({
+			description,
+			fn: () => new Promise((resolve) => fn(resolve)),
+			skip: false,
+			test: true,
+		});
 	};
 
 	self.xitAsynchronously = (description, fn) => {
-		queue.push({description, fn: null, skip: true, test: true});
+		queue.push({description, fn, skip: true, test: true});
 	};
 
 	self.addEventListener('error', (e) => {
@@ -256,39 +250,44 @@ require(['document', 'tester/test.css'], (document) => {
 		}
 	}
 
-	document.title = originalTitle + ' \u2014 Running\u2026';
-
-	const testedModules = [];
-	const elements = document.getElementsByTagName('meta');
-	for(let i = 0; i < elements.length; ++ i) {
-		const meta = elements[i];
-		if(meta.getAttribute('name') === 'module') {
-			const module = meta.getAttribute('content');
-			queue.push({
-				description: module + '_test',
-				fn: () => (
-					require([module + '_test'])
-					.then(() => beginModule(module))
-					.then(invokeQueueSynchronously)
-					.then(() => completeModule(module))
-				),
-				skip: false,
-				test: false,
-			});
-		}
+	function runModule(module) {
+		return (
+			require([module + '_test'])
+			.then(() => beginModule(module))
+			.then(invokeQueueSynchronously)
+			.then(() => completeModule(module))
+		);
 	}
 
-	invokeQueueSynchronously().then(() => {
-		const label = 'All done (' + totalCount + ')';
-		if(totalFailed) {
-			log('fail', label + '; skipped ' + totalSkipped + '; failed ' + totalFailed);
-			document.title = originalTitle + ' \u2014 Failed ' + totalFailed;
-		} else if(totalSkipped) {
-			log('skip', label + '; skipped ' + totalSkipped);
-			document.title = originalTitle + ' \u2014 Skipped ' + totalSkipped;
-		} else {
-			log('done', label + '.');
-			document.title = originalTitle + ' \u2014 Pass (' + totalCount + ')';
-		}
-	});
+	return {
+		invoke: (modules) => {
+			const originalTitle = document.title;
+			document.title = originalTitle + ' \u2014 Running\u2026';
+
+			queue = modules.map((module) => ({
+				description: module + '_test',
+				fn: runModule.bind(null, module),
+				skip: false,
+				test: false,
+			}));
+
+			return invokeQueueSynchronously().then(() => {
+				let label = 'All done (' + totalCount + ')';
+				if(totalFailed) {
+					label += '; skipped ' + totalSkipped + '; failed ' + totalFailed;
+					log('fail', label);
+					document.title = originalTitle + ' \u2014 Failed ' + totalFailed;
+				} else if(totalSkipped) {
+					label += '; skipped ' + totalSkipped;
+					log('skip', label);
+					document.title = originalTitle + ' \u2014 Skipped ' + totalSkipped;
+				} else {
+					label += '.';
+					log('done', label);
+					document.title = originalTitle + ' \u2014 Pass (' + totalCount + ')';
+				}
+				testTitleText.nodeValue = 'Unit Tests: ' + label;
+			});
+		},
+	};
 });

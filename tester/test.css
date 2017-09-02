@@ -2,6 +2,17 @@ body {
 	font: 0.9em sans-serif;
 }
 
+.test-hold {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 50%;
+	height: 100%;
+	box-sizing: border-box;
+	overflow: auto;
+	padding: 0 10px 30px;
+}
+
 .module-begin {
 	color: #444444;
 }
@@ -42,12 +53,52 @@ body {
 	color: #00AA00;
 }
 
-div {
+.test-hold div {
 	padding: 10px 0;
 	border-top: 2px solid #EEEEEE;
 }
 
-div span {
+.test-hold div span {
+	font: 0.9em monospace;
+	color: #444444;
+}
+
+.lint-hold {
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 50%;
+	height: 100%;
+	box-sizing: border-box;
+	overflow: auto;
+	padding: 0 10px 30px;
+}
+
+.lint-failure {
+	color: #CC0000;
+}
+
+.lint-skip {
+	color: #CCCC00;
+}
+
+.lint-pass {
+	color: #00CC00;
+}
+
+.lint-item {
+	font: 0.9em monospace;
+	white-space: pre-wrap;
+	border-top: 1px solid #EEEEEE;
+	padding: 5px 0;
+}
+
+.lint-hold div:not(.lint-item) {
+	padding: 10px 0;
+	border-top: 2px solid #EEEEEE;
+}
+
+.lint-hold div span {
 	font: 0.9em monospace;
 	color: #444444;
 }

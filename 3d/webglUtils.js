@@ -2,6 +2,7 @@ define(() => {
 	'use strict';
 
 	function nextPoT(v) {
+		/* jshint -W016 */
 		-- v;
 		v |= v >>> 1;
 		v |= v >>> 2;
@@ -103,6 +104,32 @@ define(() => {
 		}
 	}
 
+	function setUniform(gl, locn, v, state) {
+		if(typeof v === 'number') {
+			setUniformF(gl, locn, v);
+		} else if(v.tex2D !== undefined) {
+			let ind = v.i;
+			if(ind === undefined) {
+				ind = state.texIndex ++;
+			}
+			gl.activeTexture(gl.TEXTURE0 + ind);
+			gl.bindTexture(gl.TEXTURE_2D, v.tex2D);
+			gl.uniform1i(locn, ind);
+		} else if(v.i !== undefined) {
+			setUniformI(gl, locn, v.i);
+		} else if(v.m !== undefined) {
+			setUniformM(gl, locn, v.m);
+		} else if(v.f !== undefined) {
+			setUniformF(gl, locn, v.f);
+		} else if(v.data !== undefined || v.length > 4) {
+			setUniformM(gl, locn, v);
+		} else if(v.length) {
+			setUniformF(gl, locn, v);
+		} else {
+			throw new Error('Unknown value for uniform: ' + v);
+		}
+	}
+
 	class Program {
 		constructor(gl, shaders) {
 			this.gl = gl;
@@ -129,34 +156,10 @@ define(() => {
 		}
 
 		uniform(map) {
-			let texIndex = 0;
+			const state = {texIndex: 0};
 			for(let attr in map) {
 				if(map.hasOwnProperty(attr)) {
-					const locn = this.findUniform(attr);
-					const v = map[attr];
-					if(typeof v === 'number') {
-						setUniformF(this.gl, locn, v);
-					} else if(v.tex2D !== undefined) {
-						let ind = v.i;
-						if(ind === undefined) {
-							ind = texIndex ++;
-						}
-						this.gl.activeTexture(this.gl.TEXTURE0 + ind);
-						this.gl.bindTexture(this.gl.TEXTURE_2D, v.tex2D);
-						this.gl.uniform1i(locn, ind)
-					} else if(v.i !== undefined) {
-						setUniformI(this.gl, locn, v.i);
-					} else if(v.m !== undefined) {
-						setUniformM(this.gl, locn, v.m);
-					} else if(v.f !== undefined) {
-						setUniformF(this.gl, locn, v.f);
-					} else if(v.data !== undefined || v.length > 4) {
-						setUniformM(this.gl, locn, v);
-					} else if(v.length) {
-						setUniformF(this.gl, locn, v);
-					} else {
-						throw new Error('Unknown value for uniform ' + attr + ': ' + v);
-					}
+					setUniform(this.gl, this.findUniform(attr), map[attr], state);
 				}
 			}
 		}
@@ -207,7 +210,7 @@ define(() => {
 				}
 			}
 		}
-	};
+	}
 
 	class ModelData {
 		constructor(stride = 3) {
@@ -292,7 +295,7 @@ define(() => {
 				0
 			);
 		}
-	};
+	}
 
 	return {
 		nextPoT,

@@ -1,7 +1,7 @@
-define(['./webgl_utils', 'math/Mat4'], (webgl_utils, Mat4) => {
+define(['./webglUtils', 'math/Mat4'], (webglUtils, Mat4) => {
 	'use strict';
 
-	return class ModelPoint extends webgl_utils.ModelData {
+	return class ModelPoint extends webglUtils.ModelData {
 		constructor({
 			surfaceNormal = true,
 			uv = true,

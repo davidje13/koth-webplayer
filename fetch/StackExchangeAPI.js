@@ -31,6 +31,7 @@ define(() => {
 		}
 
 		checkError(data) {
+			/* jshint -W106 */
 			if(data.error_id) {
 				throw new Error(
 					'StackExchange API error ' + data.error_id +
@@ -41,14 +42,12 @@ define(() => {
 			return data;
 		}
 
-		requestPaginatedItems(
-			request,
-			query,
-			filter,
+		requestPaginatedItems(request, query, {
+			simpleFilter,
 			filterWithTotal,
 			itemCallback,
-			expectOver200 = false
-		) {
+			expectOver200 = false,
+		}) {
 			const me = this;
 
 			const pagesize = 100;
@@ -80,17 +79,27 @@ define(() => {
 				return data;
 			}
 
+			function requestPage(page, filter) {
+				return me.fetch(
+					request,
+					Object.assign({pagesize, page, filter}, query)
+				)
+					.then(parseAsJSON)
+					.then(me.checkError);
+			}
+
 			function loadSimultaneously(data) {
 				const promises = [];
 				const lastpage = Math.ceil(total / pagesize);
 				for(let i = 2; i <= lastpage; ++ i) {
-					promises.push(requestPage(i, filter).then(handleResponse));
+					promises.push(requestPage(i, simpleFilter).then(handleResponse));
 				}
 				promises.push(handleResponse(data));
 				return Promise.all(promises);
 			}
 
 			function loadNextPage(data) {
+				/* jshint -W106 */
 				let more;
 				if(data.has_more !== undefined) {
 					more = data.has_more;
@@ -99,7 +108,7 @@ define(() => {
 				}
 				if(more) {
 					++ currentPage;
-					return requestPage(currentPage, filter).then(handleResponse);
+					return requestPage(currentPage, simpleFilter).then(handleResponse);
 				}
 				return null;
 			}
@@ -118,16 +127,7 @@ define(() => {
 				}
 			}
 
-			function requestPage(page, filter) {
-				return me.fetch(
-					request,
-					Object.assign({pagesize, page, filter}, query)
-				)
-					.then(parseAsJSON)
-					.then(me.checkError);
-			}
-
-			return requestPage(1, expectOver200 ? filterWithTotal : filter)
+			return requestPage(1, expectOver200 ? filterWithTotal : simpleFilter)
 				.then(handleFirstResponse)
 				.then(() => result);
 		}
@@ -136,18 +136,16 @@ define(() => {
 			if(!qid) {
 				return Promise.reject(new Error('No question ID given'));
 			}
-			return this.requestPaginatedItems(
-				'/questions/' + qid + '/answers',
-				{
-					site,
-					order: 'asc',
-					sort: 'creation',
-				},
-				'!)UYbUclsid(lw1i*exlS99nouEa',
-				'!GZ0YfD_RQu7cV(MmK8oC)2uBMy2(X',
-				answerCallback,
-				expectOver200
-			);
+			return this.requestPaginatedItems('/questions/' + qid + '/answers', {
+				site,
+				order: 'asc',
+				sort: 'creation',
+			}, {
+				simpleFilter: '!)UYbUclsid(lw1i*exlS99nouEa',
+				filterWithTotal: '!GZ0YfD_RQu7cV(MmK8oC)2uBMy2(X',
+				itemCallback: answerCallback,
+				expectOver200,
+			});
 		}
-	}
+	};
 });

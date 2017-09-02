@@ -1,20 +1,22 @@
 define([
+	'require',
 	'core/EventObject',
-	'display/document_utils',
+	'display/documentUtils',
 	'display/SplitView',
 	'display/TreeTable',
 ], (
+	require,
 	EventObject,
 	docutil,
 	SplitView,
-	TreeTable,
+	TreeTable
 ) => {
 	'use strict';
 
 	// TODO:
 	// * Allow drag+drop to reorder teams & entries, and switch entry teams
 	// * Add change handler to reordering to update managedTeams
-	// * Persist in local storage (maybe use answer_id as unique refs)
+	// * Persist in local storage (maybe use answerID as unique refs)
 
 	function buildEntryRow(team, entry, enabledFn) {
 		const changed = entry.code !== entry.originalCode;
@@ -37,8 +39,8 @@ define([
 				value: entry.title,
 				title: entry.title + (changed ? ' (changed)' : ''),
 			},
-			user_id: entry.user_id,
-			answer_id: entry.answer_id,
+			userID: entry.userID,
+			answerID: entry.answerID,
 			enabled: enabledToggle,
 			baseEntry: entry,
 		};
@@ -75,7 +77,7 @@ define([
 			this.codeEditor = docutil.make('textarea');
 			const columns = [
 				{title: 'Entry', attribute: 'label'},
-				...extraColumns
+				...extraColumns,
 			];
 			if(allowTeamModification) {
 				columns.push({title: '', attribute: 'enabled', className: 'enabled-opt'});
@@ -97,10 +99,10 @@ define([
 			]);
 
 			this.optionsBar = docutil.make('div', {'class': 'options-bar'}, [this.entryOptions]);
-			this.infoBoxContent = docutil.text();
-			this.consoleBoxContent = docutil.text();
-			this.infoBox = docutil.make('div', {'class': 'info-box'}, [this.infoBoxContent]);
-			this.consoleBox = docutil.make('div', {'class': 'console-box'}, [this.consoleBoxContent]);
+			this.infoContent = docutil.text();
+			this.consoleContent = docutil.text();
+			this.infoBox = docutil.make('div', {'class': 'info-box'}, [this.infoContent]);
+			this.consoleBox = docutil.make('div', {'class': 'console-box'}, [this.consoleContent]);
 
 			this.entryHold = new SplitView([
 				new SplitView([
@@ -124,7 +126,7 @@ define([
 					this.entryHold.dom(),
 					this.emptyState,
 				]),
-			], {direction: SplitView.HORIZONTAL, className}),
+			], {direction: SplitView.HORIZONTAL, className});
 
 			this.tree.addEventListener('select', () => {
 				this._update();
@@ -224,7 +226,11 @@ define([
 					const nested = team.entries.map((entry) =>
 						buildEntryRow(team, entry, this._triggerEnabledChange.bind(this, entry)));
 					if(this.allowTeamModification) {
-						const button = docutil.make('button', {'data-team': team.id}, ['+ Add Entry']);
+						const button = docutil.make(
+							'button',
+							{'data-team': team.id},
+							['+ Add Entry']
+						);
 						button.addEventListener('click', this.addEntry);
 						nested.push({label: button, selectable: false});
 					}
@@ -238,18 +244,24 @@ define([
 					};
 				});
 				if(this.allowTeamModification) {
-					const button = docutil.make('button', {}, ['+ Add Team']);
+					const button = docutil.make(
+						'button',
+						{},
+						['+ Add Team']
+					);
 					button.addEventListener('click', this.addTeam);
 					treeData.push({label: button, selectable: false});
 				}
 			} else {
-				this.teams.forEach((team) => team.entries.forEach((entry) => {
-					team.entries.forEach((entry) => treeData.push(
-						buildEntryRow(team, entry, this._triggerEnabledChange.bind(this, entry))
-					));
-				}));
+				this.teams.forEach((team) => team.entries.forEach((entry) => treeData.push(
+					buildEntryRow(team, entry, this._triggerEnabledChange.bind(this, entry))
+				)));
 				if(this.allowTeamModification) {
-					const button = docutil.make('button', {'data-team': ''}, ['+ Add Entry']);
+					const button = docutil.make(
+						'button',
+						{'data-team': ''},
+						['+ Add Entry']
+					);
 					button.addEventListener('click', this.addEntry);
 					treeData.push({label: button, selectable: false});
 				}
@@ -297,9 +309,9 @@ define([
 			}
 			const entry = {
 				id: 'N' + Date.now(),
-				answer_id: 'new',
-				user_name: 'Me',
-				user_id: 'me',
+				answerID: 'new',
+				userName: 'Me',
+				userID: 'me',
 				link: '',
 				title: 'New Entry',
 				code: this.defaultCode,
@@ -308,9 +320,9 @@ define([
 			};
 			team.entries.push(entry);
 			this.rebuild();
-			const item = this.tree.getItemWhere((item) => (item.datum.baseEntry === entry));
-			if(item) {
-				this.tree.select(item.datum);
+			const currentItem = this.tree.getItemWhere((item) => (item.datum.baseEntry === entry));
+			if(currentItem) {
+				this.tree.select(currentItem.datum);
 				// Fix strange codemirror behaviour where gutter is not shown if
 				// this makes it appear (should be identical to other selection types?)
 				this.refresh();
@@ -367,8 +379,8 @@ define([
 		_updateInfo() {
 			const selectedItem = this.tree.getSelectedItem();
 			if(!selectedItem) {
-				docutil.updateText(this.infoBoxContent, '');
-				docutil.updateText(this.consoleBoxContent, '');
+				docutil.updateText(this.infoContent, '');
+				docutil.updateText(this.consoleContent, '');
 			} else {
 				const datum = selectedItem.datum;
 				let info = '';
@@ -387,8 +399,8 @@ define([
 						.join('\n')
 					);
 				}
-				docutil.updateText(this.infoBoxContent, info);
-				docutil.updateText(this.consoleBoxContent, logs);
+				docutil.updateText(this.infoContent, info);
+				docutil.updateText(this.consoleContent, logs);
 			}
 		}
 
@@ -432,5 +444,5 @@ define([
 		dom() {
 			return this.manager.dom();
 		}
-	}
+	};
 });

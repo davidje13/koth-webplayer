@@ -4,7 +4,13 @@ define(['./StackExchangeAPI'], (StackExchangeAPI) => {
 	const seAPI = new StackExchangeAPI();
 
 	const REG_TITLE = /<(h[1-6])\b(?:[^'">]|'[^']*'|"[^"]*")*>(.*?)<\/\1>/;
-	const REG_CODE = /<pre\b(?:[^'">]|'[^']*'|"[^"]*")*><code\b(?:[^'">]|'[^']*'|"[^"]*")*>([^]*?)<\/code><\/pre>/;
+	const REG_CODE = new RegExp(
+		'<pre\\b(?:[^\'">]|\'[^\']*\'|"[^"]*")*>' +
+		'<code\\b(?:[^\'">]|\'[^\']*\'|"[^"]*")*>' +
+		'([^]*?)' +
+		'</code>' +
+		'</pre>'
+	);
 
 	function findRegex(content, r, index) {
 		const match = r.exec(content);
@@ -15,6 +21,7 @@ define(['./StackExchangeAPI'], (StackExchangeAPI) => {
 	}
 
 	function parseAnswer(item, index, loaded, total) {
+		/* jshint -W106 */
 		let title = 'Unknown competitor from ' + item.owner.display_name;
 		try {
 			title = findRegex(item.body, REG_TITLE, 2) || title;
@@ -23,9 +30,9 @@ define(['./StackExchangeAPI'], (StackExchangeAPI) => {
 				throw new Error('Code not found!');
 			}
 			const entry = {
-				answer_id: item.answer_id,
-				user_name: item.owner.display_name,
-				user_id: item.owner.user_id,
+				answerID: item.answer_id,
+				userName: item.owner.display_name,
+				userID: item.owner.user_id,
 				link: item.link,
 				title,
 				code,
@@ -34,15 +41,15 @@ define(['./StackExchangeAPI'], (StackExchangeAPI) => {
 
 			self.postMessage({
 				loaded: loaded + 1,
-				total
+				total,
 			});
 
 			return entry;
 		} catch(error) {
 			return {
-				answer_id: item.answer_id,
-				user_name: item.owner.display_name,
-				user_id: item.owner.user_id,
+				answerID: item.answer_id,
+				userName: item.owner.display_name,
+				userID: item.owner.user_id,
 				link: item.link,
 				title,
 				code: '',
@@ -56,7 +63,7 @@ define(['./StackExchangeAPI'], (StackExchangeAPI) => {
 		self.postMessage({
 			loaded: entries.length,
 			total: entries.length,
-			entries
+			entries,
 		});
 	}
 
@@ -69,10 +76,10 @@ define(['./StackExchangeAPI'], (StackExchangeAPI) => {
 		});
 	}
 
-	self.addEventListener('message', (event) => {
+	self.addEventListener('message', (event) => (
 		seAPI
 			.requestAnswers(event.data.site, event.data.qid, parseAnswer)
 			.then(sendEntries)
 			.catch(sendError)
-	});
+	));
 });

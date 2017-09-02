@@ -1,28 +1,30 @@
-'use strict';
-
-// TODO:
-// * remember display config in local storage / cookies
-// * remember custom entries in local storage (maybe)
-// * permalinks need to store which entries were chosen (& ordering)
-// * jump-to-entry in editor when pausing due to an error
-// * currently using the code editor mutates the original team object state; it
-//   should be considered immutable, and copies made (will need some thought on
-//   how to handle propagating changes made in a game back to tournaments /
-//   welcome screen)
-
-require([
-	'display/document_utils',
+define([
+	'require',
+	'display/documentUtils',
 	'display/NestedNav',
 	'display/Loader',
-	'path:engine/sandboxed_loader',
+	'path:engine/sandboxedLoader',
 	'style.css',
 ], (
+	require,
 	docutil,
 	NestedNav,
 	Loader,
-	sandboxed_loader_path,
+	pathSandboxedLoader
 ) => {
-	const title = docutil.getTitle();
+	'use strict';
+
+	// TODO:
+	// * remember display config in local storage / cookies
+	// * remember custom entries in local storage (maybe)
+	// * permalinks need to store which entries were chosen (& ordering)
+	// * jump-to-entry in editor when pausing due to an error
+	// * currently using the code editor mutates the original team object state; it
+	//   should be considered immutable, and copies made (will need some thought on
+	//   how to handle propagating changes made in a game back to tournaments /
+	//   welcome screen)
+
+	const pageTitle = docutil.getTitle();
 	const gameType = docutil.getMetaTagValue('game-type');
 	const teamType = docutil.getMetaTagValue('team-type', 'free_for_all');
 	const teamTypeArgs = JSON.parse(docutil.getMetaTagValue('team-type-args', '{}'));
@@ -32,7 +34,10 @@ require([
 	const matchTypeArgs = JSON.parse(docutil.getMetaTagValue('match-type-args', '{}'));
 	const baseGameConfig = JSON.parse(docutil.getMetaTagValue('game-config', '{}'));
 	const basePlayConfig = JSON.parse(docutil.getMetaTagValue('play-config', '{}'));
-	const basePlayHiddenConfig = JSON.parse(docutil.getMetaTagValue('play-hidden-config', '{"speed": -1, "maxTime": 250}'));
+	const basePlayHiddenConfig = JSON.parse(docutil.getMetaTagValue(
+		'play-hidden-config',
+		'{"speed": -1, "maxTime": 250}'
+	));
 	const baseDisplayConfig = JSON.parse(docutil.getMetaTagValue('display-config', '{}'));
 	const teamViewColumns = JSON.parse(docutil.getMetaTagValue('team-view-columns', '[]'));
 	const defaultCode = docutil.getMetaTagValue('default-code', '// Code here\n');
@@ -64,7 +69,7 @@ require([
 		])],
 	});
 	const navRoot = nav.push({
-		navElements: [title, docutil.make('p', {}, [
+		navElements: [pageTitle, docutil.make('p', {}, [
 			docutil.make('a', {
 				'href': questionURL,
 				'target': '_blank',
@@ -74,11 +79,12 @@ require([
 		page: welcomePage,
 	}, {changeHash: false});
 
+	/* jshint -W072 */
 	require([
 		'math/Random',
 		'engine/GameOrchestrator',
 		'engine/EntryManager',
-		'core/sandbox_utils',
+		'core/sandboxUtils',
 		'display/SplitView',
 		'display/MatchSummary', // TODO: game-customisable
 		'teams/' + teamType,
@@ -92,24 +98,24 @@ require([
 		Random,
 		GameOrchestrator,
 		EntryManager,
-		sandbox_utils,
+		sandboxUtils,
 		SplitView,
 		MatchSummary,
 		TeamMaker,
 		Tournament,
 		Match,
-		GameManager_path,
+		pathGameManager,
 		Display,
 		GameScorer,
-		MatchScorer,
+		MatchScorer
 	) => {
 		loader.setState('game engine', 0.2);
-		const sandbox = sandbox_utils.make(sandboxed_loader_path);
-		const backgroundGames = new GameOrchestrator(GameManager_path, {
+		const sandbox = sandboxUtils.make(pathSandboxedLoader);
+		const backgroundGames = new GameOrchestrator(pathGameManager, {
 			maxConcurrency: Math.max(1, Math.min(8, navigator.hardwareConcurrency - 3)),
 		});
 
-		const foregroundGames = new GameOrchestrator(GameManager_path, {
+		const foregroundGames = new GameOrchestrator(pathGameManager, {
 			maxConcurrency: 1,
 		});
 
@@ -122,16 +128,11 @@ require([
 		}
 
 		const btnTournament = docutil.make('button', {}, ['Begin Random Tournament']);
-		btnTournament.addEventListener('click', () => {
-			beginTournament({teams: getManagedTeams()});
-		});
-
 		const btnGame = docutil.make('button', {}, ['Begin Random Game']);
-		btnGame.addEventListener('click', () => {
-			beginGame(null, getManagedTeams());
-		});
-
-		const generalOptions = docutil.make('span', {'class': 'general-options'}, [btnTournament, btnGame]);
+		const generalOptions = docutil.make('span', {'class': 'general-options'}, [
+			btnTournament,
+			btnGame,
+		]);
 
 		const tournamentSeed = docutil.text();
 		const tournamentDisplay = docutil.make('section', {'class': 'tournament'}, [
@@ -143,7 +144,9 @@ require([
 		const tournamentPage = docutil.make('div', {}, [tournamentDisplay]);
 
 		const singleGameDisplay = new Display();
-		const gamePageContent = docutil.make('div', {'class': 'game-page-content'}, [singleGameDisplay.dom()]);
+		const gamePageContent = docutil.make('div', {'class': 'game-page-content'}, [
+			singleGameDisplay.dom(),
+		]);
 		const gamePage = new SplitView([gamePageContent], {
 			direction: SplitView.VERTICAL,
 			fixedSize: false,
@@ -157,19 +160,29 @@ require([
 			showTeams: teamType !== 'free_for_all',
 			allowTeamModification: false,
 		});
-		popupManager.emptyStateDOM().appendChild(docutil.make('h1', {}, ['Live Entry Editor / Debugger']));
+		popupManager.emptyStateDOM().appendChild(docutil.make('h1', {}, [
+			'Live Entry Editor / Debugger',
+		]));
 		popupManager.emptyStateDOM().appendChild(docutil.make('ul', {}, [
 			docutil.make('li', {}, [
 				'Select an entry on the left to begin',
-				docutil.make('div', {}, ['While an entry is selected, you will see it highlighted in the game view.']),
+				docutil.make('div', {}, [
+					'While an entry is selected, you will see it highlighted ' +
+					'in the game view.',
+				]),
 			]),
 			docutil.make('li', {}, [
 				'Changes will take effect when the code editor loses focus',
-				docutil.make('div', {}, ['You do not need to restart the current game.']),
+				docutil.make('div', {}, [
+					'You do not need to restart the current game.',
+				]),
 			]),
 			docutil.make('li', {}, [
 				'Entries with yellow or red dots have encountered issues',
-				docutil.make('div', {}, ['You can see the details in the pane on the right once you have selected the entry.']),
+				docutil.make('div', {}, [
+					'You can see the details in the pane on the right ' +
+					'once you have selected the entry.',
+				]),
 			]),
 		]));
 
@@ -245,82 +258,6 @@ require([
 			singleGame = null;
 		});
 
-		// TODO: extract all of this & improve separation / APIs
-		const tournament = new Tournament(tournamentTypeArgs);
-		tournament.setMatchHandler((seed, teams, index) => {
-			const match = new Match(matchTypeArgs);
-			const matchDisplay = new MatchSummary({
-				name: 'Match ' + (index + 1),
-				seed,
-				teams,
-				matchScorer: MatchScorer,
-			});
-			tournamentDisplay.appendChild(matchDisplay.dom());
-			match.setGameHandler((seed, teams, index) => {
-				const game = backgroundGames.make({
-					baseGameConfig,
-					basePlayConfig: basePlayHiddenConfig,
-					baseDisplayConfig,
-				});
-				const gameDisplayToken = matchDisplay.addGame(seed);
-				// TODO: better API for this
-				matchDisplay.addEventListener('gametitleclick', (token) => {
-					if(token === gameDisplayToken) {
-						beginGame(seed, teams);
-					}
-				});
-				return new Promise((resolve, reject) => {
-					game.addEventListener('update', (state) => {
-						const config = game.getGameConfig();
-						const score = GameScorer.score(config, state);
-						matchDisplay.updateGameState(gameDisplayToken, state.progress, score);
-					});
-					game.addEventListener('complete', (state) => {
-						const config = game.getGameConfig();
-						game.terminate();
-						resolve(GameScorer.score(config, state));
-					});
-					game.begin({seed, teams});
-				});
-			});
-			return new Promise((resolve, reject) => {
-				match.addEventListener('complete', (matchScores) => {
-					resolve(MatchScorer.score(teams, matchScores));
-				});
-				match.begin({seed, teams});
-			});
-		});
-		tournament.addEventListener('complete', (finalScores) => {
-			console.log('Tournament complete', finalScores);
-			// TODO
-		});
-
-		function handleHashChange() {
-			const hash = decodeURIComponent((window.location.hash || '#').substr(1));
-			if(nav.goToHash(hash)) {
-				return true;
-			}
-			// TODO: filter teams according to hash (need to store team choices in hash somehow)
-			const teams = allTeams;
-			if(hash.startsWith('T')) {
-				nav.popTo(navRoot, {navigate: false});
-				beginTournament({teams, seed: hash});
-				return true;
-			}
-			if(hash.startsWith('M')) {
-				// TODO
-//				nav.popTo(navRoot, {navigate: false});
-//				return true;
-			}
-			if(hash.startsWith('G')) {
-				nav.popTo(navRoot, {navigate: false});
-				beginGame(hash, teams);
-				return true;
-			}
-			console.log('Unknown hash request', hash);
-			return false;
-		}
-
 		function beginGame(seed, teams) {
 			if(singleGame) {
 				singleGame.terminate();
@@ -344,6 +281,57 @@ require([
 			singleGame.addEventListener('begin', () => nav.swap(navPos, makeNav()));
 		}
 
+		// TODO: extract all of this & improve separation / APIs
+		const tournament = new Tournament(tournamentTypeArgs);
+		tournament.setMatchHandler((matchSeed, matchTeams, matchIndex) => {
+			const match = new Match(matchTypeArgs);
+			const matchDisplay = new MatchSummary({
+				name: 'Match ' + (matchIndex + 1),
+				seed: matchSeed,
+				teams: matchTeams,
+				matchScorer: MatchScorer,
+			});
+			tournamentDisplay.appendChild(matchDisplay.dom());
+			match.setGameHandler((gameSeed, gameTeams) => {
+				const game = backgroundGames.make({
+					baseGameConfig,
+					basePlayConfig: basePlayHiddenConfig,
+					baseDisplayConfig,
+				});
+				const gameDisplayToken = matchDisplay.addGame(gameSeed);
+				// TODO: better API for this
+				matchDisplay.addEventListener('gametitleclick', (token) => {
+					if(token === gameDisplayToken) {
+						beginGame(gameSeed, gameTeams);
+					}
+				});
+				return new Promise((resolve) => {
+					game.addEventListener('update', (state) => {
+						const config = game.getGameConfig();
+						const score = GameScorer.score(config, state);
+						matchDisplay.updateGameState(gameDisplayToken, state.progress, score);
+					});
+					game.addEventListener('complete', (state) => {
+						const config = game.getGameConfig();
+						game.terminate();
+						resolve(GameScorer.score(config, state));
+					});
+					game.begin({seed: gameSeed, teams: gameTeams});
+				});
+			});
+			return new Promise((resolve) => {
+				match.addEventListener('complete', (matchScores) => {
+					resolve(MatchScorer.score(matchTeams, matchScores));
+				});
+				match.begin({seed: matchSeed, teams: matchTeams});
+			});
+		});
+		tournament.addEventListener('complete', (finalScores) => {
+			/* global console */
+			console.log('Tournament complete', finalScores);
+			// TODO
+		});
+
 		function beginTournament(config) {
 			backgroundGames.terminateAll();
 			docutil.empty(tournamentDisplay);
@@ -354,6 +342,40 @@ require([
 				page: tournamentPage,
 			});
 			docutil.updateText(tournamentSeed, tournament.getSeed());
+		}
+
+		btnTournament.addEventListener('click', () => {
+			beginTournament({teams: getManagedTeams()});
+		});
+
+		btnGame.addEventListener('click', () => {
+			beginGame(null, getManagedTeams());
+		});
+
+		function handleHashChange() {
+			const hash = decodeURIComponent((window.location.hash || '#').substr(1));
+			if(nav.goToHash(hash)) {
+				return true;
+			}
+			// TODO: filter teams according to hash (need to store team choices in hash somehow)
+			const teams = allTeams;
+			if(hash.startsWith('T')) {
+				nav.popTo(navRoot, {navigate: false});
+				beginTournament({teams, seed: hash});
+				return true;
+			}
+//			if(hash.startsWith('M')) {
+//				nav.popTo(navRoot, {navigate: false}); // TODO
+//				return true;
+//			}
+			if(hash.startsWith('G')) {
+				nav.popTo(navRoot, {navigate: false});
+				beginGame(hash, teams);
+				return true;
+			}
+			/* global console */
+			console.log('Unknown hash request', hash);
+			return false;
 		}
 
 		function begin(teams) {
@@ -384,16 +406,26 @@ require([
 				manager.rebuild();
 			});
 			manager.optionsDOM().appendChild(generalOptions);
-			manager.emptyStateDOM().appendChild(docutil.make('h1', {}, ['Online web player for ' + title]));
+			manager.emptyStateDOM().appendChild(docutil.make('h1', {}, [
+				'Online web player for ' + pageTitle,
+			]));
 			manager.emptyStateDOM().appendChild(docutil.make('ul', {}, [
-				docutil.make('li', {}, ['Watch a game by clicking "Begin Random Game" in the top-right']),
+				docutil.make('li', {}, [
+					'Watch a game by clicking "Begin Random Game" in the top-right',
+				]),
 				docutil.make('li', {}, [
 					'Run a tournament by clicking "Begin Random Tournament" in the top-right',
-					docutil.make('div', {}, ['(Within a tournament, you can view any game by clicking on the "G(n)" column header)']),
+					docutil.make('div', {}, [
+						'(Within a tournament, you can view any game by ' +
+						'clicking on the "G(n)" column header)',
+					]),
 				]),
 				docutil.make('li', {}, [
 					'Edit the code for an entry, or add a new entry, using the list on the left',
-					docutil.make('div', {}, ['(Changes will apply to games and tournaments within your browser session. Modified entries are marked in yellow)']),
+					docutil.make('div', {}, [
+						'(Changes will apply to games and tournaments within ' +
+						'your browser session. Modified entries are marked in yellow)',
+					]),
 				]),
 			]));
 
@@ -433,7 +465,7 @@ require([
 				const ignoreBtn = docutil.make('button', {}, ['Continue Anyway']);
 				const errorDom = docutil.make('div', {'class': 'error'}, [
 					'Failed to load entries: ' + data.error,
-					ignoreBtn
+					ignoreBtn,
 				]);
 				ignoreBtn.addEventListener('click', () => {
 					docutil.body.removeChild(errorDom);
