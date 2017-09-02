@@ -47,6 +47,7 @@ define([
 			this.defaultCode = defaultCode;
 			this.showTeams = showTeams;
 			this.allowTeamModification = allowTeamModification;
+			this.entryHistories = new Map();
 
 			this._triggerChange = this._triggerChange.bind(this);
 			this.addTeam = this.addTeam.bind(this);
@@ -135,7 +136,7 @@ define([
 						'Ctrl-/': (cm) => cm.toggleComment({padding: ''}),
 					},
 				});
-				this.setCode(code);
+				this.setCode(code, null);
 				this.codeEditor.on('blur', this._triggerChange);
 			});
 		}
@@ -157,8 +158,15 @@ define([
 			} else {
 				code = this.codeEditor.value;
 			}
+			const entry = selectedItem.datum.baseEntry;
+			if(this.codeEditor.getDoc && entry && entry.id) {
+				this.entryHistories.set(entry.id, {
+					code,
+					history: this.codeEditor.getDoc().getHistory(),
+				});
+			}
 			this.trigger('change', [{
-				entry: selectedItem.datum.baseEntry,
+				entry,
 				title,
 				code,
 				pauseOnError: this.pauseToggle.checked,
@@ -300,7 +308,7 @@ define([
 				docutil.updateStyle(this.emptyState, {'display': 'none'});
 				docutil.updateStyle(this.entryHold.dom(), {'display': 'block'});
 				docutil.updateStyle(this.entryOptions, {'display': 'inline'});
-				this.setCode(entry.code);
+				this.setCode(entry.code, entry.id);
 				this.titleEditor.value = entry.title;
 				this.pauseToggle.checked = entry.pauseOnError;
 				this._updateInfoBox();
@@ -329,9 +337,16 @@ define([
 			}
 		}
 
-		setCode(code) {
+		setCode(code, entryID) {
 			if(this.codeEditor.getDoc) {
-				this.codeEditor.getDoc().setValue(code);
+				const doc = this.codeEditor.getDoc();
+				doc.setValue(code);
+				const lastKnown = this.entryHistories.get(entryID);
+				if(lastKnown && lastKnown.code === code) {
+					doc.setHistory(lastKnown.history);
+				} else {
+					doc.clearHistory();
+				}
 				let tabs = false;
 				let indent = 4;
 				if((code.match(/\n  [^ ]/g) || []).length) {
