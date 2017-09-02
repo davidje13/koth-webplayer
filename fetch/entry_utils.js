@@ -45,16 +45,16 @@ define(['core/worker_utils', 'path:./loader_worker'], (worker_utils, loader_work
 					'const performance = undefined;' +
 					'const console = (extras.consoleTarget ? (((target, limit = 100, itemLimit = 1024) => {' +
 						'const dolog = (type, values) => {' +
-							'target.push({type, values: Array.prototype.map.call(values, (v) => {' +
+							'target.push({type, value: Array.prototype.map.call(values, (v) => {' +
 								'if(v && v.message) {' +
-									'return String(v.message).substr(0, itemLimit);' +
+									'return String(v.message);' +
 								'}' +
 								'try {' +
-									'return JSON.stringify(v).substr(0, itemLimit);' +
+									'return JSON.stringify(v);' +
 								'} catch(e) {' +
-									'return String(v).substr(0, itemLimit);' +
+									'return String(v);' +
 								'}' +
-							'})});' +
+							'}).join(" ").substr(0, itemLimit)});' +
 							'if(target.length > limit) {' +
 								'target.shift();' +
 							'}' +

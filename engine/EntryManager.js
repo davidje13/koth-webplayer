@@ -387,7 +387,7 @@ define([
 				let logs = '';
 				if(datum.console) {
 					logs = (datum.console
-						.map((ln) => (ln.type + ': ' + ln.values.join(' ')))
+						.map((ln) => (ln.type + ': ' + ln.value))
 						.join('\n')
 					);
 				}
