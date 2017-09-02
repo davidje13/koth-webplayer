@@ -335,6 +335,13 @@ h4 a:active, h4 a:hover {
 	height: 100%;
 }
 
+.code-editor textarea {
+	border: none;
+	padding: 5px;
+	font-family: monospace;
+	resize: none;
+}
+
 .info-box {
 	padding: 5px;
 	border-left: 1px solid #333333;

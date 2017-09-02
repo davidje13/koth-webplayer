@@ -120,9 +120,12 @@ define([
 				'codemirror/addon/edit/trailingspace',
 				'codemirror/lib/codemirror.css',
 			], (CodeMirror) => {
-				const code = this.codeEditor.value;
+				const oldEditor = this.codeEditor;
+				const code = oldEditor.value;
 				// TODO: does this need to be fromTextArea?
-				this.codeEditor = CodeMirror.fromTextArea(this.codeEditor, {
+				this.codeEditor = new CodeMirror((newEditor) => {
+					oldEditor.parentNode.replaceChild(newEditor, oldEditor);
+				}, {
 					mode: {
 						name: 'javascript',
 					},
