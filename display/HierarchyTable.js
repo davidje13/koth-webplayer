@@ -37,6 +37,7 @@ define(['./document_utils', './style.css'], (docutil) => {
 					docutil.setParent(o, null);
 				}
 			});
+			const tooltip = column.tooltip || '';
 			const autohide = autohideAll || column.autohide;
 			const classes = (
 				column.className
@@ -58,6 +59,7 @@ define(['./document_utils', './style.css'], (docutil) => {
 					targetRows[0].appendChild(docutil.make('th', {
 						'class': className,
 						'colspan': childColSpan,
+						'title': tooltip,
 					}, title));
 					colSpan += childColSpan;
 				}
@@ -69,6 +71,7 @@ define(['./document_utils', './style.css'], (docutil) => {
 				targetRows[0].appendChild(docutil.make('th', {
 					'class': className,
 					'rowspan': targetRows.length,
+					'title': tooltip,
 				}, title));
 				++ colSpan;
 			}

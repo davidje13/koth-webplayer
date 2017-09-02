@@ -445,6 +445,10 @@ header .bar-done {
 	min-width: 40px;
 }
 
+.match th.certainty {
+	min-width: 50px;
+}
+
 .match td.player {
 	padding: 5px;
 	text-align: left;
@@ -461,7 +465,12 @@ header .bar-done {
 
 .match td.result {
 	text-align: center;
-	padding: 0 16px;
+	padding: 0 12px;
+}
+
+.match td.certainty {
+	text-align: right;
+	padding: 0 5px;
 }
 
 .match .win {

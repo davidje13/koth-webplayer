@@ -28,6 +28,7 @@ define([
 					key: team.id,
 					className: 'team-' + team.id,
 					score: {value: '', className: ''},
+					certainty: '',
 					nested: team.entries.map((entry) => ({
 						name: {
 							value: entry.title,
@@ -45,12 +46,19 @@ define([
 			const matchScore = this.matchScorer.score(this.teams, this.gameScores);
 			this.table.setData(matchScore.teams.map((matchTeamScore) => {
 				const tableTeam = this.tableTeamsLookup.get(matchTeamScore.id);
-				if(matchTeamScore.score) {
+				if(matchTeamScore.score !== null) {
 					tableTeam.score.value = matchTeamScore.score.toFixed(1);
 				} else {
 					tableTeam.score.value = '';
 				}
 				tableTeam.score.className = matchTeamScore.winner ? 'win' : '';
+				if(matchTeamScore.certainty !== null) {
+					tableTeam.certainty = (
+						(matchTeamScore.certainty * 100).toFixed(1) + '%'
+					);
+				} else {
+					tableTeam.certainty = null;
+				}
 				return tableTeam;
 			}));
 		}
@@ -70,9 +78,14 @@ define([
 				className: 'player',
 				attribute: 'name',
 			}, ...gameCols, {
-				title: '',
+				title: 'Average',
 				attribute: 'score',
 				className: 'result',
+			}, {
+				title: 'K-S',
+				tooltip: 'distinctness from next-highest entry (two-sample Kolmogorov-Smirnov test)',
+				attribute: 'certainty',
+				className: 'certainty',
 			}]);
 
 			this.sendData();

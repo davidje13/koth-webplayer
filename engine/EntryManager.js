@@ -146,7 +146,6 @@ define([
 			], (CodeMirror) => {
 				const oldEditor = this.codeEditor;
 				const code = oldEditor.value;
-				// TODO: does this need to be fromTextArea?
 				this.codeEditor = new CodeMirror((newEditor) => {
 					oldEditor.parentNode.replaceChild(newEditor, oldEditor);
 				}, {
@@ -219,9 +218,6 @@ define([
 		}
 
 		rebuild() {
-			// TODO: this rebuild prevents clicking directly on an item in the tree
-			// (the item is rebuilt on text area blur so the click never happens)
-			// Should update TableTree to only re-render diff
 			let treeData = [];
 			if(this.showTeams) {
 				treeData = this.teams.map((team) => {
