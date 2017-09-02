@@ -114,16 +114,21 @@ require([
 		});
 
 		let allTeams = null;
-		let managedTeams = null;
+
+		function getManagedTeams() {
+			return allTeams.map((team) => Object.assign({}, team, {
+				entries: team.entries.filter((entry) => (entry.enabled)),
+			})).filter((team) => (team.entries.length > 0));
+		}
 
 		const btnTournament = docutil.make('button', {}, ['Begin Random Tournament']);
 		btnTournament.addEventListener('click', () => {
-			beginTournament({teams: managedTeams});
+			beginTournament({teams: getManagedTeams()});
 		});
 
 		const btnGame = docutil.make('button', {}, ['Begin Random Game']);
 		btnGame.addEventListener('click', () => {
-			beginGame(null, managedTeams);
+			beginGame(null, getManagedTeams());
 		});
 
 		const generalOptions = docutil.make('span', {'class': 'general-options'}, [btnTournament, btnGame]);
@@ -180,8 +185,15 @@ require([
 		}
 
 		popupManager.addEventListener('change', ({entry, title, code, pauseOnError}) => {
-			entry.title = title;
-			entry.code = code;
+			if(title !== undefined) {
+				entry.title = title;
+			}
+			if(code !== undefined) {
+				entry.code = code;
+			}
+			if(pauseOnError !== undefined) {
+				entry.pauseOnError = pauseOnError;
+			}
 			if(singleGame) {
 				singleGame.updateEntry({
 					id: entry.id,
@@ -349,7 +361,6 @@ require([
 				entry.originalCode = entry.code;
 			}));
 			allTeams = teams;
-			managedTeams = allTeams;
 
 			const manager = new EntryManager({
 				className: 'team-manager',
@@ -357,10 +368,19 @@ require([
 				showTeams: teamType !== 'free_for_all',
 				defaultCode,
 			});
-			manager.addEventListener('change', ({entry, title, code, pauseOnError}) => {
-				entry.title = title;
-				entry.code = code;
-				entry.pauseOnError = pauseOnError;
+			manager.addEventListener('change', ({entry, title, code, pauseOnError, enabled}) => {
+				if(title !== undefined) {
+					entry.title = title;
+				}
+				if(code !== undefined) {
+					entry.code = code;
+				}
+				if(pauseOnError !== undefined) {
+					entry.pauseOnError = pauseOnError;
+				}
+				if(enabled !== undefined) {
+					entry.enabled = enabled;
+				}
 				manager.rebuild();
 			});
 			manager.optionsDOM().appendChild(generalOptions);

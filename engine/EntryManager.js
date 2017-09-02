@@ -13,11 +13,23 @@ define([
 
 	// TODO:
 	// * Allow drag+drop to reorder teams & entries, and switch entry teams
-	// * Add change handler to 'enabled' chekboxes & reordering to update managedTeams
+	// * Add change handler to reordering to update managedTeams
 	// * Persist in local storage (maybe use answer_id as unique refs)
 
-	function buildEntryRow(team, entry) {
+	function buildEntryRow(team, entry, enabledFn) {
 		const changed = entry.code !== entry.originalCode;
+		const enabledToggle = docutil.make('input', {
+			type: 'checkbox',
+		});
+		if(entry.enabled) {
+			enabledToggle.setAttribute('checked', 'checked');
+		}
+		enabledToggle.addEventListener('click', (event) => {
+			event.stopPropagation();
+		});
+		enabledToggle.addEventListener('change', (event) => {
+			enabledFn(event.target.checked);
+		});
 		return {
 			key: team.id + '-' + entry.id,
 			className: changed ? 'changed' : '',
@@ -27,7 +39,7 @@ define([
 			},
 			user_id: entry.user_id,
 			answer_id: entry.answer_id,
-			enabled: docutil.make('input', {type: 'checkbox', checked: 'checked', disabled: 'disabled'}),
+			enabled: enabledToggle,
 			baseEntry: entry,
 		};
 	}
@@ -149,6 +161,13 @@ define([
 			return (selectedItem ? selectedItem.datum.baseEntry : null);
 		}
 
+		_triggerEnabledChange(entry, enabled) {
+			this.trigger('change', [{
+				entry,
+				enabled,
+			}]);
+		}
+
 		_triggerChange() {
 			const selectedItem = this.tree.getSelectedItem();
 			if(!selectedItem) {
@@ -183,7 +202,8 @@ define([
 			let treeData = [];
 			if(this.showTeams) {
 				treeData = this.teams.map((team) => {
-					const nested = team.entries.map((entry) => buildEntryRow(team, entry));
+					const nested = team.entries.map((entry) =>
+						buildEntryRow(team, entry, this._triggerEnabledChange.bind(this, entry)));
 					if(this.allowTeamModification) {
 						const button = docutil.make('button', {'data-team': team.id}, ['+ Add Entry']);
 						button.addEventListener('click', this.addEntry);
@@ -193,7 +213,7 @@ define([
 						key: team.id,
 						className: 'team',
 						label: 'Team ' + team.id,
-						enabled: docutil.make('input', {type: 'checkbox', checked: 'checked', disabled: 'disabled'}),
+						enabled: null,
 						nested,
 						baseTeam: team,
 					};
@@ -205,9 +225,9 @@ define([
 				}
 			} else {
 				this.teams.forEach((team) => team.entries.forEach((entry) => {
-					team.entries.map((entry) => {
-						treeData.push(buildEntryRow(team, entry));
-					});
+					team.entries.forEach((entry) => treeData.push(
+						buildEntryRow(team, entry, this._triggerEnabledChange.bind(this, entry))
+					));
 				}));
 				if(this.allowTeamModification) {
 					const button = docutil.make('button', {'data-team': ''}, ['+ Add Entry']);
@@ -264,6 +284,7 @@ define([
 				link: '',
 				title: 'New Entry',
 				code: this.defaultCode,
+				enabled: true,
 			};
 			team.entries.push(entry);
 			this.rebuild();

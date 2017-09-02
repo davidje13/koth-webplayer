@@ -17,6 +17,7 @@ define(['core/worker_utils', 'path:./loader_worker'], (worker_utils, loader_work
 			user_id: entry.user_id,
 			title: unescapeHTML(entry.title),
 			code: unescapeHTML(entry.code),
+			enabled: entry.enabled,
 		};
 	}
 

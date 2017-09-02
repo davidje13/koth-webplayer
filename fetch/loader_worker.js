@@ -29,6 +29,7 @@ define(['./StackExchangeAPI'], (StackExchangeAPI) => {
 				link: item.link,
 				title,
 				code,
+				enabled: true,
 			};
 
 			self.postMessage({
@@ -46,6 +47,7 @@ define(['./StackExchangeAPI'], (StackExchangeAPI) => {
 				title,
 				code: '',
 				error,
+				enabled: false,
 			};
 		}
 	}

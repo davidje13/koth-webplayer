@@ -19,7 +19,7 @@ A rough set of aims for this project:
   and Web Workers (done!)
 * Re-runnable games via a random seed system (done!)
 * Out-of-the-box management of entries, and UI for testing/debugging new entries
-  (not done)
+  (mostly done!)
 * Configurable out-of-the-box match and tournament management (mostly done!)
 * Fancy visualisations (see the game as a torus!) (done!)
 * Local storage persistence of display preferences & in-progress entries (not
