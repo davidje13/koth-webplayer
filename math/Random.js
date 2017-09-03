@@ -1,8 +1,8 @@
-// xorshift+ 64-bit random generator
-// https://en.wikipedia.org/wiki/Xorshift
-
 define(() => {
 	'use strict';
+
+	// xorshift+ 64-bit random generator
+	// https://en.wikipedia.org/wiki/Xorshift
 
 	const CHARS_PER_INT = 5;
 	const BASE = (

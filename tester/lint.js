@@ -60,6 +60,10 @@ define(['require', 'jshint/jshint'], (require, jshint) => {
 		'expect',
 		'not',
 		'equals',
+		'hasType',
+		'isInteger',
+		'isGreaterThan',
+		'isLowerThan',
 		'isNear',
 		'fail',
 	].concat(PREDEF);

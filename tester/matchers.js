@@ -17,6 +17,30 @@ define(() => {
 			negatedMessage: 'Expected not to get ' + expected,
 		});
 
+		target.hasType = (expected) => (actual) => ({
+			match: (typeof actual === expected),
+			message: 'Expected type ' + expected + ' but got ' + (typeof actual),
+			negatedMessage: 'Expected ' + actual + ' not to be type ' + expected,
+		});
+
+		target.isInteger = () => (actual) => ({
+			match: (typeof actual === 'number' && Math.round(actual) === actual),
+			message: 'Expected ' + actual + ' to be an integer',
+			negatedMessage: 'Expected ' + actual + ' not to be an integer',
+		});
+
+		target.isGreaterThan = (expected) => (actual) => ({
+			match: actual > expected,
+			message: 'Expected ' + actual + ' to be greater than ' + expected,
+			negatedMessage: 'Expected ' + actual + ' not to be greater than ' + expected,
+		});
+
+		target.isLowerThan = (expected) => (actual) => ({
+			match: actual < expected,
+			message: 'Expected ' + actual + ' to be lower than ' + expected,
+			negatedMessage: 'Expected ' + actual + ' not to be lower than ' + expected,
+		});
+
 		target.isNear = (expected, tolerance) => (actual) => ({
 			match: (
 				actual >= expected - tolerance &&
