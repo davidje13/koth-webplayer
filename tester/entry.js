@@ -1,6 +1,18 @@
 'use strict';
 
-require(['require', 'document', 'tester/test', 'tester/lint'], (require, document, test, lint) => {
+require([
+	'require',
+	'document',
+	'tester/Test',
+	'tester/matchers',
+	'tester/Lint',
+], (
+	require,
+	document,
+	Test,
+	matchers,
+	Lint
+) => {
 	const elements = document.getElementsByTagName('meta');
 	const testModules = [];
 	const lintModules = [];
@@ -13,6 +25,11 @@ require(['require', 'document', 'tester/test', 'tester/lint'], (require, documen
 			lintModules.push(meta.getAttribute('content'));
 		}
 	}
+
+	const test = new Test(matchers);
+	const lint = new Lint();
+	document.body.appendChild(test.dom());
+	document.body.appendChild(lint.dom());
 
 	test.invoke(testModules).then(() => {
 		const jsPaths = require.getAllPaths().filter((path) => !path.endsWith('.css'));

@@ -19,10 +19,10 @@ define([
 	// * remember custom entries in local storage (maybe)
 	// * permalinks need to store which entries were chosen (& ordering)
 	// * jump-to-entry in editor when pausing due to an error
-	// * currently using the code editor mutates the original team object state; it
-	//   should be considered immutable, and copies made (will need some thought on
-	//   how to handle propagating changes made in a game back to tournaments /
-	//   welcome screen)
+	// * currently using the code editor mutates the original team object state;
+	//   it should be considered immutable, and copies made (will need some
+	//   thought on how to handle propagating changes made in a game back to
+	//   tournaments / welcome screen)
 
 	const pageTitle = docutil.getTitle();
 	const gameType = docutil.getMetaTagValue('game-type');
@@ -109,6 +109,7 @@ define([
 		GameScorer,
 		MatchScorer
 	) => {
+		/* jshint -W071 */ // TODO
 		/* jshint +W072 */
 		loader.setState('game engine', 0.2);
 		const sandbox = sandboxUtils.make(pathSandboxedLoader);

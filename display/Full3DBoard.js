@@ -26,6 +26,71 @@ define([
 		return a * (1 - r) + b * r;
 	}
 
+	function writeWrappedTex(gl, data, {texW, texH, repXDat, repYDat}) {
+		const ww = data.width;
+		const hh = data.height;
+
+		gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+		for(let y = 0; y < hh; ++ y) {
+			repXDat[y * 4    ] = data.data[y * ww * 4    ];
+			repXDat[y * 4 + 1] = data.data[y * ww * 4 + 1];
+			repXDat[y * 4 + 2] = data.data[y * ww * 4 + 2];
+			repXDat[y * 4 + 3] = data.data[y * ww * 4 + 3];
+		}
+		gl.texSubImage2D(
+			gl.TEXTURE_2D,
+			0,
+			ww, 0,
+			1, hh,
+			gl.RGBA,
+			gl.UNSIGNED_BYTE,
+			repXDat
+		);
+		for(let y = 0; y < hh; ++ y) {
+			repXDat[y * 4    ] = data.data[(y * ww + ww - 1) * 4    ];
+			repXDat[y * 4 + 1] = data.data[(y * ww + ww - 1) * 4 + 1];
+			repXDat[y * 4 + 2] = data.data[(y * ww + ww - 1) * 4 + 2];
+			repXDat[y * 4 + 3] = data.data[(y * ww + ww - 1) * 4 + 3];
+		}
+		gl.texSubImage2D(
+			gl.TEXTURE_2D,
+			0,
+			texW - 1, 0,
+			1, hh,
+			gl.RGBA,
+			gl.UNSIGNED_BYTE,
+			repXDat
+		);
+		for(let x = 0; x < ww * 4; ++ x) {
+			repYDat[x] = data.data[x];
+		}
+		repYDat[ww * 4    ] = data.data[0];
+		repYDat[ww * 4 + 1] = data.data[1];
+		repYDat[ww * 4 + 2] = data.data[2];
+		repYDat[ww * 4 + 3] = data.data[3];
+		gl.texSubImage2D(
+			gl.TEXTURE_2D,
+			0,
+			0, hh,
+			ww + 1, 1,
+			gl.RGBA,
+			gl.UNSIGNED_BYTE,
+			repYDat
+		);
+		for(let x = 0; x < ww * 4; ++ x) {
+			repYDat[x] = data.data[ww * (hh - 1) * 4 + x];
+		}
+		gl.texSubImage2D(
+			gl.TEXTURE_2D,
+			0,
+			0, texH - 1,
+			ww + 1, 1,
+			gl.RGBA,
+			gl.UNSIGNED_BYTE,
+			repYDat
+		);
+	}
+
 	return class Full3DBoard extends EventObject {
 		constructor({renderer, markerStore = null, markerTypes = null, width = 0, height = 0}) {
 			super();
@@ -358,7 +423,7 @@ define([
 				ang = (ang % (Math.PI * 2)) * frac3D;
 			}
 
-			const focusDist = this.meshTorus.rad1 - frac3D;
+			const focusDist = this.meshTorus.shape.rad1 - frac3D;
 			const torusFocus = new Mat4.Vec3(
 				focusDist * Math.sin(ang * frac3D),
 				focusDist * Math.cos(ang * frac3D),
@@ -410,65 +475,12 @@ define([
 						this.repXDat = new Uint8Array(hh * 4);
 						this.repYDat = new Uint8Array((ww + 1) * 4);
 					}
-					gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
-					for(let y = 0; y < hh; ++ y) {
-						this.repXDat[y * 4    ] = data.data[y * ww * 4    ];
-						this.repXDat[y * 4 + 1] = data.data[y * ww * 4 + 1];
-						this.repXDat[y * 4 + 2] = data.data[y * ww * 4 + 2];
-						this.repXDat[y * 4 + 3] = data.data[y * ww * 4 + 3];
-					}
-					gl.texSubImage2D(
-						gl.TEXTURE_2D,
-						0,
-						ww, 0,
-						1, hh,
-						gl.RGBA,
-						gl.UNSIGNED_BYTE,
-						this.repXDat
-					);
-					for(let y = 0; y < hh; ++ y) {
-						this.repXDat[y * 4    ] = data.data[(y * ww + ww - 1) * 4    ];
-						this.repXDat[y * 4 + 1] = data.data[(y * ww + ww - 1) * 4 + 1];
-						this.repXDat[y * 4 + 2] = data.data[(y * ww + ww - 1) * 4 + 2];
-						this.repXDat[y * 4 + 3] = data.data[(y * ww + ww - 1) * 4 + 3];
-					}
-					gl.texSubImage2D(
-						gl.TEXTURE_2D,
-						0,
-						PoTx - 1, 0,
-						1, hh,
-						gl.RGBA,
-						gl.UNSIGNED_BYTE,
-						this.repXDat
-					);
-					for(let x = 0; x < ww * 4; ++ x) {
-						this.repYDat[x] = data.data[x];
-					}
-					this.repYDat[ww * 4    ] = data.data[0];
-					this.repYDat[ww * 4 + 1] = data.data[1];
-					this.repYDat[ww * 4 + 2] = data.data[2];
-					this.repYDat[ww * 4 + 3] = data.data[3];
-					gl.texSubImage2D(
-						gl.TEXTURE_2D,
-						0,
-						0, hh,
-						ww + 1, 1,
-						gl.RGBA,
-						gl.UNSIGNED_BYTE,
-						this.repYDat
-					);
-					for(let x = 0; x < ww * 4; ++ x) {
-						this.repYDat[x] = data.data[ww * (hh - 1) * 4 + x];
-					}
-					gl.texSubImage2D(
-						gl.TEXTURE_2D,
-						0,
-						0, PoTy - 1,
-						ww + 1, 1,
-						gl.RGBA,
-						gl.UNSIGNED_BYTE,
-						this.repYDat
-					);
+					writeWrappedTex(gl, data, {
+						texW: PoTx,
+						texH: PoTy,
+						repXDat: this.repXDat,
+						repYDat: this.repYDat,
+					});
 				}
 				this.boardW = ww;
 				this.boardH = hh;

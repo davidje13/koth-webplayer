@@ -19,8 +19,8 @@ define(['require', 'document', 'jshint/jshint'], (require, document, jshint) => 
 			latedef: true,
 			maxcomplexity: 10,
 			maxdepth: 3,
-			maxparams: 6,
-			maxstatements: 50,
+			maxparams: 5,
+			maxstatements: 40,
 			noarg: true,
 			nocomma: true,
 			nonbsp: true,
@@ -75,19 +75,11 @@ define(['require', 'document', 'jshint/jshint'], (require, document, jshint) => 
 	const JSHINT_OPTIONS = makeJSHintOptions(PREDEF);
 	const JSHINT_OPTIONS_TEST = makeJSHintOptions(PREDEF_TEST);
 
-	const baseLintElement = document.createElement('div');
-	baseLintElement.setAttribute('class', 'lint-hold');
-	const lintTitle = document.createElement('h1');
-	const lintTitleText = document.createTextNode('Linter');
-	lintTitle.appendChild(lintTitleText);
-	baseLintElement.appendChild(lintTitle);
-	document.body.appendChild(baseLintElement);
-
-	function log(type, message) {
+	function log(target, type, message) {
 		const element = document.createElement('div');
 		element.setAttribute('class', type);
 		element.appendChild(document.createTextNode(message));
-		baseLintElement.appendChild(element);
+		target.appendChild(element);
 	}
 
 	function formatError(error) {
@@ -107,53 +99,76 @@ define(['require', 'document', 'jshint/jshint'], (require, document, jshint) => 
 		);
 	}
 
-	function invokeOne(path) {
-		return require(['def:' + path], (def) => {
-			let code = def.code();
-			if(!code) {
-				log('lint-skip', path + ' SKIP');
-				return true;
-			}
+	return class Lint {
+		constructor() {
+			this.baseLintElement = document.createElement('div');
+			this.baseLintElement.setAttribute('class', 'lint-hold');
+			const lintTitle = document.createElement('h1');
+			this.lintTitleText = document.createTextNode('Linter');
+			lintTitle.appendChild(this.lintTitleText);
+			this.baseLintElement.appendChild(lintTitle);
 
-			if(code.startsWith('require.define')) {
-				code = code.substr('require.'.length);
-			}
+			this.invokeOne = this.invokeOne.bind(this);
+		}
 
-			// Ignore number of args in module definitions
-			code = '/* jshint -W072 */\n' + code.replace(/\{/, '{\n/* jshint +W072 */\n');
+		dom() {
+			return this.baseLintElement;
+		}
 
-			if(path.indexOf('/example/') !== -1) {
-				// Don't warn about unused vars or empty blocks; they are for guidance
-				code = '/* jshint -W098 *//* jshint -W035 */' + code;
-			}
+		log(type, message) {
+			log(this.baseLintElement, type, message);
+		}
 
-			jshint.JSHINT(
-				code,
-				path.endsWith('_test') ? JSHINT_OPTIONS_TEST : JSHINT_OPTIONS
-			);
-			const errors = jshint.JSHINT.errors;
+		invokeOne(module) {
+			return require(['def:' + module], (def) => {
+				let code = def.code();
+				if(!code) {
+					this.log('lint-skip', module + ' SKIP');
+					return true;
+				}
 
-			const messages = (
-				errors
-				.map((error) => formatError(error))
-				.filter((error) => (error !== null))
-			);
+				if(code.startsWith('require.define')) {
+					code = code.substr('require.'.length);
+				}
 
-			if(messages.length > 0) {
-				log('lint-failure', path + ' FAIL');
-				messages.forEach((error) => log('lint-item', error));
-				return false;
-			} else {
-				log('lint-pass', path + ' PASS');
-				return true;
-			}
-		});
-	}
+				// Ignore number of args in module definitions
+				code = (
+					'/* jshint -W072 */\n' +
+					code.replace(/\{/, '{\n/* jshint +W072 */\n')
+				);
 
-	return {
-		invoke: (paths) => {
+				if(module.indexOf('/example/') !== -1) {
+					// Don't warn about unused vars or empty blocks;
+					// they are for guidance
+					code = '/* jshint -W098 *//* jshint -W035 */' + code;
+				}
+
+				jshint.JSHINT(
+					code,
+					module.endsWith('_test') ? JSHINT_OPTIONS_TEST : JSHINT_OPTIONS
+				);
+				const errors = jshint.JSHINT.errors;
+
+				const messages = (
+					errors
+					.map((error) => formatError(error))
+					.filter((error) => (error !== null))
+				);
+
+				if(messages.length > 0) {
+					this.log('lint-failure', module + ' FAIL');
+					messages.forEach((error) => this.log('lint-item', error));
+					return false;
+				} else {
+					this.log('lint-pass', module + ' PASS');
+					return true;
+				}
+			});
+		}
+
+		invoke(modules) {
 			return (
-				Promise.all(paths.map((path) => invokeOne(path)))
+				Promise.all(modules.map(this.invokeOne))
 				.then((passes) => {
 					const allPass = passes.every((pass) => pass);
 					let title = '';
@@ -162,9 +177,9 @@ define(['require', 'document', 'jshint/jshint'], (require, document, jshint) => 
 					} else {
 						title = 'Linter: FAIL';
 					}
-					lintTitleText.nodeValue = title;
+					this.lintTitleText.nodeValue = title;
 				})
 			);
-		},
+		}
 	};
 });

@@ -4,6 +4,19 @@ const requireFactory = () => {
 	const DEFINITION_PREFIX = 'def:';
 	const ABSPATH_PREFIX = 'path:';
 
+	const states = new Map();
+	const hooks = {};
+	let unnamedDef = null;
+	let blocked = false;
+	let require = null;
+
+	hooks.performLoad = (src, done) => {
+		const script = window.document.createElement('script');
+		script.setAttribute('src', src + '.js');
+		script.addEventListener('load', done, {once: true});
+		window.document.getElementsByTagName('head')[0].appendChild(script);
+	};
+
 	class SharedPromise {
 		constructor(promise) {
 			this.state = 0;
@@ -50,11 +63,13 @@ const requireFactory = () => {
 		}
 	}
 
-	const states = new Map();
-	const loadedStyles = new Set();
-	const hooks = {};
-	let unnamedDef = null;
-	let blocked = false;
+	function augment(target, source) {
+		for(let key in source) {
+			if(source.hasOwnProperty(key)) {
+				target[key] = source[key];
+			}
+		}
+	}
 
 	function stateOf(src) {
 		let state = states.get(src);
@@ -70,22 +85,6 @@ const requireFactory = () => {
 			});
 		}
 		return state;
-	}
-
-	const KEY_DOCUMENT = stateOf('document');
-	const KEY_REQUIRE = stateOf('require');
-	KEY_DOCUMENT.noFactoryCode = true;
-
-	if(self.window) {
-		KEY_DOCUMENT.building = new SharedPromise((resolve) => {
-			window.addEventListener('load', () => {
-				KEY_DOCUMENT.building = null;
-				KEY_DOCUMENT.module = window.document;
-				resolve(window.document);
-			}, {once: true});
-		});
-	} else {
-		KEY_DOCUMENT.building = SharedPromise.reject('DOM not available');
 	}
 
 	function getExports() {
@@ -135,13 +134,13 @@ const requireFactory = () => {
 		return state.loading.promise();
 	}
 
-	function loadStyle(src) {
-		if(loadedStyles.has(src)) {
+	function loadStyle(state, src) {
+		if(state.module) {
 			return Promise.resolve();
 		}
 
 		return new Promise((resolve) => {
-			loadedStyles.add(src);
+			state.module = true;
 			const link = window.document.createElement('link');
 			link.setAttribute('rel', 'stylesheet');
 			link.setAttribute('href', src);
@@ -149,13 +148,6 @@ const requireFactory = () => {
 			window.document.getElementsByTagName('head')[0].appendChild(link);
 		});
 	}
-
-	hooks.performLoad = (src, done) => {
-		const script = window.document.createElement('script');
-		script.setAttribute('src', src + '.js');
-		script.addEventListener('load', done, {once: true});
-		window.document.getElementsByTagName('head')[0].appendChild(script);
-	};
 
 	function stringifySingle(o, multiline) {
 		// Reformat module requirements to better fit the originals for the
@@ -216,8 +208,6 @@ const requireFactory = () => {
 		return path.join('/');
 	}
 
-	let require = null;
-
 	function applyDefinition(src) {
 		const state = stateOf(src);
 		if(state.module) {
@@ -248,7 +238,7 @@ const requireFactory = () => {
 		const state = stateOf(trueSrc);
 
 		if(trueSrc.endsWith('.css')) {
-			return loadStyle(trueSrc);
+			return loadStyle(state, trueSrc);
 		}
 
 		if(state.module) {
@@ -269,11 +259,7 @@ const requireFactory = () => {
 			fn && fn.apply(null, deps));
 	};
 
-	require.replaceLoader = function(loader) {
-		hooks.performLoad = loader;
-	};
-
-	require.define = function(src, depends, factory) {
+	function define(src, depends, factory) {
 		if(typeof src !== 'string') {
 			factory = depends;
 			depends = src;
@@ -293,32 +279,59 @@ const requireFactory = () => {
 		} else {
 			unnamedDef = def;
 		}
-	};
-
-	require.getAllPaths = () => {
-		const paths = [];
-		states.forEach((state, path) => {
-			paths.push(path);
-		});
-		return paths;
-	};
+	}
 
 	// Disguise ourselves so that third-party libraries will integrate nicely
 	// (we're a pretty close API anyway)
-	require.define.amd = true;
+	define.amd = true;
 
-	require.shed = function() {
-		self.require = {define: require.define};
-		self.requireFactory = undefined;
-		blocked = true;
-	};
+	augment(require, {
+		define,
 
-	/* globals requireFactory */
-	KEY_REQUIRE.factory = requireFactory;
-	KEY_REQUIRE.module = require;
+		replaceLoader: (loader) => {
+			hooks.performLoad = loader;
+		},
+
+		getAllPaths: () => {
+			const paths = [];
+			states.forEach((state, path) => {
+				paths.push(path);
+			});
+			return paths;
+		},
+
+		shed: () => {
+			self.require = {define};
+			self.requireFactory = undefined;
+			blocked = true;
+		},
+	});
+
+	function loadBuiltins() {
+		const KEY_DOCUMENT = stateOf('document');
+		KEY_DOCUMENT.noFactoryCode = true;
+		if(self.window) {
+			KEY_DOCUMENT.building = new SharedPromise((resolve) => {
+				window.addEventListener('load', () => {
+					KEY_DOCUMENT.building = null;
+					KEY_DOCUMENT.module = window.document;
+					resolve(window.document);
+				}, {once: true});
+			});
+		} else {
+			KEY_DOCUMENT.building = SharedPromise.reject('DOM not available');
+		}
+
+		/* globals requireFactory */
+		const KEY_REQUIRE = stateOf('require');
+		KEY_REQUIRE.factory = requireFactory;
+		KEY_REQUIRE.module = require;
+	}
+
+	loadBuiltins();
 
 	self.require = require;
-	self.define = require.define;
+	self.define = define;
 	self.exports = {};
 
 	return require;

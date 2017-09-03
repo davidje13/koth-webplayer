@@ -47,7 +47,7 @@ define(() => {
 		}
 	}
 
-	function calculateZones(zones, w, h, zoneSize, ants, framesDelta) {
+	function calculateZones(zones, ants, {w, h, zoneSize, framesDelta}) {
 		zones.fill(0);
 		const zw = Math.ceil(w / zoneSize);
 		const zh = Math.ceil(h / zoneSize);
@@ -203,14 +203,12 @@ define(() => {
 					fadeOut(this.dat);
 				}
 
-				calculateZones(
-					this.zones,
-					this.dat.width,
-					this.dat.height,
-					this.zoneSize,
-					this.rawAnts,
-					framesDelta
-				);
+				calculateZones(this.zones, this.rawAnts, {
+					w: this.dat.width,
+					h: this.dat.height,
+					zoneSize: this.zoneSize,
+					framesDelta,
+				});
 
 				paintPartial(
 					this.dat,

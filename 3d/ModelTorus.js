@@ -9,6 +9,31 @@ define([
 ) => {
 	'use strict';
 
+	function buildYCaches(crossSection, loopY, segsY) {
+		const yStartFrac = -0.5 * loopY;
+		const yEndFrac = 0.5 * loopY;
+		const yStartTheta = crossSection.thetaFromFrac(yStartFrac);
+		const yEndTheta = crossSection.thetaFromFrac(yEndFrac);
+
+		const ySin = [];
+		const yCos = [];
+		const yFrac = [];
+		for(let y = 0; y <= segsY; ++ y) {
+			const a = (
+				yStartTheta +
+				(yEndTheta - yStartTheta) * (y / segsY)
+			);
+			ySin.push(Math.sin(a));
+			yCos.push(Math.cos(a));
+			yFrac.push(
+				(crossSection.fracFromTheta(a) - yStartFrac) /
+				(yEndFrac - yStartFrac)
+			);
+		}
+
+		return {ySin, yCos, yFrac};
+	}
+
 	return class ModelTorus extends webglUtils.ModelData {
 		constructor({
 			surfaceNormal = true,
@@ -26,13 +51,15 @@ define([
 			this.surfaceNormal = surfaceNormal;
 			this.uv = uv;
 
-			this.segsX = segsX;
-			this.segsY = segsY;
-			this.rad1 = rad1;
-			this.rad2A = rad2A;
-			this.rad2B = rad2B;
-			this.loopX = loopX;
-			this.loopY = loopY;
+			this.shape = {
+				segsX,
+				segsY,
+				rad1,
+				rad2A,
+				rad2B,
+				loopX,
+				loopY,
+			};
 
 			this.cacheVertBuffer = null;
 			this.cacheCrossSection = null;
@@ -42,9 +69,9 @@ define([
 		}
 
 		setResolution(segsX, segsY) {
-			if(this.segsX !== segsX || this.segsY !== segsY) {
-				this.segsX = segsX;
-				this.segsY = segsY;
+			if(this.shape.segsX !== segsX || this.shape.segsY !== segsY) {
+				this.shape.segsX = segsX;
+				this.shape.segsY = segsY;
 				this.cacheVertBuffer = null;
 				this.dirtyVertices = true;
 				this.dirtyIndices = true;
@@ -52,36 +79,36 @@ define([
 		}
 
 		setRadii(rad1, rad2A, rad2B) {
-			if(this.rad1 !== rad1) {
-				this.rad1 = rad1;
+			if(this.shape.rad1 !== rad1) {
+				this.shape.rad1 = rad1;
 				this.dirtyVertices = true;
 			}
-			if(this.rad2A !== rad2A || this.rad2B !== rad2B) {
-				this.rad2A = rad2A;
-				this.rad2B = rad2B;
+			if(this.shape.rad2A !== rad2A || this.shape.rad2B !== rad2B) {
+				this.shape.rad2A = rad2A;
+				this.shape.rad2B = rad2B;
 				this.cacheCrossSection = null;
 				this.dirtyVertices = true;
 			}
 		}
 
 		setFractions(loopX, loopY) {
-			if(this.loopX !== loopX || this.loopY !== loopY) {
-				this.loopX = loopX;
-				this.loopY = loopY;
+			if(this.shape.loopX !== loopX || this.shape.loopY !== loopY) {
+				this.shape.loopX = loopX;
+				this.shape.loopY = loopY;
 				this.dirtyVertices = true;
 			}
 		}
 
 		getCrossSection() {
+			const {rad2A, rad2B} = this.shape;
 			return (
 				this.cacheCrossSection ||
-				(this.cacheCrossSection = new Ellipse(this.rad2A, this.rad2B))
+				(this.cacheCrossSection = new Ellipse(rad2A, rad2B))
 			);
 		}
 
 		rebuildIndices() {
-			const segsX = this.segsX;
-			const segsY = this.segsY;
+			const {segsX, segsY} = this.shape;
 			const indices = new Uint16Array(segsX * segsY * 6);
 
 			for(let x = 0; x < segsX; ++ x) {
@@ -99,13 +126,7 @@ define([
 		}
 
 		rebuildVertices() {
-			const segsX = this.segsX;
-			const segsY = this.segsY;
-			const rad1 = this.rad1;
-			const rad2A = this.rad2A;
-			const rad2B = this.rad2B;
-			const loopX = this.loopX;
-			const loopY = this.loopY;
+			const {segsX, segsY, rad1, rad2A, rad2B, loopX, loopY} = this.shape;
 			const surfaceNormal = this.surfaceNormal;
 			const uv = this.uv;
 			const stride = this.stride;
@@ -115,28 +136,11 @@ define([
 				(this.cacheVertBuffer = new Float32Array((segsX + 1) * (segsY + 1) * stride))
 			);
 
-			const crossSection = this.getCrossSection();
-
-			const yStartFrac = -0.5 * loopY;
-			const yEndFrac = 0.5 * loopY;
-			const yStartTheta = crossSection.thetaFromFrac(yStartFrac);
-			const yEndTheta = crossSection.thetaFromFrac(yEndFrac);
-
-			const ySin = [];
-			const yCos = [];
-			const yFrac = [];
-			for(let y = 0; y <= segsY; ++ y) {
-				const a = (
-					yStartTheta +
-					(yEndTheta - yStartTheta) * (y / segsY)
-				);
-				ySin.push(Math.sin(a));
-				yCos.push(Math.cos(a));
-				yFrac.push(
-					(crossSection.fracFromTheta(a) - yStartFrac) /
-					(yEndFrac - yStartFrac)
-				);
-			}
+			const {ySin, yCos, yFrac} = buildYCaches(
+				this.getCrossSection(),
+				loopY,
+				segsY
+			);
 
 			const uv0 = surfaceNormal ? 6 : 3;
 
@@ -173,11 +177,7 @@ define([
 		}
 
 		find(x, y) {
-			const rad1 = this.rad1;
-			const rad2A = this.rad2A;
-			const rad2B = this.rad2B;
-			const loopX = this.loopX;
-			const loopY = this.loopY;
+			const {rad1, rad2A, rad2B, loopX, loopY} = this.shape;
 
 			const yStartFrac = -0.5 * loopY;
 			const yEndFrac = 0.5 * loopY;
