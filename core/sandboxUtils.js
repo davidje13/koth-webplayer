@@ -59,7 +59,7 @@ define([
 		}
 	}
 
-	function make(dependencies, fn) {
+	function make(dependencies, fn, {allowAllScripts = false} = {}) {
 		if(typeof dependencies === 'function') {
 			fn = dependencies;
 			dependencies = [];
@@ -169,7 +169,8 @@ define([
 			'<head>\n' +
 			'<meta charset="utf-8">\n' +
 			'<meta http-equiv="content-security-policy" content="' +
-			'script-src \'nonce-' + nonce + '\' ' + remoteDomain +
+			'script-src \'' + (allowAllScripts ? 'unsafe-inline' : ('nonce-' + nonce)) + '\' ' +
+			remoteDomain +
 			(needUnsafeEval ? ' \'unsafe-eval\'' : '') + ';' +
 			'style-src \'none\';' +
 			'">\n' +

@@ -35,5 +35,26 @@ define(['./sandboxUtils'], (sandboxUtils) => {
 			});
 			sandboxed.postMessage({length: 2, content: 'a'});
 		});
+
+		itAsynchronously('can be nested', (done) => {
+			const sandboxed = sandboxUtils.make(['core/sandboxUtils'], (sandboxUtilsB) => {
+				const sandboxed2 = sandboxUtilsB.make(() => {
+					self.addEventListener('message', (o) => {
+						self.postMessage(o.data + '-inner');
+					});
+				});
+				sandboxed2.addEventListener('message', (o) => {
+					self.postMessage(o.data + '-outer2');
+				});
+				self.addEventListener('message', (o) => {
+					sandboxed2.postMessage(o.data + '-outer1');
+				});
+			}, {allowAllScripts: true});
+			sandboxed.addEventListener('message', (o) => {
+				expect(o.data, equals('input-outer1-inner-outer2'));
+				done();
+			});
+			sandboxed.postMessage('input');
+		});
 	});
 });
