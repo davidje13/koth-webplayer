@@ -37,7 +37,7 @@ define(['./documentUtils', './style.css'], (docutil) => {
 				}
 			}
 			if(changeHash && item.hash !== null) {
-				document.location.hash = item.hash;
+				docutil.document.location.hash = item.hash;
 			}
 			return true;
 		}
@@ -139,7 +139,7 @@ define(['./documentUtils', './style.css'], (docutil) => {
 					this._swapPage(null, false);
 					this.currentIndex = -1;
 					if(changeHash) {
-						document.location.hash = '';
+						docutil.document.location.hash = '';
 					}
 				} else {
 					this.goToIndex(index - 1, {changeHash});

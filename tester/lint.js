@@ -1,4 +1,4 @@
-define(['require', 'jshint/jshint'], (require, jshint) => {
+define(['require', 'document', 'jshint/jshint'], (require, document, jshint) => {
 	'use strict';
 
 	function makeJSHintOptions(predef) {
@@ -48,6 +48,7 @@ define(['require', 'jshint/jshint'], (require, jshint) => {
 	}
 
 	const PREDEF = [
+		'-document',
 		'self',
 		'define',
 		'crypto',

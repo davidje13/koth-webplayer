@@ -6,6 +6,7 @@ define(['document'], (document) => {
 	}
 
 	return {
+		document: document,
 		body: document.body,
 
 		getMetaTagValue: (name, fallback = null) => {

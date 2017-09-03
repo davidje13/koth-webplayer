@@ -12,7 +12,7 @@ define([
 	function unescapeHTML(code) {
 		// TODO: ideally would not require access to the DOM
 		// Thanks, https://stackoverflow.com/a/7394787/1180785
-		const o = document.createElement('textarea');
+		const o = window.document.createElement('textarea');
 		o.innerHTML = code;
 		return o.value;
 	}

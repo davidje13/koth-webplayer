@@ -142,19 +142,19 @@ const requireFactory = () => {
 
 		return new Promise((resolve) => {
 			loadedStyles.add(src);
-			const link = document.createElement('link');
+			const link = window.document.createElement('link');
 			link.setAttribute('rel', 'stylesheet');
 			link.setAttribute('href', src);
 			link.addEventListener('load', resolve, {once: true});
-			document.getElementsByTagName('head')[0].appendChild(link);
+			window.document.getElementsByTagName('head')[0].appendChild(link);
 		});
 	}
 
 	hooks.performLoad = (src, done) => {
-		const script = document.createElement('script');
+		const script = window.document.createElement('script');
 		script.setAttribute('src', src + '.js');
 		script.addEventListener('load', done, {once: true});
-		document.getElementsByTagName('head')[0].appendChild(script);
+		window.document.getElementsByTagName('head')[0].appendChild(script);
 	};
 
 	function stringifySingle(o, multiline) {
