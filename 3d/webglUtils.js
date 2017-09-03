@@ -2,7 +2,7 @@ define(() => {
 	'use strict';
 
 	function nextPoT(v) {
-		/* jshint -W016 */
+		/* jshint -W016 */ // bit operations used for speed
 		-- v;
 		v |= v >>> 1;
 		v |= v >>> 2;

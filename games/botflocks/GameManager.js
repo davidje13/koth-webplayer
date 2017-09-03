@@ -1,12 +1,11 @@
-define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
+define([
+	'core/arrayUtils',
+	'fetch/entryUtils',
+], (
+	arrayUtils,
+	entryUtils
+) => {
 	'use strict';
-
-	function botNear(x, y, dist) {
-		return ((bot) => Math.max(
-			Math.abs(x - bot.x),
-			Math.abs(y - bot.y),
-		) <= dist);
-	}
 
 	const MOVES = [
 		{x:-1, y:-1},
@@ -19,14 +18,44 @@ define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 		{x: 1, y: 1},
 	];
 
+	function botNear(x, y, dist) {
+		return ((bot) => (Math.max(
+			Math.abs(x - bot.x),
+			Math.abs(y - bot.y)
+		) <= dist));
+	}
+
+	function interpretAction(bot, action, width, height) {
+		if(!action) {
+			return {type: -1, tx: 0, ty: 0};
+		}
+		const delta = MOVES[(action - 1) % MOVES.length];
+		const tx = bot.x + delta.x;
+		const ty = bot.y + delta.y;
+		if(tx < 0 || ty < 0 || tx >= width || ty >= height) {
+			return {type: -1, tx: 0, ty: 0};
+		}
+		const type = Math.floor((action - 1) / MOVES.length);
+		return {type, tx, ty};
+	}
+
 	return class GameManager {
-		constructor(random, {width, height, floorHeight, flockSize, maxFrame, visibilitySquare, goalTimeLimit, teams}) {
+		constructor(random, {
+			width,
+			height,
+			floorHeight,
+			flockSize,
+			maxFrame,
+			visibilitySquare,
+			goalTimeLimit,
+			teams,
+		}) {
 			this.random = random;
-			this.width = width|0;
-			this.height = height|0;
-			this.maxFrame = Math.max(maxFrame|0, 1);
-			this.visibilityDist = Math.max(((visibilitySquare - 1) / 2)|0, 1);
-			this.goalTimeLimit = Math.max(goalTimeLimit|0, 1);
+			this.width = Math.round(width);
+			this.height = Math.round(height);
+			this.maxFrame = Math.max(Math.round(maxFrame), 1);
+			this.visibilityDist = Math.max(Math.floor((visibilitySquare - 1) / 2), 1);
+			this.goalTimeLimit = Math.max(Math.round(goalTimeLimit), 1);
 			this.currentEntry = 0;
 			this.frame = 0;
 			this.simulationTime = 0;
@@ -132,9 +161,9 @@ define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 		}
 
 		updateConfig({maxFrame, visibilitySquare, goalTimeLimit}) {
-			this.maxFrame = Math.max(maxFrame|0, 1);
-			this.visibilityDist = Math.max(((visibilitySquare - 1) / 2)|0, 1);
-			this.goalTimeLimit = Math.max(goalTimeLimit|0, 1);
+			this.maxFrame = Math.max(Math.round(maxFrame), 1);
+			this.visibilityDist = Math.max(Math.floor((visibilitySquare - 1) / 2), 1);
+			this.goalTimeLimit = Math.max(Math.round(goalTimeLimit), 1);
 		}
 
 		botAt(x, y) {
@@ -153,7 +182,7 @@ define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 			while(true) {
 				const p = this.random.next(this.width * this.height);
 				x = p % this.width;
-				y = (p / this.width)|0;
+				y = Math.floor(p / this.width);
 				if(!this.botAt(x, y)) {
 					break;
 				}
@@ -171,17 +200,10 @@ define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 		}
 
 		moveBot(entry, bot, action) {
-			if(!action) {
-				return;
-			}
-			const delta = MOVES[(action - 1) % MOVES.length];
-			const tx = bot.x + delta.x;
-			const ty = bot.y + delta.y;
-			if(tx < 0 || ty < 0 || tx >= this.width || ty >= this.height) {
-				return;
-			}
-			const type = Math.floor((action - 1) / MOVES.length);
+			const {type, tx, ty} = interpretAction(bot, action, this.width, this.height);
 			switch(type) {
+			case -1: // NoOp
+				break;
 			case 0: // Move
 				if(!this.wallAt(tx, ty) && MOVES.some((d) => this.wallAt(tx + d.x, ty + d.y))) {
 					bot.x = tx;
@@ -215,7 +237,7 @@ define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 
 			let error = null;
 			let elapsed = 0;
-			let action = undefined;
+			let action = null;
 
 			const oldRandom = Math.random;
 			const enemyBots = [];
@@ -233,7 +255,7 @@ define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 								hasWall: enemyBot.hasWall,
 							});
 						}
-					})
+					});
 				})
 			);
 			arrayUtils.shuffleInPlace(enemyBots, this.random);
@@ -258,13 +280,12 @@ define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 				const begin = performance.now();
 				action = entry.fn(Object.assign({
 					grid: (x, y) => { // grid(x, y)
-						if((x|0) !== x || (y|0) !== y) {
+						if(Math.round(x) !== x || Math.round(y) !== y) {
 							return -1;
 						}
 						if(x < 0 || y < 0 || x >= this.width || y >= this.height) {
 							return -1;
 						}
-						const nearest = this.visibilityDist + 1;
 						if(entry.bots.some(botNear(x, y, this.visibilityDist))) {
 							return this.board[y * this.width + x];
 						} else {
@@ -291,7 +312,7 @@ define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 					error = 'Invalid action: ' + action;
 				} else {
 					action.forEach((act, i) => {
-						if((act|0) !== act || act < 0 || act > 24) {
+						if(Math.round(act) !== act || act < 0 || act > 24) {
 							error = 'Invalid action for bot ' + i + ': ' + act;
 						}
 					});
@@ -402,5 +423,5 @@ define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 				})),
 			};
 		}
-	}
+	};
 });

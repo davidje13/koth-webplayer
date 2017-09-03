@@ -72,7 +72,6 @@ define(() => {
 					tiedPos = i;
 					tiedFood = place.food;
 				}
-				let score = 0;
 				if(!place.disqualified && place.food > 0) {
 					place.winner = (tiedPos === 0);
 					place.score = SCORING[tiedPos];

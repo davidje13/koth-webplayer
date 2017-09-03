@@ -97,5 +97,5 @@ define(() => {
 		getImageData() {
 			return this.dat;
 		}
-	}
+	};
 });

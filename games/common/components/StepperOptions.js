@@ -90,7 +90,7 @@ define([
 			this.maxFrame = docutil.make('input', {
 				'type': 'number',
 				'min': '1',
-				'step': '1'
+				'step': '1',
 			});
 			this.seedEntry = docutil.make('input', {'type': 'text', 'class': 'seed-entry'});
 			this.seedGo = docutil.make('button', {}, ['Go']);
@@ -100,7 +100,7 @@ define([
 			});
 
 			this.maxFrame.addEventListener('change', () => {
-				const maxFrame = Math.max(this.maxFrame.value|0, 1);
+				const maxFrame = Math.max(Math.round(this.maxFrame.value), 1);
 				this.trigger('changegame', [{maxFrame}]);
 			});
 
@@ -129,13 +129,27 @@ define([
 					this.buttons.map((button) => button.element)
 				),
 				docutil.make('span', {'class': 'performance'}, [
-					'Step avg.: ', docutil.make('span', {'class': 'metric'}, [this.stepTime]), 'ms',
+					'Step avg.: ',
+					docutil.make('span', {'class': 'metric'}, [this.stepTime]),
+					'ms',
+
 					' ',
-					'(engine: ', docutil.make('span', {'class': 'metric'}, [this.engineTime]), 'ms)',
+
+					'(engine: ',
+					docutil.make('span', {'class': 'metric'}, [this.engineTime]),
+					'ms)',
+
 					docutil.make('br'),
-					'Render avg.: ', docutil.make('span', {'class': 'metric'}, [this.renderTime]), 'ms',
+
+					'Render avg.: ',
+					docutil.make('span', {'class': 'metric'}, [this.renderTime]),
+					'ms',
+
 					' ',
-					'Real: ', docutil.make('span', {'class': 'metric'}, [this.worldTime]), 's',
+
+					'Real: ',
+					docutil.make('span', {'class': 'metric'}, [this.worldTime]),
+					's',
 				]),
 				docutil.make('span', {'class': 'destructive'}, [
 					this.seedEntry,
@@ -159,7 +173,7 @@ define([
 		}
 
 		updateGameConfig(config) {
-			if(this.maxFrame !== document.activeElement) {
+			if(this.maxFrame !== docutil.document.activeElement) {
 				this.maxFrame.value = config.maxFrame;
 			}
 			if(config.seed !== this.currentSeed) {
@@ -170,13 +184,17 @@ define([
 
 		updateState(state) {
 			let simTime = state.simulationTime;
-			state.teams.forEach((team) => team.entries.forEach((entry) => simTime -= entry.elapsedTime));
+			state.teams.forEach((team) => team.entries.forEach((entry) =>
+				(simTime -= entry.elapsedTime)));
 
 			docutil.updateText(this.frame, state.frame);
 			docutil.updateText(this.stepTime, (state.simulationTime / state.frame).toFixed(3));
 			docutil.updateText(this.engineTime, (simTime / state.frame).toFixed(3));
 			if(this.renderPerf) {
-				docutil.updateText(this.renderTime, (this.renderPerf.renderTime / this.renderPerf.renderCount).toFixed(3));
+				docutil.updateText(this.renderTime, (
+					this.renderPerf.renderTime /
+					this.renderPerf.renderCount
+				).toFixed(3));
 			} else {
 				docutil.updateText(this.renderTime, '-');
 			}
@@ -186,5 +204,5 @@ define([
 		dom() {
 			return this.bar;
 		}
-	}
+	};
 });

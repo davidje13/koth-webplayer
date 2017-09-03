@@ -7,7 +7,7 @@ define([
 	EventObject,
 	docutil,
 	HierarchyTable,
-	GameScorer,
+	GameScorer
 ) => {
 	'use strict';
 
@@ -92,17 +92,20 @@ define([
 				}
 			}));
 
-			this.table.setData(GameScorer.score(null, state).teams.map((teamScore) => Object.assign({
+			const teamScores = GameScorer.score(null, state).teams;
+			this.table.setData(teamScores.map((teamScore) => Object.assign({
 				score: {
 					value: teamScore.score || '',
 					className: (teamScore.winner ? 'win' : ''),
 				},
-				nested: teamScore.entries.map((entryScore) => this.tableEntriesLookup.get(entryScore.id)),
+				nested: teamScore.entries.map((entryScore) =>
+					this.tableEntriesLookup.get(entryScore.id)
+				),
 			}, this.tableTeamsLookup.get(teamScore.id))));
 		}
 
 		dom() {
 			return this.table.dom();
 		}
-	}
+	};
 });

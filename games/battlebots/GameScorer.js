@@ -64,7 +64,6 @@ define(() => {
 					tiedPos = i;
 					tiedSurvivors = place.survivors;
 				}
-				let score = 0;
 				if(!place.disqualified && place.survivors > 0) {
 					place.winner = (tiedPos === 0);
 					place.score = SCORING[tiedPos];

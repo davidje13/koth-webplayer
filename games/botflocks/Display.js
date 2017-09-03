@@ -19,7 +19,7 @@ define([
 	OptionsBar,
 	StepperOptions,
 	BoardRenderer,
-	LeaderboardDisplay,
+	LeaderboardDisplay
 ) => {
 	'use strict';
 
@@ -137,7 +137,7 @@ define([
 			this.board = new Full2DBoard({
 				renderer: this.renderer,
 				markerStore: this.markers,
-				scaleX: 0
+				scaleX: 0,
 			});
 			this.table = new LeaderboardDisplay();
 			this.renderer.setColourChoices(COLOUR_OPTIONS);
@@ -152,7 +152,11 @@ define([
 			this.targetMarkerType = '';
 			this.focussed = [];
 
-			const entryEditButton = docutil.make('button', {'class': 'entry-edit-button'}, ['Edit Entries']);
+			const entryEditButton = docutil.make(
+				'button',
+				{'class': 'entry-edit-button'},
+				['Edit Entries']
+			);
 			entryEditButton.addEventListener('click', () => {
 				this.trigger('editentries');
 			});

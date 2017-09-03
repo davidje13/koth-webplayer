@@ -31,7 +31,7 @@ define(() => {
 		}
 
 		checkError(data) {
-			/* jshint -W106 */
+			/* jshint -W106 */ // snake_case variables are from external API
 			if(data.error_id) {
 				throw new Error(
 					'StackExchange API error ' + data.error_id +
@@ -99,7 +99,7 @@ define(() => {
 			}
 
 			function loadNextPage(data) {
-				/* jshint -W106 */
+				/* jshint -W106 */ // snake_case variables are from external API
 				let more;
 				if(data.has_more !== undefined) {
 					more = data.has_more;

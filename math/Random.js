@@ -69,7 +69,7 @@ define(() => {
 		}
 
 		next(range = 0x100000000) {
-			/* jshint -W016 */
+			/* jshint -W016 */ // bit-operations are part of the algorithm
 			let x0 = this.s[0];
 			let x1 = this.s[1];
 			const y0 = this.s[2];

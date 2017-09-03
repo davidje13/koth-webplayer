@@ -1,5 +1,13 @@
-define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
+define([
+	'core/arrayUtils',
+	'fetch/entryUtils',
+], (
+	arrayUtils,
+	entryUtils
+) => {
 	'use strict';
+
+	/* jshint -W016 */ // bit operations used extensively for speed
 
 	const QUEEN = 5;
 	const WORKER_TYPES = 4;
@@ -108,41 +116,39 @@ define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 		entry.cacheAct[hash] = action;
 	}
 
+	function checkIntRange(v, low, high) {
+		if(typeof v !== 'number') {
+			return false;
+		}
+		if(Math.round(v) !== v) {
+			return false;
+		}
+		if(v < low || v > high) {
+			return false;
+		}
+		return true;
+	}
+
 	function checkError(action, ant, view) {
+		/* jshint -W074 */ // complexity is justified!
+
 		if(typeof action !== 'object') {
 			return 'Returned ' + (typeof action);
 		}
-		if(typeof action.cell !== 'number') {
-			return 'Returned action.cell of type ' + (typeof action.cell);
+		if(!checkIntRange(action.cell, 0, 8)) {
+			return 'Returned bad action.cell: ' + String(action.cell);
 		}
-		if((action.cell|0) !== action.cell) {
-			return 'Returned non-integer action.cell: ' + action.cell;
-		}
-		if(action.cell < 0 || action.cell > 8) {
-			return 'Returned out-of-range action.cell: ' + action.cell;
-		}
+		const target = view[action.cell];
 		if(action.color) {
 			if(action.type) {
 				return 'Returned both color and type';
 			}
-			if(typeof action.color !== 'number') {
-				return 'Returned action.color of type ' + (typeof action.color);
-			}
-			if((action.color|0) !== action.color) {
-				return 'Returned non-integer action.color: ' + action.color;
-			}
-			if(action.color < 1 || action.color > 8) {
-				return 'Returned out-of-range action.color: ' + action.color;
+			if(!checkIntRange(action.color, 1, 8)) {
+				return 'Returned bad action.color: ' + String(action.color);
 			}
 		} else if(action.type) {
-			if(typeof action.type !== 'number') {
-				return 'Returned action.type of type ' + (typeof action.type);
-			}
-			if((action.type|0) !== action.type) {
-				return 'Returned non-integer action.type: ' + action.type;
-			}
-			if(action.type < 1 || action.type > WORKER_TYPES) {
-				return 'Returned out-of-range action.type: ' + action.type;
+			if(!checkIntRange(action.type, 1, WORKER_TYPES)) {
+				return 'Returned bad action.type: ' + String(action.type);
 			}
 			if(ant.type !== QUEEN) {
 				return 'Non-queen cannot create workers';
@@ -150,14 +156,14 @@ define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 			if(!ant.food) {
 				return 'No food left to create workers';
 			}
-			if(view[action.cell] & (SV_ANT_TYPE | SV_FOOD)) {
+			if(target & (SV_ANT_TYPE | SV_FOOD)) {
 				return 'Cannot spawn ant on non-empty square';
 			}
 		} else {
-			if(action.cell !== CENTRE && view[action.cell] & SV_ANT_TYPE) {
+			if(action.cell !== CENTRE && (target & SV_ANT_TYPE)) {
 				return 'Cannot move to non-empty square';
 			}
-			if(ant.type !== QUEEN && ant.food && view[action.cell] & SV_FOOD) {
+			if(ant.type !== QUEEN && ant.food && (target & SV_FOOD)) {
 				return 'Cannot move to food while carrying food';
 			}
 		}
@@ -166,12 +172,18 @@ define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 	}
 
 	return class GameManager {
-		constructor(random, {width, height, foodRatio, maxFrame, teams}) {
+		constructor(random, {
+			width,
+			height,
+			foodRatio,
+			maxFrame,
+			teams,
+		}) {
 			this.random = random;
-			this.width = width|0;
-			this.height = height|0;
+			this.width = Math.round(width);
+			this.height = Math.round(height);
 			this.teams = teams;
-			this.maxFrame = Math.max(maxFrame|0, 1);
+			this.maxFrame = Math.max(Math.round(maxFrame), 1);
 			const area = this.width * this.height;
 			this.frame = 0;
 			this.currentAnt = 0;
@@ -182,7 +194,7 @@ define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 			this.ants = [];
 			this.nextAntID = 0;
 
-			const foodCount = (area * foodRatio)|0;
+			const foodCount = Math.round(area * foodRatio);
 
 			let entryCount = 0;
 			teams.forEach((team) => entryCount += team.entries.length);
@@ -208,7 +220,7 @@ define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 					entry: entry.id,
 					type: QUEEN,
 					x: startIndex % this.width,
-					y: (startIndex / this.width)|0,
+					y: Math.floor(startIndex / this.width),
 					i: startIndex,
 					food: 0,
 				};
@@ -270,7 +282,7 @@ define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 		}
 
 		updateConfig({maxFrame}) {
-			this.maxFrame = Math.max(maxFrame|0, 1);
+			this.maxFrame = Math.max(Math.round(maxFrame), 1);
 		}
 
 		indexFromPos(pos) {
@@ -507,5 +519,5 @@ define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 				})),
 			};
 		}
-	}
+	};
 });

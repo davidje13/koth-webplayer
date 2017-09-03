@@ -62,9 +62,9 @@ define(() => {
 				if(!entry.disqualified) {
 					const c = palette[teamIndex + 3] || palette[2];
 					entry.bots.forEach((bot) => {
-						if(bot.hasWall) {
-							// TODO
-						}
+						// TODO: visual indicator when carying wall
+//						if(bot.hasWall) {
+//						}
 						const p = bot.y * this.dat.width + bot.x;
 						d[p * 4    ] = c[0];
 						d[p * 4 + 1] = c[1];
@@ -107,5 +107,5 @@ define(() => {
 		getImageData() {
 			return this.dat;
 		}
-	}
+	};
 });

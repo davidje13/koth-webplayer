@@ -1,4 +1,8 @@
-define(['fetch/entryUtils'], (entryUtils) => {
+define([
+	'fetch/entryUtils',
+], (
+	entryUtils
+) => {
 	'use strict';
 
 	// This is the core runner for your game.
@@ -45,7 +49,13 @@ define(['fetch/entryUtils'], (entryUtils) => {
 //			}));
 		}
 
-		updateEntry({id, code = null, pauseOnError = null, disqualified = null /* other props you care about */}) {
+		updateEntry({
+			id,
+			code = null,
+			pauseOnError = null,
+			disqualified = null,
+			/* other props you care about */
+		}) {
 			const entry = this.entryLookup.get(id);
 			if(!entry) {
 				throw new Error('Attempt to modify an entry which was not registered in the game');
@@ -95,7 +105,11 @@ define(['fetch/entryUtils'], (entryUtils) => {
 			// later.
 			this.random.save();
 
-			const entry = someEntryHere;
+			const entry = null; // Pick an entry
+
+			let action = null;
+			let error = null;
+			let elapsed = 0;
 
 			try {
 				// For an example of how to allow competitors to use Math.random
@@ -104,11 +118,12 @@ define(['fetch/entryUtils'], (entryUtils) => {
 				action = entry.fn({
 					my: 'foo',
 					parameters: 'bar',
-					here: 'baz'
+					here: 'baz',
 				}, {consoleTarget: entry.console});
 				elapsed = performance.now() - begin;
 
-				if(action_is_bad) {
+				const actionIsBad = false; // Check this
+				if(actionIsBad) {
 					error = 'Oh no!';
 				}
 			} catch(e) {
@@ -162,10 +177,10 @@ define(['fetch/entryUtils'], (entryUtils) => {
 				foo: 'bar',
 				teams: this.teams.map((team) => ({
 					id: team.id,
-					entries: team.entries.map((entry) => {
+					entries: team.entries.map((entryState) => {
 //						const entryState = this.entryLookup.get(entry.id);
 						return {
-							id: entry.id,
+							id: entryState.id,
 							disqualified: entryState.disqualified,
 
 							// example data:
@@ -184,5 +199,5 @@ define(['fetch/entryUtils'], (entryUtils) => {
 				})),
 			};
 		}
-	}
+	};
 });

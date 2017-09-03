@@ -1,4 +1,10 @@
-define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
+define([
+	'core/arrayUtils',
+	'fetch/entryUtils',
+], (
+	arrayUtils,
+	entryUtils
+) => {
 	'use strict';
 
 	const MOVES = {
@@ -23,12 +29,18 @@ define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 	};
 
 	return class GameManager {
-		constructor(random, {width, height, maxFrame, visibilityDistance, teams}) {
+		constructor(random, {
+			width,
+			height,
+			maxFrame,
+			visibilityDistance,
+			teams,
+		}) {
 			this.random = random;
-			this.width = width|0;
-			this.height = height|0;
+			this.width = Math.round(width);
+			this.height = Math.round(height);
 			this.teams = teams;
-			this.maxFrame = Math.max(maxFrame|0, 1);
+			this.maxFrame = Math.max(Math.round(maxFrame), 1);
 			this.frame = 0;
 			this.simulationTime = 0;
 			this.bots = [];
@@ -64,7 +76,7 @@ define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 					moves: 0,
 					kills: 0,
 					x: startIndex % this.width,
-					y: (startIndex / this.width)|0,
+					y: Math.floor(startIndex / this.width),
 				};
 
 				this.entryLookup.set(entry.id, {
@@ -139,12 +151,11 @@ define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 		}
 
 		updateConfig({maxFrame, visibilityDistance}) {
-			this.maxFrame = Math.max(maxFrame|0, 1);
+			this.maxFrame = Math.max(Math.round(maxFrame), 1);
 			this.visDist2 = visibilityDistance * visibilityDistance;
 		}
 
 		moveBot(bot, action) {
-			const isBlue = (bot.team === 'T1');
 			const move = MOVES[bot.team][action];
 			bot.x += move.x;
 			bot.y += move.y;
@@ -209,7 +220,7 @@ define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 
 			let error = null;
 			let elapsed = 0;
-			let action = undefined;
+			let action = null;
 
 			const oldRandom = Math.random;
 			const params = {
@@ -241,7 +252,7 @@ define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 				});
 				elapsed = performance.now() - begin;
 
-				if((action|0) !== action || action < 0 || action > 6) {
+				if(Math.round(action) !== action || action < 0 || action > 6) {
 					error = 'Invalid action: ' + action;
 				} else if(elapsed > 15) {
 					error = 'Too long to respond: ' + elapsed + 'ms';
@@ -375,5 +386,5 @@ define(['core/arrayUtils', 'fetch/entryUtils'], (arrayUtils, entryUtils) => {
 				})),
 			};
 		}
-	}
+	};
 });

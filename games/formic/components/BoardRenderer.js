@@ -17,12 +17,17 @@ define(() => {
 		[  0,   0,   0, 255], // ant
 	];
 
-	function paintArea(d, board, x0, y0, x1, y1, step, colours) {
+	function hasFood(cell) {
+		/* jshint -W016 */
+		return cell & FOOD_BIT;
+	}
+
+	function paintArea(d, board, colours, {x0, y0, x1, y1, step}) {
 		for(let y = y0; y < y1; ++ y) {
 			for(let x = x0; x < x1; ++ x) {
 				const p = y * step + x;
 				const cell = board[p];
-				const c = colours[(cell & FOOD_BIT) ? 8 : cell];
+				const c = colours[hasFood(cell) ? 8 : cell];
 				d[p * 4    ] = c[0];
 				d[p * 4 + 1] = c[1];
 				d[p * 4 + 2] = c[2];
@@ -48,10 +53,10 @@ define(() => {
 		const zh = Math.ceil(h / zoneSize);
 		for(let i = 0; i < ants.length; ++ i) {
 			const ant = ants[i];
-			const x0 = ((ant.x + w - framesDelta) / zoneSize)|0;
-			const y0 = ((ant.y + h - framesDelta) / zoneSize)|0;
-			const x1 = ((ant.x + w + framesDelta) / zoneSize)|0;
-			const y1 = ((ant.y + h + framesDelta) / zoneSize)|0;
+			const x0 = Math.floor((ant.x + w - framesDelta) / zoneSize);
+			const y0 = Math.floor((ant.y + h - framesDelta) / zoneSize);
+			const x1 = Math.floor((ant.x + w + framesDelta) / zoneSize);
+			const y1 = Math.floor((ant.y + h + framesDelta) / zoneSize);
 			for(let y = y0; y <= y1; ++ y) {
 				for(let x = x0; x <= x1; ++ x) {
 					zones[(y % zh) * zw + (x % zw)] = 1;
@@ -71,16 +76,13 @@ define(() => {
 				if(zones[y * zw + x]) {
 					const xx = x * zoneSize;
 					const yy = y * zoneSize;
-					paintArea(
-						d,
-						board,
-						xx,
-						yy,
-						Math.min(xx + zoneSize, w),
-						Math.min(yy + zoneSize, h),
-						w,
-						colours
-					);
+					paintArea(d, board, colours, {
+						x0: xx,
+						y0: yy,
+						x1: Math.min(xx + zoneSize, w),
+						y1: Math.min(yy + zoneSize, h),
+						step: w,
+					});
 				}
 			}
 		}
@@ -88,7 +90,6 @@ define(() => {
 
 	function positionAnts(dat, ants, colour) {
 		const w = dat.width;
-		const h = dat.height;
 		const d = dat.data;
 		for(let i = 0; i < ants.length; ++ i) {
 			const p = ants[i].y * w + ants[i].x;
@@ -144,16 +145,13 @@ define(() => {
 
 			const palette = this.getPalette();
 
-			paintArea(
-				this.dat.data,
-				this.rawBoard,
-				0,
-				0,
-				this.dat.width,
-				this.dat.height,
-				this.dat.width,
-				palette
-			);
+			paintArea(this.dat.data, this.rawBoard, palette, {
+				x0: 0,
+				y0: 0,
+				x1: this.dat.width,
+				y1: this.dat.height,
+				step: this.dat.width,
+			});
 			positionAnts(this.dat, this.rawAnts, palette[9]);
 			this.dirty = false;
 		}
@@ -222,16 +220,13 @@ define(() => {
 					palette
 				);
 			} else {
-				paintArea(
-					this.dat.data,
-					this.rawBoard,
-					0,
-					0,
-					this.dat.width,
-					this.dat.height,
-					this.dat.width,
-					palette
-				);
+				paintArea(this.dat.data, this.rawBoard, palette, {
+					x0: 0,
+					y0: 0,
+					x1: this.dat.width,
+					y1: this.dat.height,
+					step: this.dat.width,
+				});
 			}
 			positionAnts(this.dat, this.rawAnts, palette[9]);
 			this.dirty = false;
@@ -243,5 +238,5 @@ define(() => {
 		getImageData() {
 			return this.dat;
 		}
-	}
+	};
 });

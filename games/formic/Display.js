@@ -25,7 +25,7 @@ define([
 	OptionsBar,
 	StepperOptions,
 	BoardRenderer,
-	LeaderboardDisplay,
+	LeaderboardDisplay
 ) => {
 	'use strict';
 
@@ -95,6 +95,11 @@ define([
 		if(COLOUR_OPTIONS.hasOwnProperty(i)) {
 			COLOUR_OPTIONS_SELECT.push({value: i, label: COLOUR_OPTIONS[i].name});
 		}
+	}
+
+	function hasFood(cell) {
+		/* jshint -W016 */
+		return cell & FOOD_BIT;
 	}
 
 	return class Display extends EventObject {
@@ -188,7 +193,7 @@ define([
 				markerStore: this.markers,
 				markerTypes3D: this.markerTypes3D,
 				begin3D: null,
-				scaleX: 0
+				scaleX: 0,
 			});
 			this.table = new LeaderboardDisplay();
 			this.renderer.setColourChoices(COLOUR_OPTIONS);
@@ -256,7 +261,11 @@ define([
 				},
 			});
 
-			const entryEditButton = docutil.make('button', {'class': 'entry-edit-button'}, ['Edit Entries']);
+			const entryEditButton = docutil.make(
+				'button',
+				{'class': 'entry-edit-button'},
+				['Edit Entries']
+			);
 			entryEditButton.addEventListener('click', () => {
 				this.trigger('editentries');
 			});
@@ -340,17 +349,15 @@ define([
 				const ww = this.latestW;
 				const hh = this.latestH;
 				const board = this.latestBoard;
-				for(let y = 0; y < hh; ++ y) {
-					for(let x = 0; x < ww; ++ x) {
-						if(board[y * ww + x] & FOOD_BIT) {
-							this.markers.mark('food-' + x + '-' + y, {
-								x,
-								y,
-								className: 'food-locator-' + this.foodMarkerType,
-								wrap: false,
-								clip: false,
-							});
-						}
+				for(let i = 0; i < ww * hh; ++ i) {
+					if(hasFood(board[i])) {
+						this.markers.mark('food-' + i, {
+							x: i % ww,
+							y: Math.floor(i / ww),
+							className: 'food-locator-' + this.foodMarkerType,
+							wrap: false,
+							clip: false,
+						});
 					}
 				}
 			}

@@ -109,6 +109,7 @@ define([
 		GameScorer,
 		MatchScorer
 	) => {
+		/* jshint +W072 */
 		loader.setState('game engine', 0.2);
 		const sandbox = sandboxUtils.make(pathSandboxedLoader);
 		const backgroundGames = new GameOrchestrator(pathGameManager, {

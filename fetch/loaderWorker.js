@@ -21,7 +21,7 @@ define(['./StackExchangeAPI'], (StackExchangeAPI) => {
 	}
 
 	function parseAnswer(item, index, loaded, total) {
-		/* jshint -W106 */
+		/* jshint -W106 */ // snake_case variables are from external API
 		let title = 'Unknown competitor from ' + item.owner.display_name;
 		try {
 			title = findRegex(item.body, REG_TITLE, 2) || title;

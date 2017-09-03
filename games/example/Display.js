@@ -4,7 +4,7 @@ define([
 	// You can also include stylesheets if you want to (e.g. ./style.css)
 ], (
 	EventObject,
-	docutil,
+	docutil
 ) => {
 	'use strict';
 

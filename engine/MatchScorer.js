@@ -1,4 +1,4 @@
-define(['statistics'], (statistics) => {
+define(['math/statistics'], (statistics) => {
 	'use strict';
 
 	const scoreSorter = (a, b) => b.score - a.score;

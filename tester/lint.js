@@ -52,6 +52,7 @@ define(['require', 'document', 'jshint/jshint'], (require, document, jshint) => 
 		'self',
 		'define',
 		'crypto',
+		'ImageData',
 	];
 
 	const PREDEF_TEST = [
@@ -68,6 +69,8 @@ define(['require', 'document', 'jshint/jshint'], (require, document, jshint) => 
 		'isNear',
 		'fail',
 	].concat(PREDEF);
+
+	const LINE_DIFF = 3;
 
 	const JSHINT_OPTIONS = makeJSHintOptions(PREDEF);
 	const JSHINT_OPTIONS_TEST = makeJSHintOptions(PREDEF_TEST);
@@ -88,7 +91,7 @@ define(['require', 'document', 'jshint/jshint'], (require, document, jshint) => 
 	}
 
 	function formatError(error) {
-		const evidence = error.evidence.replace(/\t/g, '    ');
+		const evidence = error.evidence && error.evidence.replace(/\t/g, '    ');
 		if(error.code === 'W140') {
 			// Don't warn about lack of trailing comma for inline objects/lists
 			const c = evidence.charAt(error.character - 1);
@@ -98,7 +101,7 @@ define(['require', 'document', 'jshint/jshint'], (require, document, jshint) => 
 		}
 		return (
 			error.code +
-			' @' + error.line + ':' + error.character +
+			' @' + (error.line - LINE_DIFF) + ':' + error.character +
 			': ' + error.reason +
 			'\n' + evidence
 		);
@@ -111,9 +114,19 @@ define(['require', 'document', 'jshint/jshint'], (require, document, jshint) => 
 				log('lint-skip', path + ' SKIP');
 				return true;
 			}
+
 			if(code.startsWith('require.define')) {
 				code = code.substr('require.'.length);
 			}
+
+			// Ignore number of args in module definitions
+			code = '/* jshint -W072 */\n' + code.replace(/\{/, '{\n/* jshint +W072 */\n');
+
+			if(path.indexOf('/example/') !== -1) {
+				// Don't warn about unused vars or empty blocks; they are for guidance
+				code = '/* jshint -W098 *//* jshint -W035 */' + code;
+			}
+
 			jshint.JSHINT(
 				code,
 				path.endsWith('_test') ? JSHINT_OPTIONS_TEST : JSHINT_OPTIONS
