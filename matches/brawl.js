@@ -1,17 +1,13 @@
 define([
-	'core/EventObject',
+	'./Match',
 	'core/arrayUtils',
 	'math/Random',
 ], (
-	EventObject,
+	Match,
 	arrayUtils,
 	Random
 ) => {
 	'use strict';
-
-	// TODO: this is almost identical to tournament mode "single_match"
-	// - seems concept of matches and tournaments could be replaced with a
-	//   nested matches concept (how to handle configuration & defaults?)
 
 	const SHUFFLES = {
 		none: (list) => list,
@@ -27,67 +23,52 @@ define([
 		return SHUFFLES[type](list, details);
 	}
 
-	return class Match extends EventObject {
+	return class extends Match {
 		constructor({
-			gameCount = 4,
-			gameTeamLimit = null,
-			gameTeamShuffle = 'random',
-			gameEntryShuffle = 'random',
+			count = 1,
+			teamLimit = null,
+			teamShuffle = 'random',
+			entryShuffle = 'random',
 		}) {
 			super();
 
-			this.gameCount = gameCount;
-			this.gameTeamLimit = gameTeamLimit;
-			this.gameTeamShuffle = gameTeamShuffle;
-			this.gameEntryShuffle = gameEntryShuffle;
-
-			this.gameHandler = null;
-			this.seed = null;
+			this.count = count;
+			this.teamLimit = teamLimit;
+			this.teamShuffle = teamShuffle;
+			this.entryShuffle = entryShuffle;
 		}
 
-		setGameHandler(handler) {
-			this.gameHandler = handler;
-		}
-
-		getSeed() {
-			return this.seed;
-		}
-
-		begin({seed = null, teams}) {
-			this.seed = Random.makeRandomSeedFrom(seed, 'M');
-
-			const random = new Random(this.seed);
-
-			const games = [];
-			for(let index = 0; index < this.gameCount; ++ index) {
-				const gameSeed = random.makeRandomSeed('G');
+		run(random, teams) {
+			const subs = [];
+			for(let index = 0; index < this.count; ++ index) {
+				const subSeed = random.makeRandomSeed();
 				/* jshint -W083 */
-				const gameTeams = teams.map((team) => {
+				const subTeams = teams.map((team) => {
 					return Object.assign({}, team, {
 						entries: applyShuffle(
-							this.gameEntryShuffle,
+							this.entryShuffle,
 							team.entries,
 							{index, random}
 						),
 					});
 				});
-				const shuffledGameTeams = applyShuffle(
-					this.gameTeamShuffle,
-					gameTeams,
+				const shuffledSubTeams = applyShuffle(
+					this.teamShuffle,
+					subTeams,
 					{index, random}
 				);
-				if(this.gameTeamLimit && this.gameTeamLimit < shuffledGameTeams.length) {
-					shuffledGameTeams.length = this.gameTeamLimit;
+				if(this.teamLimit && this.teamLimit < shuffledSubTeams.length) {
+					shuffledSubTeams.length = this.teamLimit;
 				}
-				games.push(this.gameHandler(
-					gameSeed,
-					shuffledGameTeams,
-					games.length
+				subs.push(this.subHandler(
+					subSeed,
+					shuffledSubTeams,
+					subs.length
 				));
 			}
-			return Promise.all(games).then((gameScores) => {
+			return Promise.all(subs).then((subScores) => {
 				// TODO: should score aggregation happen here?
-				this.trigger('complete', [gameScores]);
+				this.trigger('complete', [subScores]);
 			});
 		}
 	};

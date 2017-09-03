@@ -4,17 +4,7 @@ define(['./Random'], (Random) => {
 	describe('makeRandomSeed', () => {
 		it('generates a seed using a cryptographic random number generator', () => {
 			const seed = Random.makeRandomSeed();
-			expect(seed.length, equals(21));
-		});
-
-		it('uses the given prefix', () => {
-			const seed = Random.makeRandomSeed('prefix-');
-			expect(seed.startsWith('prefix-'), equals(true));
-		});
-
-		it('defaults to a prefix of "X"', () => {
-			const seed = Random.makeRandomSeed();
-			expect(seed.startsWith('X'), equals(true));
+			expect(seed.length, equals(20));
 		});
 
 		it('generates distinct seeds', () => {
@@ -30,13 +20,13 @@ define(['./Random'], (Random) => {
 	describe('Random', () => {
 		describe('constructor', () => {
 			it('can be given a seed as a string or number', () => {
-				const random1 = new Random('X123');
+				const random1 = new Random('123');
 				const random2 = new Random(123);
 				expect(random1.next(), equals(random2.next()));
 			});
 
 			it('can be given a random generator to create its own seed', () => {
-				const baseSeed = 'Xabc';
+				const baseSeed = 'abc';
 				const random1 = new Random(new Random(baseSeed));
 				const random2 = new Random(new Random(baseSeed).makeRandomSeed());
 				expect(random1.next(), equals(random2.next()));
@@ -45,13 +35,13 @@ define(['./Random'], (Random) => {
 
 		describe('next', () => {
 			it('generates integers', () => {
-				const random = new Random('Xabc');
+				const random = new Random('abc');
 				const value = random.next();
 				expect(value, isInteger());
 			});
 
 			it('uses the range [0 n)', () => {
-				const random = new Random('Xabc');
+				const random = new Random('abc');
 				for(let i = 0; i < 100; ++ i) {
 					const value = random.next(10);
 					expect(value, not(isLowerThan(0)));
@@ -60,7 +50,7 @@ define(['./Random'], (Random) => {
 			});
 
 			it('defaults to a range of [0 0x100000000) (32-bits)', () => {
-				const random = new Random('Xabc');
+				const random = new Random('abc');
 				for(let i = 0; i < 100; ++ i) {
 					const value = random.next();
 					expect(value, not(isLowerThan(0)));
@@ -69,7 +59,7 @@ define(['./Random'], (Random) => {
 			});
 
 			it('is roughly evenly distributed', () => {
-				const random = new Random('Xabc');
+				const random = new Random('abc');
 				const buckets = [0, 0, 0, 0, 0];
 				const samples = 10000;
 				for(let i = 0; i < samples; ++ i) {
@@ -83,7 +73,7 @@ define(['./Random'], (Random) => {
 			});
 
 			it('generates deterministic values', () => {
-				const seed = 'Xabc';
+				const seed = 'abc';
 				const random1 = new Random(seed);
 				const random2 = new Random(seed);
 				const value1 = random1.next();
@@ -92,7 +82,7 @@ define(['./Random'], (Random) => {
 			});
 
 			it('generates distinct values', () => {
-				const random = new Random('Xabc');
+				const random = new Random('abc');
 				const value1 = random.next();
 				const value2 = random.next();
 				expect(value1, not(equals(value2)));
@@ -101,25 +91,13 @@ define(['./Random'], (Random) => {
 
 		describe('makeRandomSeed', () => {
 			it('generates a seed using the pseudo-random generator', () => {
-				const random = new Random('Xabc');
+				const random = new Random('abc');
 				const seed = random.makeRandomSeed();
-				expect(seed.length, equals(21));
-			});
-
-			it('uses the given prefix', () => {
-				const random = new Random('Xabc');
-				const seed = random.makeRandomSeed('prefix-');
-				expect(seed.startsWith('prefix-'), equals(true));
-			});
-
-			it('defaults to a prefix of "X"', () => {
-				const random = new Random('Xabc');
-				const seed = random.makeRandomSeed();
-				expect(seed.startsWith('X'), equals(true));
+				expect(seed.length, equals(20));
 			});
 
 			it('generates deterministic seeds', () => {
-				const seed = 'Xabc';
+				const seed = 'abc';
 				const random1 = new Random(seed);
 				const random2 = new Random(seed);
 				const seed1 = random1.makeRandomSeed();
@@ -128,7 +106,7 @@ define(['./Random'], (Random) => {
 			});
 
 			it('generates distinct seeds', () => {
-				const random = new Random('Xabc');
+				const random = new Random('abc');
 				const seed1 = random.makeRandomSeed();
 				const seed2 = random.makeRandomSeed();
 				expect(seed1, not(equals(seed2)));
@@ -137,7 +115,7 @@ define(['./Random'], (Random) => {
 
 		describe('save / rollback', () => {
 			it('stores and retrieves the state of the pseudo-random generator', () => {
-				const random = new Random('Xabc');
+				const random = new Random('abc');
 				random.save();
 				const value1 = random.next();
 				random.rollback();

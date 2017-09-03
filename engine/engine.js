@@ -28,7 +28,7 @@ define([
 	const gameType = docutil.getMetaTagValue('game-type');
 	const teamType = docutil.getMetaTagValue('team-type', 'free_for_all');
 	const teamTypeArgs = JSON.parse(docutil.getMetaTagValue('team-type-args', '{}'));
-	const tournamentType = docutil.getMetaTagValue('tournament-type', 'single_match');
+	const tournamentType = docutil.getMetaTagValue('tournament-type', 'brawl');
 	const tournamentTypeArgs = JSON.parse(docutil.getMetaTagValue('tournament-type-args', '{}'));
 	const matchType = docutil.getMetaTagValue('match-type', 'brawl');
 	const matchTypeArgs = JSON.parse(docutil.getMetaTagValue('match-type-args', '{}'));
@@ -88,7 +88,7 @@ define([
 		'display/SplitView',
 		'display/MatchSummary', // TODO: game-customisable
 		'teams/' + teamType,
-		'tournaments/' + tournamentType,
+		'matches/' + tournamentType,
 		'matches/' + matchType,
 		'path:' + gameDir + '/GameManager',
 		gameDir + '/Display',
@@ -270,7 +270,7 @@ define([
 				baseDisplayConfig,
 			});
 			singleGame.addEventListener('update', updateEntryManager);
-			singleGame.begin({seed, teams});
+			singleGame.begin(seed, teams);
 			function makeNav() {
 				return {
 					navElements: ['Game', docutil.make('p', {}, [singleGame.getSeed()])],
@@ -284,7 +284,8 @@ define([
 
 		// TODO: extract all of this & improve separation / APIs
 		const tournament = new Tournament(tournamentTypeArgs);
-		tournament.setMatchHandler((matchSeed, matchTeams, matchIndex) => {
+		tournament.setSubHandler((matchSeed, matchTeams, matchIndex) => {
+			matchSeed = 'M' + matchSeed;
 			const match = new Match(matchTypeArgs);
 			const matchDisplay = new MatchSummary({
 				name: 'Match ' + (matchIndex + 1),
@@ -293,7 +294,8 @@ define([
 				matchScorer: MatchScorer,
 			});
 			tournamentDisplay.appendChild(matchDisplay.dom());
-			match.setGameHandler((gameSeed, gameTeams) => {
+			match.setSubHandler((gameSeed, gameTeams) => {
+				gameSeed = 'G' + gameSeed;
 				const game = backgroundGames.make({
 					baseGameConfig,
 					basePlayConfig: basePlayHiddenConfig,
@@ -317,14 +319,14 @@ define([
 						game.terminate();
 						resolve(GameScorer.score(config, state));
 					});
-					game.begin({seed: gameSeed, teams: gameTeams});
+					game.begin(gameSeed, gameTeams);
 				});
 			});
 			return new Promise((resolve) => {
 				match.addEventListener('complete', (matchScores) => {
 					resolve(MatchScorer.score(matchTeams, matchScores));
 				});
-				match.begin({seed: matchSeed, teams: matchTeams});
+				match.begin(matchSeed, matchTeams);
 			});
 		});
 		tournament.addEventListener('complete', (finalScores) => {
@@ -333,10 +335,10 @@ define([
 			// TODO
 		});
 
-		function beginTournament(config) {
+		function beginTournament(seed, teams) {
 			backgroundGames.terminateAll();
 			docutil.empty(tournamentDisplay);
-			tournament.begin(config);
+			tournament.begin(seed, teams);
 			nav.push({
 				navElements: ['Tournament', docutil.make('p', {}, [tournament.getSeed()])],
 				hash: tournament.getSeed(),
@@ -346,11 +348,11 @@ define([
 		}
 
 		btnTournament.addEventListener('click', () => {
-			beginTournament({teams: getManagedTeams()});
+			beginTournament('T' + Random.makeRandomSeed(), getManagedTeams());
 		});
 
 		btnGame.addEventListener('click', () => {
-			beginGame(null, getManagedTeams());
+			beginGame('G' + Random.makeRandomSeed(), getManagedTeams());
 		});
 
 		function handleHashChange() {
@@ -362,7 +364,7 @@ define([
 			const teams = allTeams;
 			if(hash.startsWith('T')) {
 				nav.popTo(navRoot, {navigate: false});
-				beginTournament({teams, seed: hash});
+				beginTournament(hash, teams);
 				return true;
 			}
 //			if(hash.startsWith('M')) {

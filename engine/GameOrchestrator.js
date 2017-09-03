@@ -26,7 +26,7 @@ define([
 			this.updateTm = null;
 			this.latestState = null;
 
-			this.begin = this.begin.bind(this);
+			this.beginRandom = this.beginRandom.bind(this);
 			this.replay = this.replay.bind(this);
 			this.step = this.step.bind(this);
 			this.updateGameConfig = this.updateGameConfig.bind(this);
@@ -52,7 +52,7 @@ define([
 			}
 
 			if(this.display) {
-				this.display.removeEventListener('begin', this.begin);
+				this.display.removeEventListener('begin', this.beginRandom);
 				this.display.removeEventListener('replay', this.replay);
 				this.display.removeEventListener('step', this.step);
 				this.display.removeEventListener('changegame', this.updateGameConfig);
@@ -62,7 +62,7 @@ define([
 
 			this.display = display;
 			if(this.display) {
-				this.display.addEventListener('begin', this.begin);
+				this.display.addEventListener('begin', this.beginRandom);
 				this.display.addEventListener('replay', this.replay);
 				this.display.addEventListener('step', this.step);
 				this.display.addEventListener('changegame', this.updateGameConfig);
@@ -184,10 +184,14 @@ define([
 		}
 
 		replay() {
-			this.begin({seed: this.getSeed()});
+			this.begin(this.getSeed(), this.config.game.teams);
 		}
 
-		begin({seed = null, teams = null} = {}) {
+		beginRandom() {
+			this.begin('G' + Random.makeRandomSeed(), this.config.game.teams);
+		}
+
+		begin(seed, teams) {
 			if(this.dead) {
 				throw new Error('Attempt to use terminated game');
 			}
@@ -203,10 +207,8 @@ define([
 				this.gameStarted = false;
 				this.gameActive = false;
 			}
-			this.config.game.seed = Random.makeRandomSeedFrom(seed, 'G');
-			if(teams) {
-				this.config.game.teams = teams;
-			}
+			this.config.game.seed = seed;
+			this.config.game.teams = teams;
 			if(this.display) {
 				this.display.clear();
 				this.display.updatePlayConfig(this.config.play);

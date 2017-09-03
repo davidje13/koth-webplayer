@@ -1,8 +1,8 @@
 define(() => {
 	'use strict';
 
-	// This calculates scores for game results, which are used by matches and
-	// tournaments to decide winners.
+	// This calculates scores for game results, which are used by matches to
+	// decide winners.
 
 	return {
 		score: (gameConfig, state) => {

@@ -17,6 +17,8 @@ define(() => {
 		'\u03C4\u03C5\u03C6\u03C7\u03C8'
 	);
 
+	const SEED_LENGTH = CHARS_PER_INT * 4;
+
 	function readEncoded(s) {
 		let r = 0;
 		for(let i = 0; i < s.length; ++ i) {
@@ -43,11 +45,11 @@ define(() => {
 
 		seed(seed) {
 			if(typeof seed === 'object') {
-				seed = seed.makeRandomSeed('');
+				seed = seed.makeRandomSeed();
 			} else if((typeof seed) !== 'string') {
 				seed = seed.toString();
-			} else {
-				seed = seed.substr(1); // trim identifier letter
+			} else if(seed.length > SEED_LENGTH) {
+				seed = seed.substr(seed.length - SEED_LENGTH);
 			}
 			for(let i = 0; i < 4; ++ i) {
 				this.s[i] = readEncoded(seed.substr(i * CHARS_PER_INT, CHARS_PER_INT));
@@ -83,32 +85,22 @@ define(() => {
 			return ((this.s[3] + y1) >>> 0) % range;
 		}
 
-		makeRandomSeed(prefix = 'X') {
-			let s = prefix;
+		makeRandomSeed() {
+			let s = '';
 			for(let i = 0; i < 4; ++ i) {
 				s += makeEncoded(this.next(0x100000000), CHARS_PER_INT);
 			}
 			return s;
 		}
 
-		static makeRandomSeed(prefix = 'X') {
+		static makeRandomSeed() {
 			const buffer = new Uint32Array(4);
 			crypto.getRandomValues(buffer);
-			let s = prefix;
+			let s = '';
 			for(let i = 0; i < 4; ++ i) {
 				s += makeEncoded(buffer[i], CHARS_PER_INT);
 			}
 			return s;
-		}
-
-		static makeRandomSeedFrom(seed = null, prefix = 'X') {
-			if(!seed) {
-				return Random.makeRandomSeed(prefix);
-			}
-			if(typeof seed === 'object') {
-				return seed.makeRandomSeed(prefix);
-			}
-			return seed;
 		}
 	};
 });

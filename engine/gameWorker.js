@@ -17,7 +17,7 @@ define(['math/Random'], (Random) => {
 			});
 		}
 
-		function begin({config}) {
+		function begin(config) {
 			if(game) {
 				throw new Error('Cannot re-use game worker');
 			}
@@ -50,7 +50,7 @@ define(['math/Random'], (Random) => {
 
 			switch(data.action) {
 			case 'BEGIN':
-				begin(data);
+				begin(data.config);
 				break;
 
 			case 'STEP':
