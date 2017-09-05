@@ -127,6 +127,7 @@ define([
 					{value: 3, label: '1:3'},
 					{value: 4, label: '1:4'},
 					{value: 5, label: '1:5'},
+					{value: 6, label: '1:6'},
 				]},
 				{attribute: 'targetMarkerType', label: 'Target marker', values: [
 					{value: '', label: 'None'},

@@ -18,6 +18,7 @@ define([
 			this.markerStore = markerStore;
 			this.scaleX = 0;
 			this.scaleY = 0;
+			this.dataScale = 1;
 
 			this.renderedMarks = new Map();
 
@@ -33,17 +34,19 @@ define([
 		}
 
 		_updateStyles() {
+			const mx = this.scaleX / this.dataScale;
+			const my = this.scaleY / this.dataScale;
 			docutil.updateStyle(this.canvas, {
-				'width': (this.canvas.width * this.scaleX) + 'px',
-				'height': (this.canvas.height * this.scaleY) + 'px',
+				'width': (this.canvas.width * mx) + 'px',
+				'height': (this.canvas.height * my) + 'px',
 			});
 			docutil.updateStyle(this.board, {
-				'width': Math.round(this.canvas.width * this.scaleX) + 'px',
-				'height': Math.round(this.canvas.height * this.scaleY) + 'px',
+				'width': Math.round(this.canvas.width * mx) + 'px',
+				'height': Math.round(this.canvas.height * my) + 'px',
 			});
 			docutil.updateStyle(this.boardClip, {
-				'width': Math.round(this.canvas.width * this.scaleX) + 'px',
-				'height': Math.round(this.canvas.height * this.scaleY) + 'px',
+				'width': Math.round(this.canvas.width * mx) + 'px',
+				'height': Math.round(this.canvas.height * my) + 'px',
 			});
 		}
 
@@ -101,12 +104,15 @@ define([
 		repaint() {
 			const data = this.renderer.getImageData();
 			if(data) {
+				const dataScale = this.renderer.scale || 1;
 				if(
 					data.width !== this.canvas.width ||
-					data.height !== this.canvas.height
+					data.height !== this.canvas.height ||
+					dataScale !== this.dataScale
 				) {
 					this.canvas.width = data.width;
 					this.canvas.height = data.height;
+					this.dataScale = dataScale;
 					this._updateStyles();
 				}
 				this.context.putImageData(data, 0, 0);

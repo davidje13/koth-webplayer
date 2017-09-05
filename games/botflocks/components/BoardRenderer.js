@@ -10,6 +10,30 @@ define(() => {
 		[255,   0,   0, 255], // Player 2
 	];
 
+	function renderBlock(d, x, y, c, {scale, width}) {
+		const p0 = (y * width * scale + x) * scale;
+		for(let yy = 0; yy < scale; ++ yy) {
+			for(let xx = 0; xx < scale; ++ xx) {
+				const p = p0 + yy * width * scale + xx;
+				d[p * 4    ] = c[0];
+				d[p * 4 + 1] = c[1];
+				d[p * 4 + 2] = c[2];
+				d[p * 4 + 3] = c[3];
+			}
+		}
+	}
+
+	function renderPoint(d, x, y, c, {scale, width}) {
+		const p = (
+			Math.floor((y + 0.5) * scale) * width * scale +
+			Math.floor((x + 0.5) * scale)
+		);
+		d[p * 4    ] = c[0];
+		d[p * 4 + 1] = c[1];
+		d[p * 4 + 2] = c[2];
+		d[p * 4 + 3] = c[3];
+	}
+
 	return class BoardRenderer {
 		constructor() {
 			this.colourChoices = {};
@@ -18,9 +42,12 @@ define(() => {
 			this.rawBoard = null;
 			this.rawTeams = null;
 			this.dat = null;
+			this.width = 0;
+			this.height = 0;
 			this.dirty = true;
 			this.renderTime = 0;
 			this.renderCount = 0;
+			this.scale = 3;
 		}
 
 		setColourChoices(colourChoices) {
@@ -51,25 +78,20 @@ define(() => {
 			const palette = this.getPalette();
 
 			const d = this.dat.data;
-			for(let p = 0; p < this.dat.width * this.dat.height; ++ p) {
-				const c = palette[this.rawBoard[p]];
-				d[p * 4    ] = c[0];
-				d[p * 4 + 1] = c[1];
-				d[p * 4 + 2] = c[2];
-				d[p * 4 + 3] = c[3];
+			for(let y = 0; y < this.height; ++ y) {
+				for(let x = 0; x < this.width; ++ x) {
+					const c = palette[this.rawBoard[y * this.width + x]];
+					renderBlock(d, x, y, c, this);
+				}
 			}
 			this.rawTeams.forEach((team, teamIndex) => team.entries.forEach((entry) => {
 				if(!entry.disqualified) {
 					const c = palette[teamIndex + 3] || palette[2];
 					entry.bots.forEach((bot) => {
-						// TODO: visual indicator when carying wall
-//						if(bot.hasWall) {
-//						}
-						const p = bot.y * this.dat.width + bot.x;
-						d[p * 4    ] = c[0];
-						d[p * 4 + 1] = c[1];
-						d[p * 4 + 2] = c[2];
-						d[p * 4 + 3] = c[3];
+						renderBlock(d, bot.x, bot.y, c, this);
+						if(bot.hasWall) {
+							renderPoint(d, bot.x, bot.y, palette[1], this);
+						}
 					});
 				}
 			}));
@@ -77,8 +99,17 @@ define(() => {
 		}
 
 		updateGameConfig({width, height}) {
-			if(!this.dat || width !== this.dat.width || height !== this.dat.height) {
-				this.dat = new ImageData(width, height);
+			if(
+				!this.dat ||
+				width !== this.width ||
+				height !== this.height
+			) {
+				this.width = width;
+				this.height = height;
+				this.dat = new ImageData(
+					width * this.scale,
+					height * this.scale
+				);
 				this.dirty = true;
 			}
 		}
