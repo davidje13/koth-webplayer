@@ -37,7 +37,7 @@ define([
 					return true;
 				}
 			}
-			/* global console */
+			/* globals console */
 			console.log('Unknown hash request', hash);
 			return false;
 		}

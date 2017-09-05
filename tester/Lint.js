@@ -138,7 +138,7 @@ define(['require', 'document', 'jshint/jshint'], (require, document, jshint) => 
 				);
 
 				if(module.indexOf('/example/') !== -1) {
-					// Don't warn about unused vars or empty blocks;
+					// Don't warn about unused vars or empty blocks in examples;
 					// they are for guidance
 					code = '/* jshint -W098 *//* jshint -W035 */' + code;
 				}

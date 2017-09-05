@@ -38,31 +38,35 @@ define([
 			this.entryShuffle = entryShuffle;
 		}
 
+		pickTeams(teams, {index, random}) {
+			const subTeams = teams.map((team) => {
+				return Object.assign({}, team, {
+					entries: applyShuffle(
+						this.entryShuffle,
+						team.entries,
+						{index, random}
+					),
+				});
+			});
+			const shuffledSubTeams = applyShuffle(
+				this.teamShuffle,
+				subTeams,
+				{index, random}
+			);
+			if(this.teamLimit && this.teamLimit < shuffledSubTeams.length) {
+				shuffledSubTeams.length = this.teamLimit;
+			}
+			return shuffledSubTeams;
+		}
+
 		run(random, teams) {
 			const subs = [];
 			for(let index = 0; index < this.count; ++ index) {
 				const subSeed = random.makeRandomSeed();
-				/* jshint -W083 */
-				const subTeams = teams.map((team) => {
-					return Object.assign({}, team, {
-						entries: applyShuffle(
-							this.entryShuffle,
-							team.entries,
-							{index, random}
-						),
-					});
-				});
-				const shuffledSubTeams = applyShuffle(
-					this.teamShuffle,
-					subTeams,
-					{index, random}
-				);
-				if(this.teamLimit && this.teamLimit < shuffledSubTeams.length) {
-					shuffledSubTeams.length = this.teamLimit;
-				}
+				const subTeams = this.pickTeams(teams, {index, random});
 				subs.push(this.subHandler(
 					subSeed,
-					shuffledSubTeams,
+					subTeams,
 					subs.length
 				));
 			}

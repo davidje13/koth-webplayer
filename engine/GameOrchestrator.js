@@ -312,14 +312,17 @@ define([
 			}
 		}
 
+		countActiveThreads() {
+			let used = 0;
+			this.games.forEach((game) => {
+				used += game.gameActive ? 1 : 0;
+			});
+			return used;
+		}
+
 		checkCapacity() {
 			while(this.awaitingCapacity.length > 0) {
-				let used = 0;
-				/* jshint -W083 */
-				this.games.forEach((game) => {
-					used += game.gameActive ? 1 : 0;
-				});
-				if(used >= this.maxConcurrency) {
+				if(this.countActiveThreads() >= this.maxConcurrency) {
 					break;
 				}
 				const fn = this.awaitingCapacity.shift();

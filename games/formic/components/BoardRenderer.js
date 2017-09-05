@@ -18,7 +18,7 @@ define(() => {
 	];
 
 	function hasFood(cell) {
-		/* jshint -W016 */
+		/* jshint -W016 */ // allow bitwise operation
 		return cell & FOOD_BIT;
 	}
 

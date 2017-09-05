@@ -156,7 +156,7 @@ define([
 				});
 			});
 			this.tournament.addEventListener('complete', (finalScores) => {
-				/* global console */
+				/* globals console */
 				console.log('Tournament complete', finalScores);
 				// TODO
 			});
