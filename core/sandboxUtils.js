@@ -1,11 +1,13 @@
 define([
 	'require',
+	'def:require',
 	'document',
 	'./EventObject',
 	'def:./EventObject',
 	'def:./sandboxUtilsInner',
 ], (
 	require,
+	defRequire,
 	document,
 	EventObject,
 	defEventObject,
@@ -13,7 +15,7 @@ define([
 ) => {
 	'use strict';
 
-	// Usage: sandboxUtils.make(myFunction / myScriptName);
+	// Usage: sandboxUtils.make([dependencies], myFunction);
 	// myFunction executes inside the sandbox
 	// Returns a worker-like object which permits communication
 	// (addEventListener & sendMessage), and destruction (terminate)
@@ -59,15 +61,7 @@ define([
 		}
 	}
 
-	function make(dependencies, fn, {allowAllScripts = false} = {}) {
-		if(typeof dependencies === 'function') {
-			fn = dependencies;
-			dependencies = [];
-		}
-		if(typeof dependencies === 'string') {
-			dependencies = [dependencies];
-		}
-
+	function makeContent(dependencies, fn, {allowAllScripts}) {
 		// Thanks, https://stackoverflow.com/a/23522755/1180785
 		const safari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
@@ -94,6 +88,60 @@ define([
 		// for Safari we have to sacrafice some more security thanks to their
 		// insistence on security.
 		const needsSameOrigin = (safari && protocol === 'https:');
+
+		const src = (
+			'self.rootProtocol = ' + JSON.stringify(protocol) + ';\n' +
+			'self.rootHref = ' + JSON.stringify(href) + ';\n' +
+			'self.restrictedRequire = ' + JSON.stringify(!blockRequire) + ';\n' +
+			'const requireFactory = ' + defRequire.factory() + ';\n' +
+			'requireFactory();\n' +
+			defEventObject.code() + '\n' +
+			defInner.code() + '\n' +
+			'require([' + JSON.stringify(defInner.src) + '])' +
+			'.then(' + buildInvocation(dependencies, fn) + ');\n'
+		);
+
+		const nonce = makeNonce();
+
+		const html = (
+			'<html>\n' +
+			'<head>\n' +
+			'<meta charset="utf-8">\n' +
+			'<meta http-equiv="content-security-policy" content="' +
+			'script-src \'' + (allowAllScripts ? 'unsafe-inline' : ('nonce-' + nonce)) + '\' ' +
+			remoteDomain +
+			(needUnsafeEval ? ' \'unsafe-eval\'' : '') + ';' +
+			'style-src \'none\';' +
+			'">\n' +
+			'<script nonce="' + nonce + '">' + src + '</script>\n' +
+			'</head>\n' +
+			'<body>\n' +
+			'</body>\n' +
+			'</html>\n'
+		);
+
+		return {
+			html,
+			blockRequire,
+			origin: (needsSameOrigin ? remoteDomain : 'null'),
+			sandboxing: (
+				'allow-scripts' +
+				(needsSameOrigin ? ' allow-same-origin' : '')
+			),
+		};
+	}
+
+	function make(dependencies, fn, {allowAllScripts = false} = {}) {
+		if(typeof dependencies === 'function') {
+			fn = dependencies;
+			dependencies = [];
+		}
+		if(typeof dependencies === 'string') {
+			dependencies = [dependencies];
+		}
+
+		const details = makeContent(dependencies, fn, {allowAllScripts});
+		let blockRequire = details.blockRequire;
 
 		const iframe = document.createElement('iframe');
 		let state = STATE_LOADING;
@@ -128,7 +176,7 @@ define([
 
 		function messageListener(event) {
 			if(
-				event.origin !== (needsSameOrigin ? remoteDomain : 'null') ||
+				event.origin !== details.origin ||
 				event.source !== iframe.contentWindow
 			) {
 				return;
@@ -149,46 +197,10 @@ define([
 
 		o = new IFrame(postMessage, terminate);
 
-		/* globals requireFactory */
-		const src = (
-			'self.rootProtocol = ' + JSON.stringify(protocol) + ';\n' +
-			'self.rootHref = ' + JSON.stringify(href) + ';\n' +
-			'self.restrictedRequire = ' + JSON.stringify(!blockRequire) + ';\n' +
-			'const requireFactory = ' + requireFactory.toString() + ';\n' +
-			'requireFactory();\n' +
-			defEventObject.code() + '\n' +
-			defInner.code() + '\n' +
-			'require([' + JSON.stringify(defInner.src) + '])' +
-			'.then(' + buildInvocation(dependencies, fn) + ');\n'
-		);
-
-		const nonce = makeNonce();
-
-		const html = (
-			'<html>\n' +
-			'<head>\n' +
-			'<meta charset="utf-8">\n' +
-			'<meta http-equiv="content-security-policy" content="' +
-			'script-src \'' + (allowAllScripts ? 'unsafe-inline' : ('nonce-' + nonce)) + '\' ' +
-			remoteDomain +
-			(needUnsafeEval ? ' \'unsafe-eval\'' : '') + ';' +
-			'style-src \'none\';' +
-			'">\n' +
-			'<script nonce="' + nonce + '">' + src + '</script>\n' +
-			'</head>\n' +
-			'<body>\n' +
-			'</body>\n' +
-			'</html>\n'
-		);
-
-		iframe.setAttribute(
-			'sandbox',
-			'allow-scripts' +
-			(needsSameOrigin ? ' allow-same-origin' : '')
-		);
+		iframe.setAttribute('sandbox', details.sandboxing);
 		iframe.style.display = 'none';
 		iframe.setAttribute('src', URL.createObjectURL(new Blob(
-			[html],
+			[details.html],
 			{type: 'text/html'}
 		)));
 

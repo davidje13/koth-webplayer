@@ -383,6 +383,22 @@ define([
 			return hash % CACHE_SIZE;
 		}
 
+		handleError(entry, index, view, action, error) {
+			entry.errorInput = JSON.stringify(viewToAPI(view));
+			entry.errorOutput = JSON.stringify(action);
+			entry.error = (
+				error + ' (gave ' + entry.errorOutput +
+				' for ' + entry.errorInput + ')'
+			);
+			if(entry.pauseOnError) {
+				this.random.rollback();
+				this.currentAnt = index + 1;
+				throw 'PAUSE';
+			} else {
+				entry.disqualified = true;
+			}
+		}
+
 		stepAnt(index) {
 			this.random.save();
 			const ant = this.ants[index];
@@ -390,47 +406,43 @@ define([
 			if(entry.disqualified) {
 				return;
 			}
+
 			const view = SHARED_VIEW;
 			const rotation = this.random.next(4);
 			const hash = this.generateView(view, ant, ant.entry, rotation);
+
+			let error = null;
+			let elapsed = 0;
 			let action = findCache(entry, hash, view);
-			if(!action) {
-				let error = null;
-				let elapsed = 0;
-				try {
-					const apiView = viewToAPI(view);
-					const begin = performance.now();
-					action = entry.fn({view: apiView}, {consoleTarget: entry.console});
-					elapsed = performance.now() - begin;
-					error = checkError(action, ant, view);
-				} catch(e) {
-					error = entryUtils.stringifyEntryError(e);
-				}
-				if(error) {
-					entry.errorInput = JSON.stringify(viewToAPI(view));
-					entry.errorOutput = JSON.stringify(action);
-					entry.error = (
-						error + ' (gave ' + entry.errorOutput +
-						' for ' + entry.errorInput + ')'
-					);
-					if(entry.pauseOnError) {
-						this.random.rollback();
-						this.currentAnt = index + 1;
-						throw 'PAUSE';
-					} else {
-						entry.disqualified = true;
-					}
-					return;
-				}
+
+			if(action) {
+				this.moveAnt(index, ant, action, rotation);
+				return;
+			}
+
+			try {
+				const apiView = viewToAPI(view);
+				const begin = performance.now();
+				action = entry.fn({view: apiView}, {consoleTarget: entry.console});
+				elapsed = performance.now() - begin;
+				error = checkError(action, ant, view);
+			} catch(e) {
+				error = entryUtils.stringifyEntryError(e);
+			}
+
+			entry.elapsedTime += elapsed;
+			++ entry.codeSteps;
+
+			if(error) {
+				this.handleError(entry, index, view, action, error);
+			} else {
 				const viewCopy = [];
 				for(let i = 0; i < 9; ++ i) {
 					viewCopy[i] = view[i];
 				}
 				putCache(entry, hash, viewCopy, action);
-				entry.elapsedTime += elapsed;
-				++ entry.codeSteps;
+				this.moveAnt(index, ant, action, rotation);
 			}
-			this.moveAnt(index, ant, action, rotation);
 		}
 
 		// TODO: maybe extract frame/step/maxFrames/isOver/progress logic for

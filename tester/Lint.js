@@ -20,7 +20,7 @@ define(['require', 'document', 'jshint/jshint'], (require, document, jshint) => 
 			maxcomplexity: 10,
 			maxdepth: 3,
 			maxparams: 5,
-			maxstatements: 40,
+			maxstatements: 30,
 			noarg: true,
 			nocomma: true,
 			nonbsp: true,

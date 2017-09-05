@@ -1,22 +1,62 @@
 define([
 	'require',
+	'def:require',
 	'./EventObject',
 	'def:./EventObject',
 	'def:./workerUtilsInner',
+	'path:./workerUtilsLoader',
 ], (
 	require,
+	defRequire,
 	EventObject,
 	defEventObject,
-	defInner
+	defInner,
+	pathLoader
 ) => {
 	'use strict';
 
-	// Usage: workerUtils.make(myFunction / myScriptName);
+	// Usage: workerUtils.make([dependencies], myFunction);
 	// myFunction executes inside the worker
 	// returns the new worker (addEventListener & sendMessage to communicate)
 
 	function escape(v) {
 		return JSON.stringify(v);
+	}
+
+	function makeContent(dependencies, fn) {
+		const safari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+		const protocol = self.rootProtocol || window.location.protocol;
+		const href = self.rootHref || window.location.href;
+
+		let invocation;
+		const depstr = escape(dependencies);
+		if(fn && dependencies.length > 0) {
+			invocation = '() => require(' + depstr + ', ' + fn.toString() + ')';
+		} else if(fn) {
+			invocation = fn.toString();
+		} else {
+			invocation = '() => require(' + depstr + ')';
+		}
+
+		const src = (
+			'self.rootProtocol = ' + escape(protocol) + ';\n' +
+			'self.rootHref = ' + escape(href) + ';\n' +
+			'self.restrictedRequire = ' + escape(self.restrictedRequire || false) + ';\n' +
+			'const requireFactory = ' + defRequire.factory() + ';\n' +
+			'requireFactory();\n' +
+			defEventObject.code() + '\n' +
+			defInner.code() + '\n' +
+			'require([' + escape(defInner.src) + '])' +
+			'.then(' + invocation + ')' +
+			'.then(() => require.shed());\n'
+		);
+
+		return {
+			src,
+			noBlob: (safari && protocol === 'https:'),
+			loader: (href.substr(0, href.lastIndexOf('/') + 1) + pathLoader + '.js'),
+		};
 	}
 
 	function make(dependencies, fn) {
@@ -31,45 +71,15 @@ define([
 		const queueIn = [];
 		const listeners = new EventObject();
 
-		let invocation;
-		const depstr = escape(dependencies);
-		if(fn && dependencies.length > 0) {
-			invocation = '() => require(' + depstr + ', ' + fn.toString() + ')';
-		} else if(fn) {
-			invocation = fn.toString();
-		} else {
-			invocation = '() => require(' + depstr + ')';
-		}
-
-		const protocol = self.rootProtocol || window.location.protocol;
-		const href = self.rootHref || window.location.href;
-
-		/* globals requireFactory */
-		const src = (
-			'self.rootProtocol = ' + escape(protocol) + ';\n' +
-			'self.rootHref = ' + escape(href) + ';\n' +
-			'self.restrictedRequire = ' + escape(self.restrictedRequire || false) + ';\n' +
-			'const requireFactory = ' + requireFactory.toString() + ';\n' +
-			'requireFactory();\n' +
-			defEventObject.code() + '\n' +
-			defInner.code() + '\n' +
-			'require([' + escape(defInner.src) + '])' +
-			'.then(' + invocation + ')' +
-			'.then(() => require.shed());\n'
-		);
-
-		const safari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+		const details = makeContent(dependencies, fn);
 
 		let worker = null;
-		if(safari && protocol === 'https:') {
-			worker = new Worker(
-				href.substr(0, href.lastIndexOf('/') + 1) +
-				'core/workerUtilsLoader.js'
-			);
-			worker.postMessage({src});
+		if(details.noBlob) {
+			worker = new Worker(details.loader);
+			worker.postMessage({src: details.src});
 		} else {
 			worker = new Worker(URL.createObjectURL(new Blob(
-				[src],
+				[details.src],
 				{type: 'text/javascript'}
 			)));
 		}

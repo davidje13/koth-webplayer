@@ -167,6 +167,13 @@ const requireFactory = () => {
 	function wrapDefinition(src) {
 		return {
 			src,
+			factory: () => {
+				const state = stateOf(src);
+				if(state.noFactoryCode) {
+					return null;
+				}
+				return state.factory.toString();
+			},
 			code: () => {
 				const state = stateOf(src);
 				if(state.noFactoryCode) {

@@ -72,20 +72,26 @@ define([
 			this.addTeam = this.addTeam.bind(this);
 			this.addEntry = this.addEntry.bind(this);
 
-			this.titleEditor = docutil.make('input', {'type': 'text'});
-			this.pauseToggle = docutil.make('input', {'type': 'checkbox'});
-			this.codeEditor = docutil.make('textarea');
 			const columns = [
 				{title: 'Entry', attribute: 'label'},
 				...extraColumns,
 			];
-			if(allowTeamModification) {
-				columns.push({title: '', attribute: 'enabled', className: 'enabled-opt'});
+			if(this.allowTeamModification) {
+				columns.push({
+					title: '',
+					attribute: 'enabled',
+					className: 'enabled-opt',
+				});
 			}
-			this.tree = new TreeTable({
-				className: 'team-table',
-				columns,
-			});
+
+			this._buildEditor({className, columns});
+		}
+
+		_buildEditor({className, columns}) {
+			this.titleEditor = docutil.make('input', {'type': 'text'});
+			this.pauseToggle = docutil.make('input', {'type': 'checkbox'});
+			this.codeEditor = docutil.make('textarea');
+			this.tree = new TreeTable({className: 'team-table', columns});
 
 			this.titleEditor.addEventListener('change', this._triggerChange);
 			this.titleEditor.addEventListener('input', this._triggerChangeDebounced);

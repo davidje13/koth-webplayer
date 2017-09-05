@@ -39,6 +39,57 @@ define([
 		return {type, tx, ty};
 	}
 
+	function makeAPIParams(entry, params, {width, height, board, visibilityDist}) {
+		return Object.assign({
+			grid: (x, y) => { // grid(x, y)
+				if(Math.round(x) !== x || Math.round(y) !== y) {
+					return -1;
+				}
+				if(x < 0 || y < 0 || x >= width || y >= height) {
+					return -1;
+				}
+				if(entry.bots.some(botNear(x, y, visibilityDist))) {
+					return board[y * width + x];
+				} else {
+					return -1;
+				}
+			},
+			getMem: () => {
+				return entry.memory;
+			},
+			setMem: (msg) => {
+				if(typeof msg === 'string' && msg.length <= 256) {
+					entry.memory = msg;
+				}
+			},
+		}, params);
+	}
+
+	function makeAPIExtras({console, random}) {
+		return {
+			consoleTarget: console,
+			MathRandom: () => {
+				return random.next(0x100000000) / 0x100000000;
+			},
+		};
+	}
+
+	function checkError(bots, actions, elapsed) {
+		if(!Array.isArray(actions) || actions.length !== bots.length) {
+			return 'Invalid action: ' + actions;
+		}
+		for(let i = 0; i < actions.length; ++ i) {
+			const action = actions[i];
+			if(Math.round(action) !== action || action < 0 || action > 24) {
+				return 'Invalid action for bot ' + i + ': ' + action;
+			}
+		}
+		if(elapsed > 20) {
+			return 'Too long to respond: ' + elapsed + 'ms';
+		}
+		return '';
+	}
+
 	return class GameManager {
 		constructor(random, {
 			width,
@@ -199,6 +250,59 @@ define([
 			return this.board[y * this.width + x] === 1;
 		}
 
+		getEntryParams(entry, enemyTeams) {
+			const enemyBots = [];
+			let anyEnemyEntry = null;
+			enemyTeams.forEach((enemyTeam) =>
+				enemyTeam.entries.forEach((enemyEntry) => {
+					if(!anyEnemyEntry) {
+						anyEnemyEntry = enemyEntry;
+					}
+					enemyEntry.bots.forEach((enemyBot) => {
+						if(entry.bots.some(botNear(enemyBot.x, enemyBot.y, this.visibilityDist))) {
+							enemyBots.push({
+								x: enemyBot.x,
+								y: enemyBot.y,
+								hasWall: enemyBot.hasWall,
+							});
+						}
+					});
+				})
+			);
+			arrayUtils.shuffleInPlace(enemyBots, this.random);
+			return {
+				p1: entry.p1,
+				id: entry.answerID,
+				eid: anyEnemyEntry.answerID,
+				move: ++ entry.moves,
+				goal: {
+					x: this.goal.x,
+					y: this.goal.y,
+				},
+				bots: entry.bots.map((bot) => ({
+					x: bot.x,
+					y: bot.y,
+					hasWall: bot.hasWall,
+				})),
+				ebots: enemyBots,
+				memory: entry.memory,
+			};
+		}
+
+		handleError(entry, params, action, error) {
+			entry.errorInput = JSON.stringify(params);
+			entry.errorOutput = action;
+			entry.error = (
+				error + ' (gave ' + entry.errorOutput +
+				' for ' + entry.errorInput + ')'
+			);
+			if(entry.pauseOnError) {
+				this.random.rollback();
+				-- entry.moves;
+				throw 'PAUSE';
+			}
+		}
+
 		moveBot(entry, bot, action) {
 			const {type, tx, ty} = interpretAction(bot, action, this.width, this.height);
 			switch(type) {
@@ -229,97 +333,45 @@ define([
 			}
 		}
 
+		moveEntry(entry, actions) {
+			actions.forEach((action, i) => {
+				this.moveBot(entry, entry.bots[i], action);
+			});
+			if(this.goal.x < 0) {
+				this.pickNewGoal();
+			}
+		}
+
 		stepEntry(entry, enemyTeams) {
 			this.random.save();
 			if(entry.disqualified) {
 				return false;
 			}
 
+			const params = this.getEntryParams(entry, enemyTeams);
+
 			let error = null;
 			let elapsed = 0;
 			let action = null;
 
 			const oldRandom = Math.random;
-			const enemyBots = [];
-			let anyEnemyEntry = null;
-			enemyTeams.forEach((enemyTeam) =>
-				enemyTeam.entries.forEach((enemyEntry) => {
-					if(!anyEnemyEntry) {
-						anyEnemyEntry = enemyEntry;
-					}
-					enemyEntry.bots.forEach((enemyBot) => {
-						if(entry.bots.some(botNear(enemyBot.x, enemyBot.y, this.visibilityDist))) {
-							enemyBots.push({
-								x: enemyBot.x,
-								y: enemyBot.y,
-								hasWall: enemyBot.hasWall,
-							});
-						}
-					});
-				})
-			);
-			arrayUtils.shuffleInPlace(enemyBots, this.random);
-			const params = {
-				p1: entry.p1,
-				id: entry.answerID,
-				eid: anyEnemyEntry.answerID,
-				move: ++ entry.moves,
-				goal: {
-					x: this.goal.x,
-					y: this.goal.y,
-				},
-				bots: entry.bots.map((bot) => ({
-					x: bot.x,
-					y: bot.y,
-					hasWall: bot.hasWall,
-				})),
-				ebots: enemyBots,
-				memory: entry.memory,
-			};
 			try {
 				const begin = performance.now();
-				action = entry.fn(Object.assign({
-					grid: (x, y) => { // grid(x, y)
-						if(Math.round(x) !== x || Math.round(y) !== y) {
-							return -1;
-						}
-						if(x < 0 || y < 0 || x >= this.width || y >= this.height) {
-							return -1;
-						}
-						if(entry.bots.some(botNear(x, y, this.visibilityDist))) {
-							return this.board[y * this.width + x];
-						} else {
-							return -1;
-						}
-					},
-					getMem: () => {
-						return entry.memory;
-					},
-					setMem: (msg) => {
-						if(typeof msg === 'string' && msg.length <= 256) {
-							entry.memory = msg;
-						}
-					},
-				}, params), {
-					MathRandom: () => {
-						return this.random.next(0x100000000) / 0x100000000;
-					},
-					consoleTarget: entry.console,
-				});
+				action = entry.fn(
+					makeAPIParams(entry, params, {
+						width: this.width,
+						height: this.height,
+						board: this.board,
+						visibilityDist: this.visibilityDist,
+					}),
+					makeAPIExtras({
+						console: entry.console,
+						random: this.random,
+					})
+				);
 				elapsed = performance.now() - begin;
 
-				if(!Array.isArray(action) || action.length !== entry.bots.length) {
-					error = 'Invalid action: ' + action;
-				} else {
-					action.forEach((act, i) => {
-						if(Math.round(act) !== act || act < 0 || act > 24) {
-							error = 'Invalid action for bot ' + i + ': ' + act;
-						}
-					});
-				}
-				if(!error && elapsed > 20) {
-					error = 'Too long to respond: ' + elapsed + 'ms';
-				}
+				error = checkError(entry.bots, action, elapsed);
 			} catch(e) {
 				error = entryUtils.stringifyEntryError(e);
 			}
@@ -329,24 +381,9 @@ define([
 			++ entry.codeSteps;
 
 			if(error) {
-				entry.errorInput = JSON.stringify(params);
-				entry.errorOutput = action;
-				entry.error = (
-					error + ' (gave ' + entry.errorOutput +
-					' for ' + entry.errorInput + ')'
-				);
-				if(entry.pauseOnError) {
-					this.random.rollback();
-					-- entry.moves;
-					throw 'PAUSE';
-				}
+				this.handleError(entry, params, action, error);
 			} else {
-				action.forEach((act, i) => {
-					this.moveBot(entry, entry.bots[i], act);
-				});
-				if(this.goal.x < 0) {
-					this.pickNewGoal();
-				}
+				this.moveEntry(entry, action);
 			}
 
 			return true;

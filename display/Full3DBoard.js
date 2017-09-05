@@ -91,8 +91,109 @@ define([
 		);
 	}
 
+	function makeCanvasProg(gl) {
+		return new webglUtils.Program(gl, [
+			webglUtils.makeShader(gl, gl.VERTEX_SHADER, (
+				'uniform mat4 matProj;\n' +
+				'uniform mat4 matMV;\n' +
+				'uniform mat3 matNorm;\n' +
+				'attribute vec3 vert;\n' +
+				'attribute vec3 norm;\n' +
+				'attribute vec2 uv;\n' +
+				'varying mediump vec2 texp;\n' +
+				'varying mediump float light;\n' +
+				'void main(void) {\n' +
+				'  gl_Position = matProj * matMV * vec4(vert.xyz, 1);\n' +
+				'  light = dot(normalize(matNorm * norm), vec3(0, 0, 1));\n' +
+				'  texp = uv;\n' +
+				'}\n'
+			)),
+			webglUtils.makeShader(gl, gl.FRAGMENT_SHADER, (
+				'uniform sampler2D tex;\n' +
+				'uniform mediump vec2 texScale;\n' +
+				'uniform mediump float shadowStr;\n' +
+				'uniform mediump vec3 shadowCol;\n' +
+				'uniform mediump vec3 backCol;\n' +
+				'varying mediump vec2 texp;\n' +
+				'varying mediump float light;\n' +
+				'void main(void) {\n' +
+				'  if(gl_FrontFacing) {\n' +
+				'    gl_FragColor = vec4(mix(\n' +
+				'      shadowCol,\n' +
+				'      texture2D(tex, texp * texScale).rgb,\n' +
+				'      mix(1.0, max(light, 0.0), shadowStr)\n' +
+				'    ), 1);\n' +
+				'  } else {\n' +
+				'    gl_FragColor = vec4(mix(\n' +
+				'      shadowCol,\n' +
+				'      backCol,\n' +
+				'      mix(1.0, max(-light, 0.0), shadowStr)\n' +
+				'    ), 1);\n' +
+				'  }\n' +
+				'}\n'
+			)),
+		]);
+	}
+
+	function makePointerProg(gl) {
+		return new webglUtils.Program(gl, [
+			webglUtils.makeShader(gl, gl.VERTEX_SHADER, (
+				'uniform mat4 matProj;\n' +
+				'uniform mat4 matMV;\n' +
+				'uniform mat3 matNorm;\n' +
+				'attribute vec3 vert;\n' +
+				'attribute vec3 norm;\n' +
+				'varying mediump float light;\n' +
+				'void main(void) {\n' +
+				'  gl_Position = matProj * matMV * vec4(vert.xyz, 1);\n' +
+				'  light = dot(normalize(matNorm * norm), vec3(0, 0, 1));\n' +
+				'}\n'
+			)),
+			webglUtils.makeShader(gl, gl.FRAGMENT_SHADER, (
+				'uniform mediump vec3 col;\n' +
+				'uniform mediump float shadowStr;\n' +
+				'uniform mediump vec3 shadowCol;\n' +
+				'varying mediump float light;\n' +
+				'void main(void) {\n' +
+				'  gl_FragColor = vec4(mix(\n' +
+				'    shadowCol, col, mix(1.0, max(light, 0.0), shadowStr)\n' +
+				'  ), 1);\n' +
+				'}\n'
+			)),
+		]);
+	}
+
+	const POINTER_PROG_PARAMS = {
+		shadowStr: 0.8,
+		shadowCol: [0.0, 0.02, 0.03],
+		col: [1, 1, 1],
+	};
+
+	function makeWebGL() {
+		window.devicePixelRatio = 1;
+		const canvas = docutil.make('canvas');
+		const gl = canvas.getContext('webgl');
+
+		gl.clearColor(0, 0, 0, 0);
+		gl.clearDepth(1.0);
+		gl.enable(gl.DEPTH_TEST);
+		gl.depthFunc(gl.LEQUAL);
+		gl.cullFace(gl.BACK);
+
+		return {
+			canvas,
+			gl,
+		};
+	}
+
 	return class Full3DBoard extends EventObject {
-		constructor({renderer, markerStore = null, markerTypes = null, width = 0, height = 0}) {
+		constructor({
+			renderer,
+			markerStore = null,
+			markerTypes = null,
+			width = 0,
+			height = 0,
+		}) {
 			super();
 
 			this.renderer = renderer;
@@ -103,19 +204,21 @@ define([
 			this.viewLift = Math.PI * 0.25;
 			this.viewDist = 0;
 			this.frac3D = 1;
+			this.texWidth = 0;
+			this.texHeight = 0;
+			this.boardW = 0;
+			this.boardH = 0;
+			this.torusDirty = true;
+			this.nextRerender = 0;
+			this.rerenderTm = null;
 
-			window.devicePixelRatio = 1;
-			this.canvas = docutil.make('canvas');
-			this.board = docutil.make('div', {'class': 'game-board-3d'}, [this.canvas]);
-
-			const gl = this.canvas.getContext('webgl');
+			const {canvas, gl} = makeWebGL();
+			this.canvas = canvas;
 			this.context = gl;
 
-			gl.clearColor(0, 0, 0, 0);
-			gl.clearDepth(1.0);
-			gl.enable(gl.DEPTH_TEST);
-			gl.depthFunc(gl.LEQUAL);
-			gl.cullFace(gl.BACK);
+			this.board = docutil.make('div', {'class': 'game-board-3d'}, [
+				this.canvas,
+			]);
 
 			this.texBoard = webglUtils.makeTexture(gl, gl.TEXTURE_2D, {
 				[gl.TEXTURE_MAG_FILTER]: gl.NEAREST,
@@ -126,119 +229,42 @@ define([
 
 			this.meshTorus = new ModelTorus();
 
-			this.canvasProg = new webglUtils.Program(gl, [
-				webglUtils.makeShader(gl, gl.VERTEX_SHADER, (
-					'uniform mat4 matProj;\n' +
-					'uniform mat4 matMV;\n' +
-					'uniform mat3 matNorm;\n' +
-					'attribute vec3 vert;\n' +
-					'attribute vec3 norm;\n' +
-					'attribute vec2 uv;\n' +
-					'varying mediump vec2 texp;\n' +
-					'varying mediump float light;\n' +
-					'void main(void) {\n' +
-					'  gl_Position = matProj * matMV * vec4(vert.xyz, 1);\n' +
-					'  light = dot(normalize(matNorm * norm), vec3(0, 0, 1));\n' +
-					'  texp = uv;\n' +
-					'}\n'
-				)),
-				webglUtils.makeShader(gl, gl.FRAGMENT_SHADER, (
-					'uniform sampler2D tex;\n' +
-					'uniform mediump vec2 texScale;\n' +
-					'uniform mediump float shadowStr;\n' +
-					'uniform mediump vec3 shadowCol;\n' +
-					'uniform mediump vec3 backCol;\n' +
-					'varying mediump vec2 texp;\n' +
-					'varying mediump float light;\n' +
-					'void main(void) {\n' +
-					'  if(gl_FrontFacing) {\n' +
-					'    gl_FragColor = vec4(mix(\n' +
-					'      shadowCol,\n' +
-					'      texture2D(tex, texp * texScale).rgb,\n' +
-					'      mix(1.0, max(light, 0.0), shadowStr)\n' +
-					'    ), 1);\n' +
-					'  } else {\n' +
-					'    gl_FragColor = vec4(mix(\n' +
-					'      shadowCol,\n' +
-					'      backCol,\n' +
-					'      mix(1.0, max(-light, 0.0), shadowStr)\n' +
-					'    ), 1);\n' +
-					'  }\n' +
-					'}\n'
-				)),
-			]);
-
 			this.defaultPointerModel = new ModelPoint({
 				uv: false,
 				stride: 6,
 				radius: 0.02,
 				height: 0.05,
 			});
-			this.defaultPointerProg = new webglUtils.Program(gl, [
-				webglUtils.makeShader(gl, gl.VERTEX_SHADER, (
-					'uniform mat4 matProj;\n' +
-					'uniform mat4 matMV;\n' +
-					'uniform mat3 matNorm;\n' +
-					'attribute vec3 vert;\n' +
-					'attribute vec3 norm;\n' +
-					'varying mediump float light;\n' +
-					'void main(void) {\n' +
-					'  gl_Position = matProj * matMV * vec4(vert.xyz, 1);\n' +
-					'  light = dot(normalize(matNorm * norm), vec3(0, 0, 1));\n' +
-					'}\n'
-				)),
-				webglUtils.makeShader(gl, gl.FRAGMENT_SHADER, (
-					'uniform mediump vec3 col;\n' +
-					'uniform mediump float shadowStr;\n' +
-					'uniform mediump vec3 shadowCol;\n' +
-					'varying mediump float light;\n' +
-					'void main(void) {\n' +
-					'  gl_FragColor = vec4(mix(\n' +
-					'    shadowCol, col, mix(1.0, max(light, 0.0), shadowStr)\n' +
-					'  ), 1);\n' +
-					'}\n'
-				)),
-			]);
-			this.defaultPointerParams = {
-				shadowStr: 0.8,
-				shadowCol: [0.0, 0.02, 0.03],
-				col: [1, 1, 1],
-			};
+			this.canvasProg = makeCanvasProg(gl);
+			this.defaultPointerProg = makePointerProg(gl);
 
-			this.nextRerender = 0;
-			this.rerenderTm = null;
-
-			docutil.addDragHandler(this.board, (dx, dy) => {
-				this.viewAngle -= dx * Math.PI / this.canvas.height;
-				this.viewLift += dy * Math.PI / this.canvas.height;
-				if(this.viewAngle > Math.PI) {
-					this.viewAngle -= Math.PI * 2;
-				}
-				if(this.viewAngle < -Math.PI) {
-					this.viewAngle += Math.PI * 2;
-				}
-				this.viewLift = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.viewLift));
-
-				const now = Date.now();
-				if(now > this.nextRerender) {
-					this.rerender();
-				} else if(!this.rerenderInt) {
-					this.rerenderTm = setTimeout(
-						() => this.rerender(),
-						this.nextRerender - now
-					);
-				}
-			});
-
-			this.texWidth = 0;
-			this.texHeight = 0;
-			this.boardW = 0;
-			this.boardH = 0;
-			this.torusDirty = true;
+			docutil.addDragHandler(this.board, this.handleDrag.bind(this));
 
 			this._buildTorus();
 			this.resize(width, height);
 			this.setZoom(0);
+		}
+
+		handleDrag(dx, dy) {
+			this.viewAngle -= dx * Math.PI / this.canvas.height;
+			this.viewLift += dy * Math.PI / this.canvas.height;
+			if(this.viewAngle > Math.PI) {
+				this.viewAngle -= Math.PI * 2;
+			}
+			if(this.viewAngle < -Math.PI) {
+				this.viewAngle += Math.PI * 2;
+			}
+			this.viewLift = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.viewLift));
+
+			const now = Date.now();
+			if(now > this.nextRerender) {
+				this.rerender();
+			} else if(!this.rerenderInt) {
+				this.rerenderTm = setTimeout(
+					() => this.rerender(),
+					this.nextRerender - now
+				);
+			}
 		}
 
 		resize(width, height) {
@@ -362,7 +388,7 @@ define([
 
 				const model = (config.model || this.defaultPointerModel);
 				const prog = (config.prog || this.defaultPointerProg);
-				const params = (config.params || this.defaultPointerParams);
+				const params = (config.params || POINTER_PROG_PARAMS);
 
 				model.gl = gl;
 				model.bindAll();

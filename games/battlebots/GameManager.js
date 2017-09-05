@@ -28,6 +28,39 @@ define([
 		],
 	};
 
+	function makeAPIParams(bot, entry, params) {
+		return Object.assign({
+			setMsg: (msg) => {
+				if(typeof msg === 'string') {
+					msg = msg.substr(0, 64);
+					params.messages[entry.userID] = bot.message = msg;
+				}
+			},
+			getMsg: (id) => {
+				return params.messages[id];
+			},
+		}, params);
+	}
+
+	function makeAPIExtras({console, random}) {
+		return {
+			consoleTarget: console,
+			MathRandom: () => {
+				return random.next(0x100000000) / 0x100000000;
+			},
+		};
+	}
+
+	function checkError(action, elapsed) {
+		if(Math.round(action) !== action || action < 0 || action > 6) {
+			return 'Invalid action: ' + action;
+		}
+		if(elapsed > 15) {
+			return 'Too long to respond: ' + elapsed + 'ms';
+		}
+		return '';
+	}
+
 	return class GameManager {
 		constructor(random, {
 			width,
@@ -186,13 +219,7 @@ define([
 			});
 		}
 
-		stepBot(index) {
-			this.random.save();
-			const bot = this.bots[index];
-			const entry = this.entryLookup.get(bot.entry);
-			if(entry.disqualified || !bot.alive) {
-				return false;
-			}
+		getBotParams(bot) {
 			const counts = [0, 0];
 			const nearby = [[], []];
 			const messages = {};
@@ -218,12 +245,7 @@ define([
 				}
 			});
 
-			let error = null;
-			let elapsed = 0;
-			let action = null;
-
-			const oldRandom = Math.random;
-			const params = {
+			return {
 				move: ++ bot.moves,
 				x: bot.x,
 				y: bot.y,
@@ -233,30 +255,49 @@ define([
 				eNear: nearby[1 - bot.teamIndex],
 				messages,
 			};
+		}
+
+		handleError(bot, entry, params, action, error) {
+			entry.errorInput = JSON.stringify(params);
+			entry.errorOutput = action;
+			entry.error = (
+				error + ' (gave ' + entry.errorOutput +
+				' for ' + entry.errorInput + ')'
+			);
+			if(entry.pauseOnError) {
+				this.random.rollback();
+				-- bot.moves;
+				throw 'PAUSE';
+			}
+		}
+
+		stepBot(index) {
+			this.random.save();
+			const bot = this.bots[index];
+			const entry = this.entryLookup.get(bot.entry);
+			if(entry.disqualified || !bot.alive) {
+				return false;
+			}
+
+			const params = this.getBotParams(bot);
+
+			let error = null;
+			let elapsed = 0;
+			let action = null;
+
+			const oldRandom = Math.random;
 			try {
 				const begin = performance.now();
-				action = entry.fn(Object.assign({
-					setMsg: (msg) => {
-						if(typeof msg === 'string') {
-							messages[entry.userID] = bot.message = msg.substr(0, 64);
-						}
-					},
-					getMsg: (id) => {
-						return messages[id];
-					},
-				}, params), {
-					MathRandom: () => {
-						return this.random.next(0x100000000) / 0x100000000;
-					},
-					consoleTarget: entry.console,
-				});
+				action = entry.fn(
+					makeAPIParams(bot, entry, params),
+					makeAPIExtras({
+						console: entry.console,
+						random: this.random,
+					})
+				);
 				elapsed = performance.now() - begin;
 
-				if(Math.round(action) !== action || action < 0 || action > 6) {
-					error = 'Invalid action: ' + action;
-				} else if(elapsed > 15) {
-					error = 'Too long to respond: ' + elapsed + 'ms';
-				}
+				error = checkError(action, elapsed);
 			} catch(e) {
 				error = entryUtils.stringifyEntryError(e);
 			}
@@ -266,17 +307,7 @@ define([
 			++ entry.codeSteps;
 
 			if(error) {
-				entry.errorInput = JSON.stringify(params);
-				entry.errorOutput = action;
-				entry.error = (
-					error + ' (gave ' + entry.errorOutput +
-					' for ' + entry.errorInput + ')'
-				);
-				if(entry.pauseOnError) {
-					this.random.rollback();
-					-- bot.moves;
-					throw 'PAUSE';
-				}
+				this.handleError(bot, entry, params, action, error);
 			} else {
 				this.moveBot(bot, action);
 			}
