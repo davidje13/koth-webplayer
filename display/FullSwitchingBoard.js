@@ -1,10 +1,12 @@
 define([
 	'core/EventObject',
+	'core/AnimatingProperty',
 	'./documentUtils',
 	'./Full2DBoard',
 	'./Full3DBoard',
 ], (
 	EventObject,
+	AnimatingProperty,
 	docutil,
 	Full2DBoard,
 	Full3DBoard
@@ -31,19 +33,16 @@ define([
 			this.latestWidth = 0;
 			this.latestHeight = 0;
 
-			this.animationTime = 1000;
-
-			this.target = begin3D ? 1 : 0;
 			this.blockFirstAnim = (begin3D === null);
-			this.currentFrac = this.target;
+			this.currentFrac = new AnimatingProperty(
+				this._updateRendered.bind(this),
+				begin3D ? 1 : 0,
+				1000
+			);
 			this.drawnFrac = 0;
-			this.animFrame = null;
-			this.lastFrame = 0;
 			this.wireframe = false;
 
 			this.container = docutil.make('div');
-
-			this._animate = this._animate.bind(this);
 
 			this.setScale(scaleX, scaleY);
 			this._updateRendered();
@@ -87,7 +86,8 @@ define([
 		}
 
 		_updateRendered() {
-			const is3D = this.currentFrac > 0;
+			const frac = this.currentFrac.getValue();
+			const is3D = frac > 0;
 			if(is3D && !this.board3D) {
 				this._make3DBoard();
 			}
@@ -95,9 +95,9 @@ define([
 				this._make2DBoard();
 			}
 
-			if(is3D && this.drawnFrac !== this.currentFrac) {
-				this.drawnFrac = this.currentFrac;
-				const smoothedFrac = 0.5 - Math.cos(this.currentFrac * Math.PI) * 0.5;
+			if(is3D && this.drawnFrac !== frac) {
+				this.drawnFrac = frac;
+				const smoothedFrac = 0.5 - Math.cos(frac * Math.PI) * 0.5;
 				this.board3D.set3DRatio(smoothedFrac);
 				if(this.active === this.board3D) {
 					this.board3D.rerender();
@@ -113,32 +113,6 @@ define([
 				this.active = desired;
 				this.active.repaint();
 			}
-		}
-
-		_animate() {
-			this.animFrame = null;
-			const now = Date.now();
-			const delta = now - this.lastFrame;
-			this.lastFrame = now;
-
-			let complete = false;
-			if(this.currentFrac < this.target) {
-				this.currentFrac += delta / this.animationTime;
-				if(this.currentFrac >= this.target) {
-					complete = true;
-				}
-			} else {
-				this.currentFrac -= delta / this.animationTime;
-				if(this.currentFrac <= this.target) {
-					complete = true;
-				}
-			}
-			if(complete) {
-				this.currentFrac = this.target;
-			} else {
-				this.animFrame = requestAnimationFrame(this._animate);
-			}
-			this._updateRendered();
 		}
 
 		setMarkerStore(markerStore) {
@@ -203,24 +177,9 @@ define([
 		}
 
 		switch3D(on, animated = true) {
-			if(this.target === (on ? 1 : 0)) {
-				this.blockFirstAnim = false;
-				return;
-			}
-			this.target = (on ? 1 : 0);
-			if(animated && !this.blockFirstAnim) {
-				if(!this.animFrame) {
-					this.lastFrame = Date.now();
-					this.animFrame = requestAnimationFrame(this._animate);
-				}
-			} else {
-				if(this.animFrame) {
-					cancelAnimationFrame(this.animFrame);
-					this.animFrame = null;
-				}
-				this.currentFrac = this.target;
-				this._updateRendered();
-			}
+			this.currentFrac.set((on ? 1 : 0), {
+				animated: animated && !this.blockFirstAnim,
+			});
 			this.blockFirstAnim = false;
 		}
 

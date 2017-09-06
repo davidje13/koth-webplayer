@@ -3,6 +3,7 @@ define([
 	'3d/ModelPoint',
 	'3d/ModelTorus',
 	'core/EventObject',
+	'core/AnimatingProperty',
 	'math/Mat4',
 	'./documentUtils',
 	'./style.css',
@@ -11,6 +12,7 @@ define([
 	ModelPoint,
 	ModelTorus,
 	EventObject,
+	AnimatingProperty,
 	Mat4,
 	docutil
 ) => {
@@ -202,7 +204,6 @@ define([
 			this.wireframe = false;
 			this.viewAngle = 0;
 			this.viewLift = Math.PI * 0.25;
-			this.viewDist = 0;
 			this.frac3D = 1;
 			this.texWidth = 0;
 			this.texHeight = 0;
@@ -211,6 +212,7 @@ define([
 			this.torusDirty = true;
 			this.nextRerender = 0;
 			this.rerenderTm = null;
+			this.zoom = new AnimatingProperty(this.rerender.bind(this), 0, 500);
 
 			const {canvas, gl} = makeWebGL();
 			this.canvas = canvas;
@@ -239,10 +241,10 @@ define([
 			this.defaultPointerProg = makePointerProg(gl);
 
 			docutil.addDragHandler(this.board, this.handleDrag.bind(this));
+			this.board.addEventListener('dblclick', this.toggleZoom.bind(this));
 
 			this._buildTorus();
 			this.resize(width, height);
-			this.setZoom(0);
 		}
 
 		handleDrag(dx, dy) {
@@ -265,6 +267,10 @@ define([
 					this.nextRerender - now
 				);
 			}
+		}
+
+		toggleZoom() {
+			this.zoom.set((this.zoom.getTarget() === 0) ? 1 : 0);
 		}
 
 		resize(width, height) {
@@ -321,10 +327,6 @@ define([
 				this.frac3D = frac3D;
 				this.torusDirty = true;
 			}
-		}
-
-		setZoom(zoom) {
-			this.viewDist = blend(2.5, 1.5, zoom);
 		}
 
 		setMarkerStore(markerStore) {
@@ -438,11 +440,15 @@ define([
 
 			const dist2D = 5;
 
+			const zoomFrac = 0.5 - Math.cos(this.zoom.getValue() * Math.PI) * 0.5;
+			const zoomDist = blend(2.5, 3.5, zoomFrac);
+			const zoomFOV = blend(1.5, 0.5, zoomFrac);
+
 			const frac3D = this.frac3D;
 			const lift = this.viewLift * frac3D * frac3D;
-			const dist = blend(dist2D, this.viewDist, frac3D);
+			const dist = blend(dist2D, zoomDist, frac3D);
 			const aspect = this.canvas.width / this.canvas.height;
-			const fov = Math.atan(blend(1, 1.5, frac3D) / dist);
+			const fov = Math.atan(blend(1, zoomFOV, frac3D) / dist);
 			const matProjection = Mat4.perspective(fov, aspect, blend(1, 0.1, frac3D), 10.0);
 			let ang = this.viewAngle;
 			if(frac3D < 1) {
