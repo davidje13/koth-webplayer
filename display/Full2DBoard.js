@@ -64,8 +64,8 @@ define([
 					dom.textHold.appendChild(dom.text);
 					this.renderedMarks.set(key, dom);
 				}
-				const x1 = Math.round((mark.x + 0.5) * this.scaleX);
-				const y1 = Math.round((mark.y + 0.5) * this.scaleY);
+				const x1 = Math.floor((mark.x + 0.5) * this.scaleX);
+				const y1 = Math.floor((mark.y + 0.5) * this.scaleY);
 				docutil.updateAttrs(dom.element, {
 					'class': 'mark ' + (mark.className || ''),
 				});
@@ -83,8 +83,8 @@ define([
 				}
 				if(mark.w !== null && mark.h !== null) {
 					// TODO: wrapping
-					const x2 = Math.round((mark.x + mark.w) * this.scaleX);
-					const y2 = Math.round((mark.y + mark.h) * this.scaleY);
+					const x2 = Math.floor((mark.x + mark.w) * this.scaleX);
+					const y2 = Math.floor((mark.y + mark.h) * this.scaleY);
 					docutil.updateStyle(dom.element, {
 						'width': (x2 - x1) + 'px',
 						'height': (y2 - y1) + 'px',

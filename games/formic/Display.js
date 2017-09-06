@@ -33,9 +33,6 @@ define([
 
 	// TODO:
 	// * zoom window (follow ant / cursor)
-	// * optional highlight for latest moved ant
-	// * UI for following team's queen
-	// * table sorting options
 
 	const QUEEN = 5;
 
@@ -181,6 +178,10 @@ define([
 					{value: '', label: 'None'},
 					{value: 'pointer', label: 'Pointer'},
 				]},
+				{attribute: 'nextMoverMarkerType', label: 'Next mover marker', values: [
+					{value: '', label: 'None'},
+					{value: 'pointer', label: 'Pointer'},
+				]},
 				{attribute: 'foodMarkerType', label: 'Food marker', values: [
 					{value: '', label: 'None'},
 					{value: 'pointer', label: 'Pointer'},
@@ -204,10 +205,12 @@ define([
 
 			this.latestAnts = null;
 			this.latestBoard = null;
+			this.latestCurrentAnt = null;
 			this.latestW = 0;
 			this.latestH = 0;
 			this.queenMarkerType = '';
 			this.workerMarkerType = '';
+			this.nextMoverMarkerType = '';
 			this.foodMarkerType = '';
 			this.focussed = [];
 
@@ -284,6 +287,7 @@ define([
 		clear() {
 			this.latestAnts = null;
 			this.latestBoard = null;
+			this.latestCurrentAnt = null;
 
 			this.renderer.clear();
 			this.table.clear();
@@ -317,11 +321,13 @@ define([
 			if(
 				config.queenMarkerType !== this.queenMarkerType ||
 				config.workerMarkerType !== this.workerMarkerType ||
+				config.nextMoverMarkerType !== this.nextMoverMarkerType ||
 				config.foodMarkerType !== this.foodMarkerType ||
 				!arrayUtils.shallowEqual(config.focussed, this.focussed)
 			) {
 				this.queenMarkerType = config.queenMarkerType;
 				this.workerMarkerType = config.workerMarkerType;
+				this.nextMoverMarkerType = config.nextMoverMarkerType;
 				this.foodMarkerType = config.foodMarkerType;
 				this.focussed = config.focussed.slice();
 				this.repositionMarkers();
@@ -337,6 +343,7 @@ define([
 
 			this.latestAnts = state.ants;
 			this.latestBoard = state.board;
+			this.latestCurrentAnt = state.currentAnt;
 
 			this.repositionMarkers();
 			this.board.repaint();
@@ -361,8 +368,12 @@ define([
 					}
 				}
 			}
-			if((this.queenMarkerType || this.workerMarkerType) && this.latestAnts) {
-				this.latestAnts.forEach((ant) => {
+			if((
+				this.queenMarkerType ||
+				this.workerMarkerType ||
+				this.nextMoverMarkerType
+			) && this.latestAnts) {
+				this.latestAnts.forEach((ant, index) => {
 					if(this.focussed.length) {
 						if(this.focussed.indexOf(ant.entry) === -1) {
 							return;
@@ -377,6 +388,9 @@ define([
 						if(this.workerMarkerType) {
 							className = 'worker-locator-' + this.workerMarkerType;
 						}
+					}
+					if(index === this.latestCurrentAnt && this.nextMoverMarkerType) {
+						className = 'next-mover-locator-' + this.nextMoverMarkerType;
 					}
 					if(className) {
 						this.markers.mark('ant-' + ant.id, {

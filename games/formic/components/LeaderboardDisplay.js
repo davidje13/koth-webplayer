@@ -11,8 +11,7 @@ define([
 ) => {
 	'use strict';
 
-	// TODO:
-	// * Make this into a reusable component for all games
+	// TODO: make this into a reusable component for all games
 
 	const WORKER_COUNT = 4;
 
