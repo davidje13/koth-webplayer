@@ -250,6 +250,19 @@ define([
 					col: [0, 0.5, 1],
 				},
 			});
+			this.markerTypes3D.registerPointer('next-mover-locator-pointer', {
+				model: new ModelPoint({
+					uv: false,
+					stride: 6,
+					radius: 0.02,
+					height: 0.06,
+				}),
+				params: {
+					shadowStr: 0.8,
+					shadowCol: [0.0, 0.02, 0.03],
+					col: [0.3, 0.3, 0.3],
+				},
+			});
 			this.markerTypes3D.registerPointer('food-locator-pointer', {
 				model: new ModelPoint({
 					uv: false,
