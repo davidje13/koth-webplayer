@@ -134,6 +134,8 @@ define(() => {
 			if(this.dat) {
 				this.dat.data.fill(0);
 			}
+			this.rawBoard = null;
+			this.rawAnts = null;
 			this.lastRenderedFrame = 0;
 			this.dirty = true;
 		}

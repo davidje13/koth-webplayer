@@ -1,4 +1,4 @@
-.game-board .mark.region-indicator {
+.game-board .mark.zoom-locator {
 	box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
 }
 
@@ -76,4 +76,59 @@
 	content: '\01F352';
 	position: relative;
 	top: -2px;
+}
+
+
+.zoomed-board {
+	display: none;
+	position: absolute;
+	z-index: 1;
+	overflow: hidden;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+.zoomed-board.right {
+	display: block;
+	right: 0;
+}
+.zoomed-board.left {
+	display: block;
+	left: 0;
+}
+
+.zoomed-board canvas {
+	image-rendering: -moz-crisp-edges; /* WORKAROUND (Firefox) */
+	image-rendering: pixelated;
+	transform-origin: top left;
+	-webkit-transform-style: preserve-3d;
+}
+
+.zoomed-board .mark {
+	position: absolute;
+	pointer-events: none;
+}
+
+.zoomed-board .mark:after {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	line-height: 1em;
+	text-align: center;
+}
+
+.zoomed-board .mark.queen-cell:after {
+	content: '\01F451';
+}
+
+.zoomed-board .mark.worker-cell:after {
+	content: '\01F477';
+}
+
+.zoomed-board .mark.laden-worker-cell:after {
+	content: '\01F3CB';
+}
+
+.zoomed-board .mark.food-cell:after {
+	content: '\01F352';
 }

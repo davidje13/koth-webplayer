@@ -1,6 +1,7 @@
 define([
 	'core/EventObject',
 	'core/arrayUtils',
+	'core/rateUtils',
 	'3d/ModelPoint',
 	'3d/ModelTorus',
 	'display/documentUtils',
@@ -10,12 +11,14 @@ define([
 	'display/OptionsBar',
 	'games/common/components/StepperOptions',
 	'./components/BoardRenderer',
+	'./components/ZoomedBoard',
 	'./components/LeaderboardDisplay',
 	'games/common/style.css',
 	'./style.css',
 ], (
 	EventObject,
 	arrayUtils,
+	rateUtils,
 	ModelPoint,
 	ModelTorus,
 	docutil,
@@ -25,14 +28,12 @@ define([
 	OptionsBar,
 	StepperOptions,
 	BoardRenderer,
+	ZoomedBoard,
 	LeaderboardDisplay
 ) => {
 	'use strict';
 
 	const FOOD_BIT = 0x08;
-
-	// TODO:
-	// * zoom window (follow ant / cursor)
 
 	const QUEEN = 5;
 
@@ -97,6 +98,75 @@ define([
 	function hasFood(cell) {
 		/* jshint -W016 */ // allow bitwise operation
 		return cell & FOOD_BIT;
+	}
+
+	function make3DMarkers() {
+		const target = new MarkerTypes3D();
+
+		target.registerPointer('queen-locator-ring', {
+			model: new ModelTorus({
+				uv: false,
+				stride: 6,
+				segsX: 16,
+				segsY: 8,
+				rad1: 0.012,
+				rad2A: 0.005,
+				rad2B: 0.005,
+			}),
+			params: {
+				shadowStr: 0.8,
+				shadowCol: [0.0, 0.02, 0.03],
+				col: [1, 0.5, 0],
+			},
+		});
+		target.registerPointer('queen-locator-pointer', {
+			params: {
+				shadowStr: 0.8,
+				shadowCol: [0.0, 0.02, 0.03],
+				col: [1, 0.5, 0],
+			},
+		});
+		target.registerPointer('worker-locator-pointer', {
+			model: new ModelPoint({
+				uv: false,
+				stride: 6,
+				radius: 0.01,
+				height: 0.02,
+			}),
+			params: {
+				shadowStr: 0.8,
+				shadowCol: [0.0, 0.02, 0.03],
+				col: [0, 0.5, 1],
+			},
+		});
+		target.registerPointer('next-mover-locator-pointer', {
+			model: new ModelPoint({
+				uv: false,
+				stride: 6,
+				radius: 0.02,
+				height: 0.06,
+			}),
+			params: {
+				shadowStr: 0.8,
+				shadowCol: [0.0, 0.02, 0.03],
+				col: [0.3, 0.3, 0.3],
+			},
+		});
+		target.registerPointer('food-locator-pointer', {
+			model: new ModelPoint({
+				uv: false,
+				stride: 6,
+				radius: 0.005,
+				height: 0.01,
+			}),
+			params: {
+				shadowStr: 0.8,
+				shadowCol: [0.0, 0.02, 0.03],
+				col: [0.2, 0.2, 0.2],
+			},
+		});
+
+		return target;
 	}
 
 	return class Display extends EventObject {
@@ -188,7 +258,7 @@ define([
 				]},
 			]);
 			this.markers = new MarkerStore();
-			this.markerTypes3D = new MarkerTypes3D();
+			this.markerTypes3D = make3DMarkers();
 			this.board = new FullSwitchingBoard({
 				renderer: this.renderer,
 				markerStore: this.markers,
@@ -196,8 +266,14 @@ define([
 				begin3D: null,
 				scaleX: 0,
 			});
+			this.zoomedBoard = new ZoomedBoard({
+				width: 32,
+				height: 32,
+				scaleX: 16,
+			});
 			this.table = new LeaderboardDisplay();
 			this.renderer.setColourChoices(COLOUR_OPTIONS);
+			this.zoomedBoard.setColourChoices(COLOUR_OPTIONS);
 			this.options.setRenderPerformance(this.renderer);
 
 			this.options.addEventForwarding(this);
@@ -214,69 +290,6 @@ define([
 			this.foodMarkerType = '';
 			this.focussed = [];
 
-			this.markerTypes3D.registerPointer('queen-locator-ring', {
-				model: new ModelTorus({
-					uv: false,
-					stride: 6,
-					segsX: 16,
-					segsY: 8,
-					rad1: 0.012,
-					rad2A: 0.005,
-					rad2B: 0.005,
-				}),
-				params: {
-					shadowStr: 0.8,
-					shadowCol: [0.0, 0.02, 0.03],
-					col: [1, 0.5, 0],
-				},
-			});
-			this.markerTypes3D.registerPointer('queen-locator-pointer', {
-				params: {
-					shadowStr: 0.8,
-					shadowCol: [0.0, 0.02, 0.03],
-					col: [1, 0.5, 0],
-				},
-			});
-			this.markerTypes3D.registerPointer('worker-locator-pointer', {
-				model: new ModelPoint({
-					uv: false,
-					stride: 6,
-					radius: 0.01,
-					height: 0.02,
-				}),
-				params: {
-					shadowStr: 0.8,
-					shadowCol: [0.0, 0.02, 0.03],
-					col: [0, 0.5, 1],
-				},
-			});
-			this.markerTypes3D.registerPointer('next-mover-locator-pointer', {
-				model: new ModelPoint({
-					uv: false,
-					stride: 6,
-					radius: 0.02,
-					height: 0.06,
-				}),
-				params: {
-					shadowStr: 0.8,
-					shadowCol: [0.0, 0.02, 0.03],
-					col: [0.3, 0.3, 0.3],
-				},
-			});
-			this.markerTypes3D.registerPointer('food-locator-pointer', {
-				model: new ModelPoint({
-					uv: false,
-					stride: 6,
-					radius: 0.005,
-					height: 0.01,
-				}),
-				params: {
-					shadowStr: 0.8,
-					shadowCol: [0.0, 0.02, 0.03],
-					col: [0.2, 0.2, 0.2],
-				},
-			});
-
 			const entryEditButton = docutil.make(
 				'button',
 				{'class': 'entry-edit-button'},
@@ -289,12 +302,29 @@ define([
 			this.root = docutil.make('section', {'class': 'game-container'}, [
 				docutil.make('div', {'class': 'visualisation-container'}, [
 					this.options.dom(),
+					this.zoomedBoard.dom(),
 					this.board.dom(),
 					this.visualOptions.dom(),
 				]),
 				this.table.dom(),
 				entryEditButton,
 			]);
+
+			const throttledHover = rateUtils.throttle((x, y) => {
+				if(this.zoomedBoard.setFocus(x, y)) {
+					this.repositionMarkers();
+					this.board.rerender();
+				}
+			});
+
+			this.board.addEventListener('hover', throttledHover);
+			this.board.addEventListener('hoveroff', () => {
+				throttledHover.abort();
+				if(this.zoomedBoard.setFocus(null)) {
+					this.repositionMarkers();
+					this.board.rerender();
+				}
+			});
 		}
 
 		clear() {
@@ -303,6 +333,7 @@ define([
 			this.latestCurrentAnt = null;
 
 			this.renderer.clear();
+			this.zoomedBoard.clear();
 			this.table.clear();
 
 			this.markers.clear();
@@ -316,6 +347,7 @@ define([
 		updateGameConfig(config) {
 			this.options.updateGameConfig(config);
 			this.renderer.updateGameConfig(config);
+			this.zoomedBoard.updateGameConfig(config);
 			this.table.updateGameConfig(config);
 			this.latestW = config.width;
 			this.latestH = config.height;
@@ -326,6 +358,7 @@ define([
 		updateDisplayConfig(config) {
 			this.visualOptions.updateAttributes(config);
 			this.renderer.updateDisplayConfig(config);
+			this.zoomedBoard.updateDisplayConfig(config);
 
 			this.board.setScale(config.scale);
 			this.board.setWireframe(config.wireframe);
@@ -352,6 +385,7 @@ define([
 		updateState(state) {
 			this.options.updateState(state);
 			this.renderer.updateState(state);
+			this.zoomedBoard.updateState(state);
 			this.table.updateState(state);
 
 			this.latestAnts = state.ants;
@@ -364,6 +398,26 @@ define([
 
 		repositionMarkers() {
 			this.markers.clear();
+
+			if(this.zoomedBoard.hasFocus() && this.latestBoard) {
+				this.markers.mark('zoom', {
+					x: this.zoomedBoard.x - this.zoomedBoard.width / 2,
+					y: this.zoomedBoard.y - this.zoomedBoard.height / 2,
+					w: this.zoomedBoard.width,
+					h: this.zoomedBoard.height,
+					className: 'zoom-locator',
+					wrap: true,
+					clip: true,
+				});
+				const rhs = this.zoomedBoard.x < this.latestW / 2;
+				docutil.updateAttrs(this.zoomedBoard.dom(), {
+					'class': 'zoomed-board ' + (rhs ? 'right' : 'left'),
+				});
+			} else {
+				docutil.updateAttrs(this.zoomedBoard.dom(), {
+					'class': 'zoomed-board',
+				});
+			}
 
 			if(this.foodMarkerType && this.latestBoard) {
 				const ww = this.latestW;

@@ -1,9 +1,11 @@
 define([
 	'core/EventObject',
+	'core/rateUtils',
 	'./documentUtils',
 	'./style.css',
 ], (
 	EventObject,
+	rateUtils,
 	docutil
 ) => {
 	'use strict';
@@ -16,6 +18,7 @@ define([
 			super();
 
 			this.redraw = this.redraw.bind(this);
+			this._throttledRedraw = rateUtils.throttle(this.redraw);
 			this._beginDrag = this._beginDrag.bind(this);
 			this._drag = this._drag.bind(this);
 			this._endDrag = this._endDrag.bind(this);
@@ -91,9 +94,7 @@ define([
 			}
 			this.sizes[this.dragIndex] += d;
 			this.dragPos = pos;
-			if(!this.debouncedRedraw) {
-				this.debouncedRedraw = setTimeout(this.redraw, 10);
-			}
+			this._throttledRedraw();
 			e.preventDefault();
 		}
 
@@ -105,10 +106,7 @@ define([
 		}
 
 		redraw() {
-			if(this.debouncedRedraw) {
-				clearTimeout(this.debouncedRedraw);
-				this.debouncedRedraw = null;
-			}
+			this._throttledRedraw.abort();
 			const totalSize = this._totalFrac();
 			let sum = 0;
 			this.panes.forEach((element, index) => {

@@ -29,6 +29,18 @@ define([
 			this.boardClip = docutil.make('div', {'class': 'game-board-clip'}, [this.canvas]);
 			this.board = docutil.make('div', {'class': 'game-board'}, [this.boardClip]);
 
+			this.boardClip.addEventListener('mousemove', (event) => {
+				const bounds = this.boardClip.getBoundingClientRect();
+				this.trigger('hover', [
+					(event.clientX - bounds.left) / this.scaleX,
+					(event.clientY - bounds.top) / this.scaleY,
+				]);
+			});
+
+			this.boardClip.addEventListener('mouseleave', () => {
+				this.trigger('hoveroff');
+			});
+
 			this.context = this.canvas.getContext('2d');
 			this.setScale(scaleX, scaleY);
 		}

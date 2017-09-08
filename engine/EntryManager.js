@@ -1,12 +1,14 @@
 define([
 	'require',
 	'core/EventObject',
+	'core/rateUtils',
 	'display/documentUtils',
 	'display/SplitView',
 	'display/TreeTable',
 ], (
 	require,
 	EventObject,
+	rateUtils,
 	docutil,
 	SplitView,
 	TreeTable
@@ -63,12 +65,8 @@ define([
 			this.allowTeamModification = allowTeamModification;
 			this.entryHistories = new Map();
 
-			this.triggerChangeTm = null;
 			this._triggerChange = this._triggerChange.bind(this);
-			this._triggerChangeDebounced = () => {
-				clearTimeout(this.triggerChangeTm);
-				this.triggerChangeTm = setTimeout(this._triggerChange, 500);
-			};
+			this._triggerChangeDebounced = rateUtils.debounce(this._triggerChange, 500);
 			this.addTeam = this.addTeam.bind(this);
 			this.addEntry = this.addEntry.bind(this);
 
@@ -191,8 +189,7 @@ define([
 		}
 
 		_triggerChange() {
-			clearTimeout(this.triggerChangeTm);
-			this.triggerChangeTm = null;
+			this._triggerChangeDebounced.abort();
 			const selectedItem = this.tree.getSelectedItem();
 			if(!selectedItem) {
 				return;

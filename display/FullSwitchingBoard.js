@@ -108,7 +108,9 @@ define([
 			if(this.active !== desired) {
 				if(this.active) {
 					this.container.removeChild(this.active.dom());
+					this.active.removeEventForwarding(this);
 				}
+				desired.addEventForwarding(this);
 				this.container.appendChild(desired.dom());
 				this.active = desired;
 				this.active.repaint();
