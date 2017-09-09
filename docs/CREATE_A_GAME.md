@@ -113,3 +113,6 @@ integration with the Stack Exchange network, so you can post a question on
 [Programming Puzzles & Code Golf](https://codegolf.stackexchange.com/) (but
 remember to test-drive it first on Meta!) then return to your `/<game>.htm` file
 and fill in the question ID so that it will automatically load answers.
+
+Tag your question `king-of-the-hill` and `javascript` so that it will show up in
+[this list](https://codegolf.stackexchange.com/questions/tagged/king-of-the-hill+javascript).

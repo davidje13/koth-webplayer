@@ -4,17 +4,24 @@ This is a framework for Javascript-based King-of-the-Hill competitions.
 
 ## See it in Action
 
-* https://davidje13.github.io/koth-webplayer/formic.htm
-  (test implementation based on the existing [Formic Functions - Ant Queen of the Hill Contest](https://codegolf.stackexchange.com/q/135102/8927) challenge)
-* https://davidje13.github.io/koth-webplayer/botflocks.htm
-  (test implementation based on the existing [Block Building Bot Flocks!](https://codegolf.stackexchange.com/q/50690/8927) challenge)
-* https://davidje13.github.io/koth-webplayer/captureflag.htm
-  (test implementation based on the existing [Capture The Flag](https://codegolf.stackexchange.com/q/49028/8927) challenge)
-* https://davidje13.github.io/koth-webplayer/battlebots.htm
-  (test implementation based on the existing [Red vs. Blue - Pixel Team Battlebots](https://codegolf.stackexchange.com/q/48353/8927) challenge)
+* [Formic Functions](https://davidje13.github.io/koth-webplayer/formic.htm):
+  Test implementation based on
+  [an existing challenge](https://codegolf.stackexchange.com/q/135102/8927)
 
-And see the current unit test / linter status on master here:
-https://davidje13.github.io/koth-webplayer/test.htm
+* [Block Building Bot Flocks](https://davidje13.github.io/koth-webplayer/botflocks.htm):
+  Test implementation based on
+  [an existing challenge](https://codegolf.stackexchange.com/q/50690/8927)
+
+* [Capture The Flag](https://davidje13.github.io/koth-webplayer/captureflag.htm):
+  Test implementation based on
+  [an existing challenge](https://codegolf.stackexchange.com/q/49028/8927)
+
+* [Pixel Team Battlebots](https://davidje13.github.io/koth-webplayer/battlebots.htm):
+  Test implementation based on
+  [an existing challenge](https://codegolf.stackexchange.com/q/48353/8927)
+
+And see the current unit test / linter status on master
+[here](https://davidje13.github.io/koth-webplayer/test.htm).
 
 
 ## Making Games
