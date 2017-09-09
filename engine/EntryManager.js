@@ -15,11 +15,6 @@ define([
 ) => {
 	'use strict';
 
-	// TODO:
-	// * Allow drag+drop to reorder teams & entries, and switch entry teams
-	// * Add change handler to reordering to update managedTeams
-	// * Persist in local storage (maybe use answerID as unique refs)
-
 	function buildEntryRow(team, entry, enabledFn) {
 		const changed = entry.code !== entry.originalCode;
 		const enabledToggle = docutil.make('input', {

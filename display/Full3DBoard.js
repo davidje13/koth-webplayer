@@ -18,12 +18,6 @@ define([
 ) => {
 	'use strict';
 
-	// TODO:
-	// * move more low-level logic into webglUtils
-	// * is mip-mapping enabled on the texture? occasionally tries to read
-	//   beyond provided data, causing a black mark at the wrap point
-	//   (and can't use non-PoT texture)
-
 	function blend(a, b, r) {
 		return a * (1 - r) + b * r;
 	}

@@ -8,9 +8,6 @@ define([
 ) => {
 	'use strict';
 
-	// TODO: might be possible to merge this with HierarchyTable,
-	// or at least share lots of functionality
-
 	function countNesting(items) {
 		if(!items || !items.length) {
 			return 0;
@@ -188,15 +185,6 @@ define([
 		redrawRows() {
 			docutil.empty(this.tbody);
 			this.selected = null;
-
-			// TODO: only redraw changed values
-			// - each result has an associated row
-			//   - rows need to account for rowspans; maybe group @ outermost level
-			// - create any missing row entities and delete extras
-			//   - maybe use 'key' concept from react to reduce rerendering due to reordering
-			// - ensure rows are in correct order in table
-			//   - note that rowspan'd cells will need to be kept on the top-most row of the block
-			// - ensure data in rows is up to date
 
 			this.rows.length = 0;
 			this.rowLookup.clear();

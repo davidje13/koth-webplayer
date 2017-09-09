@@ -1,10 +1,6 @@
 'use strict';
 
 // TODO:
-// * remember display config in local storage / cookies
-// * remember custom entries in local storage (maybe)
-// * permalinks need to store which entries were chosen (& ordering)
-// * jump-to-entry in editor when pausing due to an error
 // * currently using the code editor mutates the original team object state;
 //   it should be considered immutable, and copies made (will need some
 //   thought on how to handle propagating changes made in a game back to

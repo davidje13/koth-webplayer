@@ -159,15 +159,6 @@ define(['./documentUtils', './style.css'], (docutil) => {
 		redrawRows() {
 			docutil.empty(this.tbody);
 
-			// TODO: only redraw changed values
-			// - each result has an associated row
-			//   - rows need to account for rowspans; maybe group @ outermost level
-			// - create any missing row entities and delete extras
-			//   - maybe use 'key' concept from react to reduce rerendering due to reordering
-			// - ensure rows are in correct order in table
-			//   - note that rowspan'd cells will need to be kept on the top-most row of the block
-			// - ensure data in rows is up to date
-
 			this.data.forEach((datum) => {
 				const rows = buildRows(this.columnData, datum);
 				rows.forEach((row) => this.tbody.appendChild(row));
