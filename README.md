@@ -17,8 +17,8 @@ https://davidje13.github.io/koth-webplayer/test.htm
 
 ## Making Games
 
-Check the [create-a-game](CREATE_A_GAME.md) guide for details on how to create
-your own games using this framework.
+Check the [create-a-game](docs/CREATE_A_GAME.md) guide for details on how to
+create your own games using this framework.
 
 
 ## Aims
@@ -43,5 +43,5 @@ This is early stages, and lots of functionality doesn't exist yet, or is rather
 quick-and-dirty, so it's likely that new games will need some changes to the
 engine itself.
 
-Contributions are welcome! Check the [contributing guidelines](CONTRIBUTING.md)
-for details.
+Contributions are welcome! Check the
+[contributing guidelines](docs/CONTRIBUTING.md) for details.
