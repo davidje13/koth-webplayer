@@ -274,7 +274,7 @@ define([
 				p1: entry.p1,
 				id: entry.answerID,
 				eid: anyEnemyEntry.answerID,
-				move: ++ entry.moves,
+				move: entry.moves + 1,
 				goal: {
 					x: this.goal.x,
 					y: this.goal.y,
@@ -298,7 +298,6 @@ define([
 			);
 			if(entry.pauseOnError) {
 				this.random.rollback();
-				-- entry.moves;
 				throw 'PAUSE';
 			}
 		}
@@ -385,6 +384,7 @@ define([
 			} else {
 				this.moveEntry(entry, action);
 			}
+			++ entry.moves;
 
 			return true;
 		}

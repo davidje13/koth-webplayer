@@ -1,0 +1,96 @@
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="content-security-policy" content="
+	base-uri 'self';
+	default-src 'none';
+	child-src blob:;
+	frame-src blob:;
+	connect-src https://api.stackexchange.com;
+	script-src 'self' 'unsafe-inline' blob:;
+	worker-src blob:;
+	style-src 'self';
+	img-src 'self';
+	form-action 'none';
+">
+
+<!-- these properties are read by the engine to configure the game -->
+<title>Capture the Flag</title>
+<link rel="icon" href="favicons/captureflag.png">
+<meta name="stack-exchange-site" content="codegolf">
+<meta name="stack-exchange-qid" content="49028">
+
+<meta name="team-view-columns" content='[
+	{"title": "ID", "attribute": "userID"}
+]'>
+
+<meta name="team-type" content="user_id_modulo">
+<meta name="team-type-args" content='{
+	"divide": 5,
+	"count": 2
+}'>
+
+<meta name="tournament-type" content="brawl">
+<meta name="tournament-type-args" content='{}'>
+
+<meta name="match-type" content="brawl">
+<meta name="match-type-args" content='{
+	"count": 50,
+	"teamShuffle": "none"
+}'>
+
+<meta name="game-type" content="captureflag">
+<meta name="game-config" content='{
+	"width": 350,
+	"height": 350,
+	"fieldPadding": 20,
+	"spawnPadding": 45,
+	"defenseRadius": 25,
+	"touchDistance": 10,
+	"initialStrength": 20,
+	"maxStrength": 20,
+	"jailStrength": 0,
+	"strengthGrowth": 2,
+	"maxFrame": 3000
+}'>
+<meta name="play-config" content='{
+	"delay": 10,
+	"speed": 1
+}'>
+<meta name="display-config" content='{
+	"scale": 1
+}'>
+
+<meta name="default-code" content="/*
+ * Inputs:
+ * this     - your bot (x, y, strength, id, isJailed)
+ * move     - the current move number (starting at 0)
+ * tJailed  - list of all jailed allies (x, y, strength, id, isJailed)
+ * eJailed  - list of all jailed opponents (x, y, strength, id, isJailed)
+ * team     - all allies
+ * enemies  - all opponents
+ * tFlag    - your team's flag (x, y, pickedUpBy); pickedUpBy is a bot object
+ *            or null if not picked up
+ * eFlag    - opponent team's flag (x, y, pickedUpBy)
+ * messages - shared messages object storing arbitrary data
+ * WIDTH    - the width of the playfield
+ * HEIGHT   - the height of the playfield
+ * FIELD_PADDING - distance from the corners of the board to the jails
+ * DEFENSE_RADIUS - minimum allowed distance to own flag / prison
+ *
+ * Return:
+ * an object containing the x and y delta to move
+ */
+
+return {x: 0, y: 0};
+">
+
+<script src="core/require.js"></script>
+<script src="engine/entry.js" async></script>
+</head>
+<body>
+
+<noscript>This viewer requires Javascript!</noscript>
+
+</body>
+</html>

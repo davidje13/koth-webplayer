@@ -246,7 +246,7 @@ define([
 			});
 
 			return {
-				move: ++ bot.moves,
+				move: bot.moves + 1,
 				x: bot.x,
 				y: bot.y,
 				tCount: counts[bot.teamIndex],
@@ -266,7 +266,6 @@ define([
 			);
 			if(entry.pauseOnError) {
 				this.random.rollback();
-				-- bot.moves;
 				throw 'PAUSE';
 			}
 		}
@@ -311,6 +310,7 @@ define([
 			} else {
 				this.moveBot(bot, action);
 			}
+			++ bot.moves;
 
 			return true;
 		}

@@ -1,0 +1,67 @@
+.game-board {
+	background: #FFFFFF;
+}
+
+.game-board .mark.bot-locator-T0 {
+	background: #FF0000;
+	margin: -5px;
+	width: 10px;
+	height: 10px;
+	border-radius: 100%;
+	z-index: 1;
+}
+
+.game-board .mark.bot-locator-T1 {
+	background: #0000FF;
+	margin: -5px;
+	width: 10px;
+	height: 10px;
+	border-radius: 100%;
+	z-index: 1;
+}
+
+.game-board .mark.focussed {
+	width: 16px;
+	height: 16px;
+	margin: -8px;
+}
+
+.game-board .mark.flag-locator-T0 {
+	border: 2px solid #FF0000;
+	margin: -5px;
+	width: 10px;
+	height: 10px;
+	border-radius: 100%;
+	box-sizing: border-box;
+	z-index: 3;
+}
+
+.game-board .mark.flag-locator-T1 {
+	border: 2px solid #0000FF;
+	margin: -5px;
+	width: 10px;
+	height: 10px;
+	border-radius: 100%;
+	box-sizing: border-box;
+	z-index: 3;
+}
+
+.game-board .mark.jail-locator-T0 {
+	border: 1px dotted #FF0000;
+	margin: -5px;
+	width: 10px;
+	height: 10px;
+	border-radius: 100%;
+	box-sizing: border-box;
+	z-index: 2;
+}
+
+.game-board .mark.jail-locator-T1 {
+	border: 1px dotted #0000FF;
+	margin: -5px;
+	width: 10px;
+	height: 10px;
+	border-radius: 100%;
+	box-sizing: border-box;
+	z-index: 2;
+}

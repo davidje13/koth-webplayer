@@ -19,14 +19,22 @@ define([
 			this.scaleX = 0;
 			this.scaleY = 0;
 			this.dataScale = 1;
+			this.hasBitmap = Boolean(renderer.getImageData);
 
 			this.renderedMarks = new Map();
 
-			window.devicePixelRatio = 1;
-			this.canvas = docutil.make('canvas');
-			this.canvas.width = 0;
-			this.canvas.height = 0;
-			this.boardClip = docutil.make('div', {'class': 'game-board-clip'}, [this.canvas]);
+			if(this.hasBitmap) {
+				window.devicePixelRatio = 1;
+				this.canvas = docutil.make('canvas');
+				this.canvas.width = 0;
+				this.canvas.height = 0;
+				this.context = this.canvas.getContext('2d');
+			} else {
+				this.canvas = {width: 0, height: 0};
+			}
+			this.boardClip = docutil.make('div', {'class': 'game-board-clip'}, [
+				this.hasBitmap ? this.canvas : null,
+			]);
 			this.board = docutil.make('div', {'class': 'game-board'}, [this.boardClip]);
 
 			this.boardClip.addEventListener('mousemove', (event) => {
@@ -41,17 +49,18 @@ define([
 				this.trigger('hoveroff');
 			});
 
-			this.context = this.canvas.getContext('2d');
 			this.setScale(scaleX, scaleY);
 		}
 
 		_updateStyles() {
 			const mx = this.scaleX / this.dataScale;
 			const my = this.scaleY / this.dataScale;
-			docutil.updateStyle(this.canvas, {
-				'width': (this.canvas.width * mx) + 'px',
-				'height': (this.canvas.height * my) + 'px',
-			});
+			if(this.hasBitmap) {
+				docutil.updateStyle(this.canvas, {
+					'width': (this.canvas.width * mx) + 'px',
+					'height': (this.canvas.height * my) + 'px',
+				});
+			}
 			docutil.updateStyle(this.board, {
 				'width': Math.round(this.canvas.width * mx) + 'px',
 				'height': Math.round(this.canvas.height * my) + 'px',
@@ -114,6 +123,20 @@ define([
 		}
 
 		repaint() {
+			if(!this.hasBitmap) {
+				const {width, height} = this.renderer.getSize();
+				if(
+					width !== this.canvas.width ||
+					height !== this.canvas.height
+				) {
+					this.canvas.width = width;
+					this.canvas.height = height;
+					this._updateStyles();
+				}
+				this.rerender();
+				return;
+			}
+
 			const data = this.renderer.getImageData();
 			if(data) {
 				const dataScale = this.renderer.scale || 1;
