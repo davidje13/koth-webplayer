@@ -1,9 +1,8 @@
 # koth-webplayer
 
-This is a work-in-progress framework for Javascript-based King-of-the-Hill
-competitions.
+This is a framework for Javascript-based King-of-the-Hill competitions.
 
-See it in action:
+## See it in Action
 
 * https://davidje13.github.io/koth-webplayer/formic.htm
   (test implementation based on the existing [Formic Functions - Ant Queen of the Hill Contest](https://codegolf.stackexchange.com/q/135102/8927) challenge)
@@ -12,7 +11,19 @@ See it in action:
 * https://davidje13.github.io/koth-webplayer/botflocks.htm
   (test implementation based on the existing [Block Building Bot Flocks!](https://codegolf.stackexchange.com/q/50690/8927) challenge)
 
-A rough set of aims for this project:
+And see the current unit test / linter status on master here:
+https://davidje13.github.io/koth-webplayer/test.htm
+
+
+## Making Games
+
+Check the [create-a-game](CREATE_A_GAME.md) guide for details on how to create
+your own games using this framework.
+
+
+## Aims
+
+This project has some rough aims:
 
 * Easy fetching of entries from Stack Exchange answers (done!)
 * Sandboxed and super-fast game simulation via the power of sandboxed iframes
@@ -25,36 +36,12 @@ A rough set of aims for this project:
 * Local storage persistence of display preferences & in-progress entries (not
   done)
 
-## Adding new games
 
-The aim is for games to be entirely modular, with helper classes (as well as
-match & tournament handling logic) kept separate and reusable. Adding a new game
-should be as simple as defining its `GameManager`, `GameScorer` and `Display`
-inside a folder named `/games/<game-name-here>/`, and creating a new HTML file
-in the root with the desired configuration metatags.
+## Modifying the Framework
 
-See `example.htm` and `/games/example/*` for details.
+This is early stages, and lots of functionality doesn't exist yet, or is rather
+quick-and-dirty, so it's likely that new games will need some changes to the
+engine itself.
 
-## Modification of the engine
-
-This is very early stages, and most functionality doesn't exist yet, or is
-rather quick-and-dirty, so it's likely that new games will need some changes to
-the engine itself.
-
-The project is designed to be runnable from the local filesystem; there should
-be no need to start a localhost server or run a browser with any special
-configuration. Other than codemirror and jshint (which have their code bundled
-in the /codemirror and /jshint directories), there are no dependencies (no
-jQuery, React, requirejs, etc.); I make no claims that that's a good (or even
-remotely sensible) architectural choice, just that I felt like working from the
-lowest level (several APIs here are heavily inspired by such projects and may
-be vaguely familiar).
-
-Modern Javascript syntax and APIs are used throughout and no polyfils are
-included, so don't expect this to work in Internet Explorer. So far it's been
-tested in Google Chrome, Mozilla Firefox, and Safari (including on iOS), but in
-theory it should work on any modern browser.
-
-Unit tests (few though they are) and linting can be run by opening the
-`test.htm` file in the root (see the current status on master at:
-https://davidje13.github.io/koth-webplayer/test.htm).
+Contributions are welcome! Check the [contributing guidelines](CONTRIBUTING.md)
+for details.

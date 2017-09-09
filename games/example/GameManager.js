@@ -93,6 +93,31 @@ define([
 			// Update anything which makes sense to change mid-game here
 		}
 
+		// This is an internal method; you can change the arguments to whatever
+		// you need when handling errors
+		handleError(entry, params, action, error) {
+			// errorInput, errorOutput, and error are presented to the user.
+			// Fill them in with something useful. For example:
+			entry.errorInput = JSON.stringify(params);
+			entry.errorOutput = action;
+			entry.error = (
+				error + ' (gave ' + entry.errorOutput +
+				' for ' + entry.errorInput + ')'
+			);
+			if(entry.pauseOnError) {
+				// To support pauseOnError, roll back the game state to just
+				// before the current move. For example, to roll back the
+				// random number generator:
+				this.random.rollback();
+				// Throwing 'PAUSE' will cause the manager to pause the game
+				throw 'PAUSE';
+			} else {
+				// If you want to auto-disqualify entries which break the
+				// rules:
+//				entry.disqualified = true;
+			}
+		}
+
 		step(type) {
 			// type will usually be '', but you can define custom step types
 			// and invoke them from your Display class (e.g. 'single')
@@ -107,6 +132,11 @@ define([
 
 			const entry = null; // Pick an entry
 
+			const params = {
+				my: 'foo',
+				parameters: 'bar',
+				here: 'baz',
+			};
 			let action = null;
 			let error = null;
 			let elapsed = 0;
@@ -115,12 +145,13 @@ define([
 				// For an example of how to allow competitors to use Math.random
 				// without becoming non-deterministic, see battlebots/botflocks
 				const begin = performance.now();
-				action = entry.fn({
-					my: 'foo',
-					parameters: 'bar',
-					here: 'baz',
-				}, {consoleTarget: entry.console});
+				action = entry.fn(params, {consoleTarget: entry.console});
 				elapsed = performance.now() - begin;
+
+				// If your error checking is complex, you may want to invoke a
+				// separate method instead of writing it inline here.
+				// For example:
+				// error = this.checkError(entry, action);
 
 				const actionIsBad = false; // Check this
 				if(actionIsBad) {
@@ -130,36 +161,24 @@ define([
 				error = entryUtils.stringifyEntryError(e);
 			}
 
+			// Recording average time taken can help to name-and-shame slow
+			// entries, but is not required
 			entry.elapsedTime += elapsed;
 			++ entry.codeSteps;
 
 			if(error) {
-				entry.errorInput = 'fn() inputs here'; // JSON.stringify is useful!
-				entry.errorOutput = action;
-				entry.error = (
-					error + ' (gave ' + entry.errorOutput +
-					' for ' + entry.errorInput + ')'
-				);
-				if(entry.pauseOnError) {
-					// To support pauseOnError, roll back the game state to just
-					// before the current move. For example, to roll back the
-					// random number generator:
-					this.random.rollback();
-					// Throwing 'PAUSE' will cause the manager to pause the game
-					throw 'PAUSE';
-				} else {
-					// If you want to auto-disqualify entries which break the
-					// rules:
-//					entry.disqualified = true;
-				}
+				this.handleError(entry, params, action, error);
 			} else {
 				// Apply the action
+				// It's often good to invoke separate method for this to avoid
+				// a massive do-everything step(), which would get hard to
+				// navigate. For example:
+				// this.performAction(entry, action);
 			}
 		}
 
 		isOver() {
-			// Begin at the beginning, return false until your game is over,
-			// then true.
+			// Return false until your game is over, then true.
 			return true;
 		}
 
