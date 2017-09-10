@@ -577,6 +577,8 @@ define([
 							x: objs.jail.x,
 							y: objs.jail.y,
 						},
+						spawn: objs.spawn,
+						captureZone: objs.captureZone,
 					};
 				}),
 			};

@@ -181,8 +181,26 @@ define([
 				return;
 			}
 			this.latestTeamStatuses.forEach((teamStatus) => {
+				this.markers.mark('zone-' + teamStatus.id, {
+					x: teamStatus.captureZone.x,
+					y: teamStatus.captureZone.y,
+					w: teamStatus.captureZone.w,
+					h: teamStatus.captureZone.h,
+					className: 'zone ' + teamStatus.id,
+					wrap: false,
+					clip: false,
+				});
+				this.markers.mark('spawn-' + teamStatus.id, {
+					x: teamStatus.spawn.x,
+					y: teamStatus.spawn.y,
+					w: teamStatus.spawn.w,
+					h: teamStatus.spawn.h,
+					className: 'spawn ' + teamStatus.id,
+					wrap: false,
+					clip: false,
+				});
 				teamStatus.entries.forEach((entryStatus) => {
-					let className = 'bot-locator-' + teamStatus.id;
+					let className = 'bot ' + teamStatus.id;
 					if(this.focussed.indexOf(entryStatus.id) !== -1) {
 						className += ' focussed';
 					}
@@ -197,14 +215,14 @@ define([
 				this.markers.mark('flag-' + teamStatus.id, {
 					x: teamStatus.flag.x,
 					y: teamStatus.flag.y,
-					className: 'flag-locator-' + teamStatus.id,
+					className: 'flag ' + teamStatus.id,
 					wrap: false,
 					clip: false,
 				});
 				this.markers.mark('jail-' + teamStatus.id, {
 					x: teamStatus.jail.x,
 					y: teamStatus.jail.y,
-					className: 'jail-locator-' + teamStatus.id,
+					className: 'jail ' + teamStatus.id,
 					wrap: false,
 					clip: false,
 				});

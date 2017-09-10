@@ -2,32 +2,68 @@
 	background: #FFFFFF;
 }
 
-.game-board .mark.bot-locator-T0 {
+.game-board .mark.zone {
+	z-index: 0;
+}
+
+.game-board .mark.zone.T0 {
+	background: rgba(255, 0, 0, 0.2);
+}
+
+.game-board .mark.zone.T1 {
+	background: rgba(0, 0, 255, 0.2);
+}
+
+.game-board .mark.spawn {
+	z-index: 1;
+	box-sizing: border-box;
+}
+
+.game-board .mark.spawn.T0 {
+	border: 2px dashed rgba(255, 0, 0, 0.2);
+	background: repeating-linear-gradient(
+		45deg,
+		rgba(255, 0, 0, 0.05),
+		rgba(255, 0, 0, 0.05) 18px,
+		rgba(255, 0, 0, 0.1) 18px,
+		rgba(255, 0, 0, 0.1) 20px
+	);
+}
+
+.game-board .mark.spawn.T1 {
+	border: 2px dashed rgba(0, 0, 255, 0.2);
+	background: repeating-linear-gradient(
+		45deg,
+		rgba(0, 0, 255, 0.05),
+		rgba(0, 0, 255, 0.05) 18px,
+		rgba(0, 0, 255, 0.1) 18px,
+		rgba(0, 0, 255, 0.1) 20px
+	);
+}
+
+.game-board .mark.bot {
+	margin: -5px;
+	width: 10px;
+	height: 10px;
+	border-radius: 100%;
+	z-index: 2;
+}
+
+.game-board .mark.bot.T0 {
 	background: #FF0000;
-	margin: -5px;
-	width: 10px;
-	height: 10px;
-	border-radius: 100%;
-	z-index: 1;
 }
 
-.game-board .mark.bot-locator-T1 {
+.game-board .mark.bot.T1 {
 	background: #0000FF;
-	margin: -5px;
-	width: 10px;
-	height: 10px;
-	border-radius: 100%;
-	z-index: 1;
 }
 
-.game-board .mark.focussed {
+.game-board .mark.bot.focussed {
 	width: 16px;
 	height: 16px;
 	margin: -8px;
 }
 
-.game-board .mark.flag-locator-T0 {
-	border: 2px solid #FF0000;
+.game-board .mark.jail {
 	margin: -5px;
 	width: 10px;
 	height: 10px;
@@ -36,32 +72,41 @@
 	z-index: 3;
 }
 
-.game-board .mark.flag-locator-T1 {
-	border: 2px solid #0000FF;
-	margin: -5px;
-	width: 10px;
-	height: 10px;
-	border-radius: 100%;
-	box-sizing: border-box;
-	z-index: 3;
-}
-
-.game-board .mark.jail-locator-T0 {
+.game-board .mark.jail.T0 {
 	border: 1px dotted #FF0000;
-	margin: -5px;
-	width: 10px;
-	height: 10px;
-	border-radius: 100%;
-	box-sizing: border-box;
-	z-index: 2;
 }
 
-.game-board .mark.jail-locator-T1 {
+.game-board .mark.jail.T1 {
 	border: 1px dotted #0000FF;
-	margin: -5px;
-	width: 10px;
-	height: 10px;
+}
+
+.game-board .mark.flag {
+	margin: -6px;
+	width: 12px;
+	height: 12px;
 	border-radius: 100%;
 	box-sizing: border-box;
-	z-index: 2;
+	z-index: 4;
+}
+
+.game-board .mark.flag:after {
+	content: "F";
+	font-size: 6px;
+	line-height: 8px;
+	text-align: center;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.game-board .mark.flag.T0 {
+	border: 2px solid #FF0000;
+	color: #FF0000;
+}
+
+.game-board .mark.flag.T1 {
+	border: 2px solid #0000FF;
+	color: #0000FF;
 }
