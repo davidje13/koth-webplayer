@@ -53,7 +53,7 @@ define(['./StackExchangeAPI'], (StackExchangeAPI) => {
 				link: item.link,
 				title,
 				code: '',
-				error,
+				error: error.toString(),
 				enabled: false,
 			};
 		}

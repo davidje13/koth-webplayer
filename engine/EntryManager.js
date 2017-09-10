@@ -321,9 +321,6 @@ define([
 			const currentItem = this.tree.getItemWhere((item) => (item.datum.baseEntry === entry));
 			if(currentItem) {
 				this.tree.select(currentItem.datum);
-				// Fix strange codemirror behaviour where gutter is not shown if
-				// this makes it appear (should be identical to other selection types?)
-				this.refresh();
 			}
 		}
 
@@ -426,6 +423,12 @@ define([
 					name: 'javascript',
 					statementIndent: indent,
 				});
+
+				// Should not be required, but CodeMirror seems to have a bug
+				// if the editor was not already visible and there are less than
+				// 10 lines of code, the gutter has a width of 0. This works
+				// around that.
+				this.codeEditor.refresh();
 			} else {
 				this.codeEditor.value = code;
 			}

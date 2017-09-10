@@ -1,0 +1,62 @@
+.game-board .mark.cell {
+	margin: -20px;
+	width: 40px;
+	height: 40px;
+	border-radius: 100%;
+	box-sizing: border-box;
+	z-index: 1;
+	background: rgba(0, 0, 0, 0.05);
+	box-shadow: inset 0 5px 20px rgba(0, 0, 0, 0.5);
+}
+
+.game-board .mark.token {
+	margin: -20px;
+	width: 40px;
+	height: 40px;
+	border-radius: 100%;
+	box-sizing: border-box;
+	z-index: 1;
+	box-shadow:
+		inset 0 -5px 20px rgba(0, 0, 0, 0.2),
+		0 2px 4px rgba(0, 0, 0, 0.2);
+	font-size: 20px;
+	line-height: 40px;
+	text-align: center;
+	color: #FFFFFF;
+}
+
+.game-board .mark.C0 {
+	background: #EE4422;
+}
+
+.game-board .mark.C1 {
+	background: #66EE22;
+}
+
+.game-board .mark.C2 {
+	background: #2266EE;
+}
+
+.game-board .mark.bot {
+	margin: -15px;
+	width: 30px;
+	height: 30px;
+	z-index: 2;
+	font-size: 24px;
+	line-height: 30px;
+	text-align: center;
+	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+	transition: top 0.1s, left 0.1s;
+}
+
+.game-board .mark.bot.focussed {
+	font-size: 30px;
+	text-shadow: 0 0 4px rgba(255, 255, 0, 1);
+	z-index: 3;
+}
+
+.game-board .mark.bot:before {
+	content: "\01F916";
+	position: relative;
+	top: 2px;
+}

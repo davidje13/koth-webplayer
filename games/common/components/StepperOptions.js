@@ -173,7 +173,9 @@ define([
 		}
 
 		updateGameConfig(config) {
-			if(this.maxFrame !== docutil.document.activeElement) {
+			if(config.maxFrame === undefined) {
+				docutil.updateAttrs(this.maxFrame, {'disabled': 'disabled'});
+			} else if(this.maxFrame !== docutil.document.activeElement) {
 				this.maxFrame.value = config.maxFrame;
 			}
 			if(config.seed !== this.currentSeed) {

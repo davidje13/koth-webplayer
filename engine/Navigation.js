@@ -47,7 +47,7 @@ define([
 		}
 
 		removeLoader() {
-			this.base.removeChild(this.loader.dom());
+			docutil.setParent(this.loader.dom(), null);
 		}
 
 		dom() {

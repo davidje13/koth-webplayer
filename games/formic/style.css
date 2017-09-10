@@ -85,6 +85,7 @@
 	z-index: 1;
 	overflow: hidden;
 	box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+	margin: -5px 10px;
 }
 .zoomed-board.right {
 	display: block;

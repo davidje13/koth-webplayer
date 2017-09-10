@@ -42,26 +42,26 @@ require([
 					'entries (' + loaded + '/' + total + ')',
 					0.3 + 0.7 * (loaded / total)
 				);
-			}).catch((error) => {
-				navigation.removeLoader();
-				const ignoreBtn = docutil.make('button', {}, ['Continue Anyway']);
-				const errorDom = docutil.make('div', {'class': 'error'}, [
-					'Failed to load entries: ' + error,
-					ignoreBtn,
-				]);
-				ignoreBtn.addEventListener('click', () => {
-					docutil.body.removeChild(errorDom);
-					engine.begin();
-					navigation.addPageProvider(engine);
-					navigation.checkNavigation();
-				});
-				docutil.body.appendChild(errorDom);
 			});
 		}).then(() => {
 			navigation.removeLoader();
 			engine.begin();
 			navigation.addPageProvider(engine);
 			navigation.checkNavigation();
+		}).catch((error) => {
+			navigation.removeLoader();
+			const ignoreBtn = docutil.make('button', {}, ['Continue Anyway']);
+			const errorDom = docutil.make('div', {'class': 'error'}, [
+				'Failed to load entries: ' + error,
+				ignoreBtn,
+			]);
+			ignoreBtn.addEventListener('click', () => {
+				docutil.body.removeChild(errorDom);
+				engine.begin();
+				navigation.addPageProvider(engine);
+				navigation.checkNavigation();
+			});
+			docutil.body.appendChild(errorDom);
 		});
 	});
 });

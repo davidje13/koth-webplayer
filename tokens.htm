@@ -1,0 +1,97 @@
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="content-security-policy" content="
+	base-uri 'self';
+	default-src 'none';
+	child-src blob:;
+	frame-src blob:;
+	connect-src https://api.stackexchange.com;
+	script-src 'self' 'unsafe-inline' blob:;
+	worker-src blob:;
+	style-src 'self';
+	img-src 'self';
+	form-action 'none';
+">
+
+<!-- these properties are read by the engine to configure the game -->
+<title>Everybody loves tokens</title>
+<link rel="icon" href="favicons/tokens.png">
+<meta name="stack-exchange-site" content="codegolf">
+<meta name="stack-exchange-qid" content="77235">
+
+<meta name="team-view-columns" content='[]'>
+
+<meta name="team-type" content="free_for_all">
+<meta name="team-type-args" content='{}'>
+
+<meta name="tournament-type" content="all_v_all">
+<meta name="tournament-type-args" content='{
+	"teamLimit": 2
+}'>
+
+<meta name="match-type" content="brawl">
+<meta name="match-type-args" content='{
+	"count": 20,
+	"teamShuffle": "roundRobin"
+}'>
+
+<meta name="game-type" content="tokens">
+<meta name="game-config" content='{
+	"minSize": 5,
+	"maxSize": 15,
+	"maxValue": 3,
+	"maxThinkingTime": 1000,
+	"bonusGrowth": 1,
+	"fillFactor": 2,
+	"idleTimeoutFactor": 4,
+	"colourNames": ["#FF0000", "#00FF00", "#0000FF"]
+}'>
+<meta name="play-config" content='{
+	"delay": 150,
+	"speed": 1
+}'>
+<meta name="display-config" content='{
+	"size": 600
+}'>
+
+<meta name="default-code" content="/*
+ * Constructor inputs:
+ * player1  - true if you are player1, false if player2
+ *
+ * yourMove inputs:
+ * player1 - details about player1:
+ *           pos: [x, y]
+ *           score
+ *           colourBonus
+ *           lastColor
+ * player2 - details about player2 (as above)
+ * tokens  - array of arrays (tokens[x][y]) of:
+ *           false: no token in cell or;
+ *           {color: 'name', points}
+ *
+ * Return: a string, one of:
+ * UP    - move up 1 square if not at top
+ * DOWN  - move down 1 square if not at bottom
+ * LEFT  - move left 1 square if not at left side
+ * RIGHT - move right 1 square if not at right side
+ * EAT   - consume token on current square (if any)
+ * PASS  - do nothing
+ */
+
+function(player1) {
+    this.yourMove = function({player1, player2, tokens}) {
+        return 'PASS';
+    }
+}
+">
+
+<script src="core/require.js"></script>
+<script src="engine/entry.js" async></script>
+</head>
+<body>
+
+<noscript>This viewer requires Javascript!</noscript>
+
+</body>
+</html>

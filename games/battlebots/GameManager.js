@@ -257,7 +257,7 @@ define([
 			};
 		}
 
-		handleError(bot, entry, params, action, error) {
+		handleError(entry, params, action, error) {
 			entry.errorInput = JSON.stringify(params);
 			entry.errorOutput = action;
 			entry.error = (
@@ -306,7 +306,7 @@ define([
 			++ entry.codeSteps;
 
 			if(error) {
-				this.handleError(bot, entry, params, action, error);
+				this.handleError(entry, params, action, error);
 			} else {
 				this.moveBot(bot, action);
 			}

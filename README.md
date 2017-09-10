@@ -8,6 +8,10 @@ This is a framework for Javascript-based King-of-the-Hill competitions.
   Test implementation based on
   [an existing challenge](https://codegolf.stackexchange.com/q/135102/8927)
 
+* [Everybody Loves Tokens](https://davidje13.github.io/koth-webplayer/tokens.htm):
+  Test implementation based on
+  [an existing challenge](https://codegolf.stackexchange.com/q/77235/8927)
+
 * [Block Building Bot Flocks](https://davidje13.github.io/koth-webplayer/botflocks.htm):
   Test implementation based on
   [an existing challenge](https://codegolf.stackexchange.com/q/50690/8927)
