@@ -51,7 +51,6 @@ define([
 					'const postMessage = undefined;' +
 					'const Date = undefined;' +
 					'const performance = undefined;' +
-					'const _argThis = parameters["this"] || {};' +
 					'const console = (extras.consoleTarget ?' +
 					'((({consoleTarget, consoleLimit = 100, consoleItemLimit = 1024}) => {' +
 						'const dolog = (type, values) => {' +
@@ -84,7 +83,7 @@ define([
 					'extras = undefined;' +
 					'return (function({' + parameters.join(',') + '}) {\n' +
 						code + '\n' +
-					'}).call(_argThis, parameters);' +
+					'}).call(parameters["this"] || {}, parameters);' +
 				'};\n'
 			);
 
