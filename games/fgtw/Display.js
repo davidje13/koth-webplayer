@@ -4,7 +4,6 @@ define([
 	'display/documentUtils',
 	'display/MarkerStore',
 	'display/Full2DBoard',
-	'display/OptionsBar',
 	'games/common/components/StepperOptions',
 	'./components/LeaderboardDisplay',
 	'games/common/style.css',
@@ -15,7 +14,6 @@ define([
 	docutil,
 	MarkerStore,
 	Full2DBoard,
-	OptionsBar,
 	StepperOptions,
 	LeaderboardDisplay
 ) => {
@@ -30,14 +28,15 @@ define([
 			this.size = 0;
 		}
 
-		updateState({size}) {
-			this.size = size;
+		updateGameConfig({cells, teams}) {
+			this.cells = cells;
+			this.teams = teams.length;
 		}
 
 		getSize() {
 			return {
-				width: this.size,
-				height: this.size,
+				width: this.cells,
+				height: this.teams,
 			};
 		}
 	}
@@ -46,12 +45,6 @@ define([
 		constructor() {
 			super();
 
-			this.latestDisplaySize = 0;
-			this.latestSize = 0;
-			this.latestBoard = null;
-			this.latestTeamStatuses = null;
-			this.latestColourNames = [];
-
 			this.renderer = new BoardRenderer();
 			this.options = new StepperOptions([
 				{
@@ -59,11 +52,6 @@ define([
 					title: 'Pause',
 					event: 'changeplay',
 					params: [{delay: 0, speed: 0}],
-				}, {
-					label: '>',
-					title: 'Step',
-					event: 'step',
-					params: ['single', 1],
 				}, {
 					label: '>>',
 					title: 'Step Frame',
@@ -111,13 +99,6 @@ define([
 					params: [{delay: 0, speed: -1}],
 				},
 			]);
-			this.visualOptions = new OptionsBar('changedisplay', [
-				{attribute: 'size', values: [
-					{value: 300, label: '300x300'},
-					{value: 600, label: '600x600'},
-					{value: 1000, label: '1000x1000'},
-				]},
-			]);
 			this.markers = new MarkerStore();
 			this.board = new Full2DBoard({
 				renderer: this.renderer,
@@ -127,9 +108,11 @@ define([
 			this.table = new LeaderboardDisplay();
 
 			this.options.addEventForwarding(this);
-			this.visualOptions.addEventForwarding(this);
 
 			this.latestTeamStatuses = null;
+			this.latestCells = 0;
+			this.latestFrame = 0;
+			this.latestCycle = 0;
 			this.focussed = [];
 
 			const entryEditButton = docutil.make(
@@ -145,7 +128,6 @@ define([
 				docutil.make('div', {'class': 'visualisation-container'}, [
 					this.options.dom(),
 					this.board.dom(),
-					this.visualOptions.dom(),
 				]),
 				this.table.dom(),
 				entryEditButton,
@@ -154,6 +136,9 @@ define([
 
 		clear() {
 			this.latestTeamStatuses = null;
+			this.latestCells = 0;
+			this.latestFrame = 0;
+			this.latestCycle = 0;
 
 			this.renderer.clear();
 			this.table.clear();
@@ -167,22 +152,16 @@ define([
 
 		updateGameConfig(config) {
 			this.options.updateGameConfig(config);
+			this.renderer.updateGameConfig(config);
 			this.table.updateGameConfig(config);
 
-			this.latestColourNames = config.colourNames;
+			this.latestCells = config.cells;
 
 			this.board.repaint();
 		}
 
-		refreshScale() {
-			this.board.setScale(this.latestDisplaySize / (this.latestSize || 1));
-		}
-
 		updateDisplayConfig(config) {
-			this.visualOptions.updateAttributes(config);
-			this.latestDisplaySize = config.size;
-
-			this.refreshScale();
+			this.board.setScale(config.scaleX, config.scaleY);
 
 			if(
 				!arrayUtils.shallowEqual(config.focussed, this.focussed)
@@ -196,15 +175,11 @@ define([
 
 		updateState(state) {
 			this.options.updateState(state);
-			this.renderer.updateState(state);
 			this.table.updateState(state);
 
 			this.latestTeamStatuses = state.teams;
-			this.latestSize = state.size;
-			this.latestBoard = state.board;
-			this.latestTeamStatuses = state.teams;
-
-			this.refreshScale();
+			this.latestFrame = state.completedFrame;
+			this.latestCycle = state.completedCycle;
 
 			this.repositionMarkers();
 			this.board.repaint();
@@ -213,37 +188,48 @@ define([
 		repositionMarkers() {
 			this.markers.clear();
 
-			if(!this.latestBoard || !this.latestTeamStatuses) {
+			if(!this.latestTeamStatuses) {
 				return;
 			}
-			for(let y = 0; y < this.latestSize; ++ y) {
-				for(let x = 0; x < this.latestSize; ++ x) {
-					const token = this.latestBoard[y * this.latestSize + x];
-					const value = Math.floor(token / this.latestColourNames.length);
-					const col = (token % this.latestColourNames.length);
+			for(let y = 0; y < this.latestTeamStatuses.length; ++ y) {
+				for(let x = 0; x < this.latestCells; ++ x) {
 					this.markers.mark('cell-' + x + '-' + y, {
 						x,
 						y,
-						className: (token ? ('token C' + col) : 'cell'),
-						content: token ? String(value) : null,
+						className: 'cell',
 						wrap: false,
 						clip: false,
 					});
 				}
 			}
-			this.latestTeamStatuses.forEach((teamStatus) => {
+			this.latestTeamStatuses.forEach((teamStatus, teamIndex) => {
 				teamStatus.entries.forEach((entryStatus) => {
-					let className = 'bot';
+					let className = entryStatus.alive ? 'player' : 'player dead';
 					if(this.focussed.indexOf(entryStatus.id) !== -1) {
 						className += ' focussed';
 					}
-					this.markers.mark('bot-' + entryStatus.id, {
-						x: entryStatus.x,
-						y: entryStatus.y,
+					this.markers.mark('player-' + entryStatus.id, {
+						x: entryStatus.cell - 1,
+						y: teamIndex,
 						className: className,
 						wrap: false,
 						clip: false,
 					});
+					const shots = entryStatus.shotHistory[this.latestFrame] || [];
+					for(let i = 0; i < shots.length; ++ i) {
+						this.markers.mark('shot-' + entryStatus.id + '-' + i, {
+							x: entryStatus.cell - 1,
+							y: teamIndex,
+							toX: shots[i] - 1,
+							toY: (teamIndex + 1) % this.latestTeamStatuses.length,
+							className: (
+								'shot' +
+								(i === this.latestCycle - 1 ? ' latest' : '')
+							),
+							wrap: false,
+							clip: false,
+						});
+					}
 				});
 			});
 		}

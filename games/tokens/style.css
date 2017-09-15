@@ -15,7 +15,7 @@
 	height: 40px;
 	border-radius: 100%;
 	box-sizing: border-box;
-	z-index: 1;
+	z-index: 2;
 	box-shadow:
 		inset 0 -5px 20px rgba(0, 0, 0, 0.2),
 		0 2px 4px rgba(0, 0, 0, 0.2);
@@ -41,7 +41,7 @@
 	margin: -15px;
 	width: 30px;
 	height: 30px;
-	z-index: 2;
+	z-index: 3;
 	font-size: 24px;
 	line-height: 30px;
 	text-align: center;
@@ -52,7 +52,7 @@
 .game-board .mark.bot.focussed {
 	font-size: 30px;
 	text-shadow: 0 0 4px rgba(255, 255, 0, 1);
-	z-index: 3;
+	z-index: 4;
 }
 
 .game-board .mark.bot:before {

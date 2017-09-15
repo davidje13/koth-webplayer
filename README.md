@@ -12,6 +12,10 @@ This is a framework for Javascript-based King-of-the-Hill competitions.
   Test implementation based on
   [an existing challenge](https://codegolf.stackexchange.com/q/77235/8927)
 
+* [Fastest Gun of the West](https://davidje13.github.io/koth-webplayer/fgtw.htm):
+  Test implementation based on
+  [an existing challenge](https://codegolf.stackexchange.com/q/51698/8927)
+
 * [Block Building Bot Flocks](https://davidje13.github.io/koth-webplayer/botflocks.htm):
   Test implementation based on
   [an existing challenge](https://codegolf.stackexchange.com/q/50690/8927)

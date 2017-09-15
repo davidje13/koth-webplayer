@@ -408,7 +408,7 @@ define([
 		handleError(bot, params, action, error, sharedRollback) {
 			const entry = this.entryLookup.get(bot.entry);
 			entry.errorInput = JSON.stringify(params);
-			entry.errorOutput = action;
+			entry.errorOutput = JSON.stringify(action);
 			entry.error = (
 				error + ' (gave ' + entry.errorOutput +
 				' for ' + entry.errorInput + ')'

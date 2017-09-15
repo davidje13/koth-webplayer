@@ -62,6 +62,24 @@ define([
 		});
 	}
 
+	function parseEntryCode(format, codeBlocks) {
+		return format.replace(/\{\{(codeblock:.*?)\}\}/g, (match, p) => {
+			const params = {
+				codeblock: 0,
+				prefix: '',
+			};
+			p.split(/, +/).forEach((param) => {
+				const kv = param.split(':', 2);
+				params[kv[0]] = kv[1];
+			});
+			const code = (codeBlocks[Number(params.codeblock)] || '');
+			return (code
+				.replace(/\n$/, '')
+				.replace(/(^|\n)([^\n])/g, '$1' + params.prefix + '$2')
+			);
+		});
+	}
+
 	return class Engine {
 		constructor(pageConfig, nav) {
 			this.pageConfig = pageConfig;
@@ -499,14 +517,17 @@ define([
 		}
 
 		begin() {
+			this.rawEntries.forEach((entry) => {
+				entry.originalCode = entry.code = parseEntryCode(
+					this.pageConfig.codeTemplate,
+					entry.codeBlocks
+				);
+			});
+
 			this.allTeams = this.TeamMaker.pickTeams(
 				this.rawEntries,
 				this.pageConfig.teamTypeArgs
 			);
-
-			this.allTeams.forEach((team) => team.entries.forEach((entry) => {
-				entry.originalCode = entry.code;
-			}));
 
 			this.buildWelcomePage();
 			this.buildTournamentPage();

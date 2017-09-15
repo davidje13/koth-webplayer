@@ -9,7 +9,8 @@ define(['./StackExchangeAPI'], (StackExchangeAPI) => {
 		'<code\\b(?:[^\'">]|\'[^\']*\'|"[^"]*")*>' +
 		'([^]*?)' +
 		'</code>' +
-		'</pre>'
+		'</pre>',
+		'g'
 	);
 
 	function findRegex(content, r, index) {
@@ -25,8 +26,16 @@ define(['./StackExchangeAPI'], (StackExchangeAPI) => {
 		let title = 'Unknown competitor from ' + item.owner.display_name;
 		try {
 			title = findRegex(item.body, REG_TITLE, 2) || title;
-			const code = findRegex(item.body, REG_CODE, 1);
-			if(!code) {
+			REG_CODE.lastIndex = 0;
+			const codeBlocks = [];
+			while(true) {
+				const code = findRegex(item.body, REG_CODE, 1);
+				if(code === null) {
+					break;
+				}
+				codeBlocks.push(code);
+			}
+			if(!codeBlocks.length) {
 				throw new Error('Code not found!');
 			}
 			const entry = {
@@ -35,7 +44,7 @@ define(['./StackExchangeAPI'], (StackExchangeAPI) => {
 				userID: item.owner.user_id,
 				link: item.link,
 				title,
-				code,
+				codeBlocks,
 				enabled: true,
 			};
 
@@ -52,7 +61,7 @@ define(['./StackExchangeAPI'], (StackExchangeAPI) => {
 				userID: item.owner.user_id,
 				link: item.link,
 				title,
-				code: '',
+				codeBlocks: [],
 				error: error.toString(),
 				enabled: false,
 			};

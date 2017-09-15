@@ -372,7 +372,10 @@ define([
 
 			const usedClasses = new Set();
 			marks.forEach((mark) => {
-				if(mark.w === null || mark.h === null) {
+				if(
+					(mark.w === null || mark.h === null) &&
+					(mark.toX === null || mark.toY === null)
+				) {
 					usedClasses.add(mark.className);
 				}
 			});
@@ -395,7 +398,11 @@ define([
 				});
 
 				marks.forEach((mark) => {
-					if(mark.className === className && (mark.w === null || mark.h === null)) {
+					if(
+						mark.className === className &&
+						(mark.w === null || mark.h === null) &&
+						(mark.toX === null || mark.toY === null)
+					) {
 						const locn = board.find(
 							(mark.x + 0.5) / this.boardW,
 							(mark.y + 0.5) / this.boardH

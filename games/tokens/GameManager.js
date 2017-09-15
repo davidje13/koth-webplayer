@@ -144,7 +144,7 @@ define([
 
 		handleError(entry, params, action, error) {
 			entry.errorInput = JSON.stringify(params);
-			entry.errorOutput = action;
+			entry.errorOutput = JSON.stringify(action);
 			entry.error = (
 				error + ' (gave ' + entry.errorOutput +
 				' for ' + entry.errorInput + ')'

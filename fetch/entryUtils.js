@@ -24,10 +24,43 @@ define([
 			userName: entry.userName,
 			userID: entry.userID,
 			title: unescapeHTML(entry.title),
-			code: unescapeHTML(entry.code),
+			codeBlocks: entry.codeBlocks.map(unescapeHTML),
 			enabled: entry.enabled,
 			pauseOnError: false,
 		};
+	}
+
+	function stringifyCompileError(e, prefix = '') {
+		if(typeof e !== 'object') {
+			return prefix + String(e);
+		}
+		const location = (e.lineNumber || e.line || 'unknown line');
+		if(e.message) {
+			return prefix + e.message + ' @ ' + location;
+		}
+		return prefix + e.toString() + ' @ ' + location;
+	}
+
+	function stringifyEntryError(e, prefix = 'Threw ') {
+		if(typeof e !== 'object') {
+			return prefix + String(e);
+		}
+		if(e.stack) {
+			const stack = e.stack;
+			const m = stack.match(/:([0-9]+):([0-9]+)?/);
+			if(m) {
+				return (
+					prefix + e.message +
+					' (line ' + (m[1] - 1) + ' column ' + (m[2] || 0) + ')'
+				);
+			} else {
+				return prefix + e.stack;
+			}
+		}
+		if(e.message) {
+			return prefix + e.message;
+		}
+		return prefix + e.toString();
 	}
 
 	return {
@@ -108,10 +141,10 @@ define([
 						fn = self.tempFn.bind({});
 						self.tempFn = null;
 					} catch(e2) {
-						compileError = e2.message || e2.toString();
+						compileError = stringifyCompileError(e2);
 					}
 				} else {
-					compileError = e.message || e.toString();
+					compileError = stringifyCompileError(e);
 				}
 			}
 			const compileTime = performance.now() - begin;
@@ -119,27 +152,7 @@ define([
 			return {fn, compileError, compileTime};
 		},
 
-		stringifyEntryError: (e) => {
-			if(typeof e !== 'object') {
-				return 'Threw ' + String(e);
-			}
-			if(e.stack) {
-				const stack = e.stack;
-				const m = stack.match(/:([0-9]+):([0-9]+)?/);
-				if(m) {
-					return (
-						'Threw ' + e.message +
-						' (line ' + (m[1] - 1) + ' column ' + (m[2] || 0) + ')'
-					);
-				} else {
-					return 'Threw ' + e.stack;
-				}
-			}
-			if(e.message) {
-				return 'Threw ' + e.message;
-			}
-			return 'Threw ' + e.toString();
-		},
+		stringifyEntryError,
 
 		load: (site, qid, progressCallback) => {
 			const loaderWorker = workerUtils.make(pathLoaderWorker);

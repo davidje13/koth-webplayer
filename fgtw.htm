@@ -1,0 +1,117 @@
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="content-security-policy" content="
+	base-uri 'self';
+	default-src 'none';
+	child-src blob:;
+	frame-src blob:;
+	connect-src https://api.stackexchange.com;
+	script-src 'self' 'unsafe-inline' blob:;
+	worker-src blob:;
+	style-src 'self';
+	img-src 'self';
+	form-action 'none';
+">
+
+<!-- these properties are read by the engine to configure the game -->
+<title>Fastest gun of the west</title>
+<link rel="icon" href="favicons/fgtw.png">
+<meta name="stack-exchange-site" content="codegolf">
+<meta name="stack-exchange-qid" content="51698">
+<meta name="stack-exchange-code-template" content="function attributes() {
+{{codeblock:0, prefix:    }}
+}
+
+function main(bulletsLeft, yourShots, enemyShots, yourMovement, enemyMovement) {
+{{codeblock:1, prefix:    }}
+}
+">
+
+<meta name="team-view-columns" content='[]'>
+
+<meta name="team-type" content="free_for_all">
+<meta name="team-type-args" content='{}'>
+
+<meta name="tournament-type" content="all_v_all">
+<meta name="tournament-type-args" content='{
+	"teamLimit": 2
+}'>
+
+<meta name="match-type" content="brawl">
+<meta name="match-type-args" content='{
+	"count": 50,
+	"teamShuffle": "roundRobin"
+}'>
+
+<meta name="game-type" content="fgtw">
+<meta name="game-config" content='{
+	"cells": 24,
+	"initialCell": 12,
+	"freeBullets": 1,
+	"bulletCost": 1,
+	"baseReloadSpeed": 4,
+	"reloadCost": 2,
+	"freeShotsPerTurn": 1,
+	"shotPerTurnCost": 3,
+	"freeMoveSpeed": 1,
+	"moveSpeedCost": 3,
+	"totalPoints": 15,
+	"maxFrame": 66
+}'>
+<meta name="play-config" content='{
+	"delay": 50,
+	"speed": 1
+}'>
+<meta name="display-config" content='{
+	"scaleX": 30,
+	"scaleY": 50
+}'>
+
+<meta name="default-code" content="/*
+ * attributes is called once at the start of the game
+ */
+function attributes() {
+    return {
+        name: 'foobar',
+        numbOfBullets: 7,
+        reloadSpeed: 1,
+        shotsPerTurn: 1,
+        moveSpeed: 2,
+    };
+}
+
+/*
+ * main is called each turn.
+ * Input:
+ * bulletsLeft   - number of bullets remaining in your gun
+ * yourShots     - array of shots you have taken over previous turns; each enry
+ *                 is an array of locations shot at that turn
+ * enemyShots    - array of shots taken by your enemy over previous turns
+ * yourMovement  - array of your past positions
+ * enemyMovement - array of enemy past positions
+ *
+ * Return:
+ * An object containing:
+ * shots  - array of cells to shoot
+ * move   - number denoting space to move to
+ * reload - true to begin reloading
+ */
+function main(bulletsLeft, yourShots, enemyShots, yourMovement, enemyMovement) {
+    return {
+        shots: [],
+        move: [],
+        reload: false,
+    };
+}
+">
+
+<script src="core/require.js"></script>
+<script src="engine/entry.js" async></script>
+</head>
+<body>
+
+<noscript>This viewer requires Javascript!</noscript>
+
+</body>
+</html>

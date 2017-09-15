@@ -99,7 +99,7 @@ define([
 			// errorInput, errorOutput, and error are presented to the user.
 			// Fill them in with something useful. For example:
 			entry.errorInput = JSON.stringify(params);
-			entry.errorOutput = action;
+			entry.errorOutput = JSON.stringify(action);
 			entry.error = (
 				error + ' (gave ' + entry.errorOutput +
 				' for ' + entry.errorInput + ')'

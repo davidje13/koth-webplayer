@@ -90,10 +90,6 @@ define([
 				docutil.updateAttrs(dom.element, {
 					'class': 'mark ' + (mark.className || ''),
 				});
-				docutil.updateStyle(dom.element, {
-					'left': x1 + 'px',
-					'top': y1 + 'px',
-				});
 				if(typeof mark.content === 'string') {
 					docutil.updateText(dom.text, mark.content);
 					docutil.setParent(dom.textHold, dom.element);
@@ -102,13 +98,37 @@ define([
 				} else {
 					docutil.empty(dom.element);
 				}
-				if(mark.w !== null && mark.h !== null) {
+				if(mark.toX !== null && mark.toY !== null) {
 					// TODO: wrapping
-					const x2 = Math.floor((mark.x + mark.w) * this.scaleX);
-					const y2 = Math.floor((mark.y + mark.h) * this.scaleY);
+					const x2 = Math.floor((mark.toX + 0.5) * this.scaleX);
+					const y2 = Math.floor((mark.toY + 0.5) * this.scaleY);
+					const l = Math.sqrt(
+						(x2 - x1) * (x2 - x1) +
+						(y2 - y1) * (y2 - y1)
+					);
 					docutil.updateStyle(dom.element, {
+						'left': (x1 + x2 - l) * 0.5 + 'px',
+						'top': (y1 + y2) * 0.5 + 'px',
+						'transform': 'rotate(' + Math.atan2(
+							y2 - y1,
+							x2 - x1
+						) + 'rad)',
+						'width': l + 'px',
+					});
+				} else if(mark.w !== null && mark.h !== null) {
+					// TODO: wrapping
+					const x2 = Math.floor((mark.x + mark.w + 0.5) * this.scaleX);
+					const y2 = Math.floor((mark.y + mark.h + 0.5) * this.scaleY);
+					docutil.updateStyle(dom.element, {
+						'left': x1 + 'px',
+						'top': y1 + 'px',
 						'width': (x2 - x1) + 'px',
 						'height': (y2 - y1) + 'px',
+					});
+				} else {
+					docutil.updateStyle(dom.element, {
+						'left': x1 + 'px',
+						'top': y1 + 'px',
 					});
 				}
 				docutil.setParent(dom.element, mark.clip ? this.boardClip : this.board);

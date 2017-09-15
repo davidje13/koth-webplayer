@@ -29,6 +29,7 @@ define(['display/documentUtils'], (docutil) => {
 		defaultCode: meta('default-code', '// Code here\n'),
 		site,
 		qid,
+		codeTemplate: meta('stack-exchange-code-template', '{{codeblock:0}}\n'),
 		questionURL: meta(
 			'stack-exchange-question-url',
 			'https://' + site + '.stackexchange.com/questions/' + qid
