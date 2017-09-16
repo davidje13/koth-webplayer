@@ -262,8 +262,10 @@ const requireFactory = () => {
 	}
 
 	require = (sources, fn, base) => {
-		return Promise.all(sources.map(requireOne.bind(null, base))).then((deps) =>
-			fn && fn.apply(null, deps));
+		return (Promise
+			.all(sources.map(requireOne.bind(null, base)))
+			.then((deps) => fn && fn.apply(null, deps))
+		);
 	};
 
 	function define(src, depends, factory) {

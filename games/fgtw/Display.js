@@ -4,8 +4,9 @@ define([
 	'display/documentUtils',
 	'display/MarkerStore',
 	'display/Full2DBoard',
+	'./GameScorer',
+	'games/common/components/LeaderboardDisplay',
 	'games/common/components/StepperOptions',
-	'./components/LeaderboardDisplay',
 	'games/common/style.css',
 	'./style.css',
 ], (
@@ -14,8 +15,9 @@ define([
 	docutil,
 	MarkerStore,
 	Full2DBoard,
-	StepperOptions,
-	LeaderboardDisplay
+	GameScorer,
+	LeaderboardDisplay,
+	StepperOptions
 ) => {
 	'use strict';
 
@@ -105,7 +107,32 @@ define([
 				markerStore: this.markers,
 				scaleX: 0,
 			});
-			this.table = new LeaderboardDisplay();
+
+			this.table = new LeaderboardDisplay({
+				columns: [{
+					title: 'Alive?',
+					generator: (entry) => (entry.alive ? 'yes' : 'no'),
+				}, {
+					title: 'Speed',
+					generator: (entry) => (entry.speed),
+				}, {
+					title: 'Shots',
+					generator: (entry) => (entry.shots),
+				}, {
+					title: 'Bullets',
+					generator: (entry) => (entry.currentBullets + ' / ' + entry.bullets),
+				}, {
+					title: 'Reloading?',
+					generator: (entry) => (entry.reloadCounter ? (
+						((entry.reloadSpeed + 1 - entry.reloadCounter) +
+						' / ' + entry.reloadSpeed)
+					) : 'no'),
+				}, {
+					title: 'Kills',
+					generator: (entry) => (entry.kills),
+				}],
+				GameScorer,
+			});
 
 			this.options.addEventForwarding(this);
 

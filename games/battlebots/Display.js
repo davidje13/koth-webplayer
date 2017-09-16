@@ -5,9 +5,10 @@ define([
 	'display/MarkerStore',
 	'display/Full2DBoard',
 	'display/OptionsBar',
+	'./GameScorer',
+	'games/common/components/LeaderboardDisplay',
 	'games/common/components/StepperOptions',
 	'./components/BoardRenderer',
-	'./components/LeaderboardDisplay',
 	'games/common/style.css',
 	'./style.css',
 ], (
@@ -17,9 +18,10 @@ define([
 	MarkerStore,
 	Full2DBoard,
 	OptionsBar,
+	GameScorer,
+	LeaderboardDisplay,
 	StepperOptions,
-	BoardRenderer,
-	LeaderboardDisplay
+	BoardRenderer
 ) => {
 	'use strict';
 
@@ -128,7 +130,18 @@ define([
 				markerStore: this.markers,
 				scaleX: 0,
 			});
-			this.table = new LeaderboardDisplay();
+
+			this.table = new LeaderboardDisplay({
+				columns: [{
+					title: 'Alive?',
+					generator: (entry) => (entry.alive ? 'yes' : 'no'),
+				}, {
+					title: 'Kills',
+					generator: (entry) => (entry.kills),
+				}],
+				GameScorer,
+			});
+
 			this.renderer.setColourChoices(COLOUR_OPTIONS);
 			this.options.setRenderPerformance(this.renderer);
 

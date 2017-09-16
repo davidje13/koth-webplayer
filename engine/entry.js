@@ -48,7 +48,7 @@ require([
 			engine.begin();
 			navigation.addPageProvider(engine);
 			navigation.checkNavigation();
-		}).catch((error) => {
+		}, (error) => {
 			navigation.removeLoader();
 			const ignoreBtn = docutil.make('button', {}, ['Continue Anyway']);
 			const errorDom = docutil.make('div', {'class': 'error'}, [

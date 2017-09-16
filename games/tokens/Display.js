@@ -5,8 +5,9 @@ define([
 	'display/MarkerStore',
 	'display/Full2DBoard',
 	'display/OptionsBar',
+	'./GameScorer',
+	'games/common/components/LeaderboardDisplay',
 	'games/common/components/StepperOptions',
-	'./components/LeaderboardDisplay',
 	'games/common/style.css',
 	'./style.css',
 ], (
@@ -16,8 +17,9 @@ define([
 	MarkerStore,
 	Full2DBoard,
 	OptionsBar,
-	StepperOptions,
-	LeaderboardDisplay
+	GameScorer,
+	LeaderboardDisplay,
+	StepperOptions
 ) => {
 	'use strict';
 
@@ -124,7 +126,17 @@ define([
 				markerStore: this.markers,
 				scaleX: 0,
 			});
-			this.table = new LeaderboardDisplay();
+
+			this.table = new LeaderboardDisplay({
+				columns: [{
+					title: 'Current Bonus',
+					generator: (entry) => (entry.lastBonus),
+//				}, {
+//					title: 'Current Colour',
+//					generator: (entry) => (???),
+				}],
+				GameScorer,
+			});
 
 			this.options.addEventForwarding(this);
 			this.visualOptions.addEventForwarding(this);

@@ -9,10 +9,11 @@ define([
 	'display/MarkerTypes3D',
 	'display/FullSwitchingBoard',
 	'display/OptionsBar',
+	'./GameScorer',
+	'games/common/components/LeaderboardDisplay',
 	'games/common/components/StepperOptions',
 	'./components/BoardRenderer',
 	'./components/ZoomedBoard',
-	'./components/LeaderboardDisplay',
 	'games/common/style.css',
 	'./style.css',
 ], (
@@ -26,16 +27,18 @@ define([
 	MarkerTypes3D,
 	FullSwitchingBoard,
 	OptionsBar,
+	GameScorer,
+	LeaderboardDisplay,
 	StepperOptions,
 	BoardRenderer,
-	ZoomedBoard,
-	LeaderboardDisplay
+	ZoomedBoard
 ) => {
 	'use strict';
 
 	const FOOD_BIT = 0x08;
 
 	const QUEEN = 5;
+	const WORKER_COUNT = 4;
 
 	const COLOUR_OPTIONS = {
 		saturated: {
@@ -271,7 +274,22 @@ define([
 				height: 32,
 				scaleX: 16,
 			});
-			this.table = new LeaderboardDisplay();
+
+			this.table = new LeaderboardDisplay({
+				columns: [{
+					title: 'Food',
+					generator: (entry) => (entry.food),
+				}, {
+					title: 'Workers',
+					nested: arrayUtils.makeList(WORKER_COUNT).map((v, i) => ({
+						title: 'Type ' + (i + 1),
+						attribute: 'type' + i,
+						generator: (entry) => (entry.workers[i]),
+					})),
+				}],
+				GameScorer,
+			});
+
 			this.renderer.setColourChoices(COLOUR_OPTIONS);
 			this.zoomedBoard.setColourChoices(COLOUR_OPTIONS);
 			this.options.setRenderPerformance(this.renderer);

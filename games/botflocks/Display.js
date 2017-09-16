@@ -5,9 +5,10 @@ define([
 	'display/MarkerStore',
 	'display/Full2DBoard',
 	'display/OptionsBar',
+	'./GameScorer',
+	'games/common/components/LeaderboardDisplay',
 	'games/common/components/StepperOptions',
 	'./components/BoardRenderer',
-	'./components/LeaderboardDisplay',
 	'games/common/style.css',
 	'./style.css',
 ], (
@@ -17,9 +18,10 @@ define([
 	MarkerStore,
 	Full2DBoard,
 	OptionsBar,
+	GameScorer,
+	LeaderboardDisplay,
 	StepperOptions,
-	BoardRenderer,
-	LeaderboardDisplay
+	BoardRenderer
 ) => {
 	'use strict';
 
@@ -59,6 +61,20 @@ define([
 		if(COLOUR_OPTIONS.hasOwnProperty(i)) {
 			COLOUR_OPTIONS_SELECT.push({value: i, label: COLOUR_OPTIONS[i].name});
 		}
+	}
+
+	function paletteLabelDecorator(entry, entryIndex, teamIndex, data) {
+		const scheme = data.colourChoices[data.colourscheme];
+		if(!scheme) {
+			return entry.title;
+		}
+		const palette = scheme.palette;
+		const colSample = docutil.make('div', {'class': 'colour-sample'});
+		const c = palette[teamIndex + 3] || palette[2];
+		docutil.updateStyle(colSample, {
+			background: 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')',
+		});
+		return docutil.make('span', {}, [colSample, entry.title]);
 	}
 
 	return class Display extends EventObject {
@@ -140,9 +156,18 @@ define([
 				markerStore: this.markers,
 				scaleX: 0,
 			});
-			this.table = new LeaderboardDisplay();
+
+			this.table = new LeaderboardDisplay({
+				columns: [{
+					title: 'Points',
+					generator: (entry) => (entry.points),
+				}],
+				GameScorer,
+				labelDecorator: paletteLabelDecorator,
+			});
+			this.table.setCustomData({colourChoices: COLOUR_OPTIONS});
+
 			this.renderer.setColourChoices(COLOUR_OPTIONS);
-			this.table.setColourChoices(COLOUR_OPTIONS);
 			this.options.setRenderPerformance(this.renderer);
 
 			this.options.addEventForwarding(this);
@@ -198,7 +223,7 @@ define([
 		updateDisplayConfig(config) {
 			this.visualOptions.updateAttributes(config);
 			this.renderer.updateDisplayConfig(config);
-			this.table.updateDisplayConfig(config);
+			this.table.setCustomData({colourscheme: config.colourscheme});
 
 			this.board.setScale(config.scale);
 

@@ -5,9 +5,10 @@ define([
 	'display/MarkerStore',
 	'display/Full2DBoard',
 	'display/OptionsBar',
+	'./GameScorer',
+	'games/common/components/LeaderboardDisplay',
 	'games/common/components/StepperOptions',
 	'./components/BoardRenderer',
-	'./components/LeaderboardDisplay',
 	'games/common/style.css',
 	'./style.css',
 ], (
@@ -17,9 +18,10 @@ define([
 	MarkerStore,
 	Full2DBoard,
 	OptionsBar,
+	GameScorer,
+	LeaderboardDisplay,
 	StepperOptions,
-	BoardRenderer,
-	LeaderboardDisplay
+	BoardRenderer
 ) => {
 	'use strict';
 
@@ -100,7 +102,23 @@ define([
 				markerStore: this.markers,
 				scaleX: 0,
 			});
-			this.table = new LeaderboardDisplay();
+
+			this.table = new LeaderboardDisplay({
+				columns: [{
+					title: 'Jailed?',
+					generator: (entry) => (entry.captured ? 'yes' : 'no'),
+				}, {
+					title: 'Has Flag?',
+					generator: (entry) => (entry.hasFlag ? 'yes' : 'no'),
+				}, {
+					title: 'Captures',
+					generator: (entry) => (entry.captures),
+				}, {
+					title: 'Strength',
+					generator: (entry) => (entry.strength.toFixed(1)),
+				}],
+				GameScorer,
+			});
 
 			this.options.addEventForwarding(this);
 			this.visualOptions.addEventForwarding(this);
