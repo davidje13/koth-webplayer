@@ -188,9 +188,7 @@ define([
 					entry.error = compiledCode.compileError;
 				} else {
 					const oldRandom = Math.random;
-					Math.random = () => {
-						return this.random.next(0x100000000) / 0x100000000;
-					};
+					Math.random = this.random.floatGenerator();
 					try {
 						const functions = compiledCode.fn({}, {});
 						const attributes = functions.attributes.call({});
@@ -261,9 +259,7 @@ define([
 			let elapsed = 0;
 
 			const oldRandom = Math.random;
-			Math.random = () => {
-				return this.random.next(0x100000000) / 0x100000000;
-			};
+			Math.random = this.random.floatGenerator();
 			try {
 				const begin = performance.now();
 				action = entry.mainFn.call(

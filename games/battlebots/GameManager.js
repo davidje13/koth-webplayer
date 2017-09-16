@@ -45,9 +45,7 @@ define([
 	function makeAPIExtras({console, random}) {
 		return {
 			consoleTarget: console,
-			MathRandom: () => {
-				return random.next(0x100000000) / 0x100000000;
-			},
+			MathRandom: random.floatGenerator(),
 		};
 	}
 

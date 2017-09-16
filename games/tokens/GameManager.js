@@ -111,9 +111,7 @@ define([
 					entry.error = compiledCode.compileError;
 				} else {
 					const oldRandom = Math.random;
-					Math.random = () => {
-						return this.random.next(0x100000000) / 0x100000000;
-					};
+					Math.random = this.random.floatGenerator();
 					try {
 						entry.obj = compiledCode.fn({first: entry.first}, {});
 						// Automatically un-disqualify entries when code is updated
@@ -261,9 +259,7 @@ define([
 			let elapsed = 0;
 
 			const oldRandom = Math.random;
-			Math.random = () => {
-				return this.random.next(0x100000000) / 0x100000000;
-			};
+			Math.random = this.random.floatGenerator();
 			try {
 				const begin = performance.now();
 				action = entry.obj.yourMove(params);

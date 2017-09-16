@@ -85,6 +85,18 @@ define(() => {
 			return ((this.s[3] + y1) >>> 0) % range;
 		}
 
+		intGenerator(range = 0x100000000) {
+			return this.next.bind(this, range);
+		}
+
+		nextFloat(range = 1) {
+			return (this.next(0x100000000) / 0x100000000) * range;
+		}
+
+		floatGenerator(range = 1) {
+			return this.nextFloat.bind(this, range);
+		}
+
 		makeRandomSeed() {
 			let s = '';
 			for(let i = 0; i < 4; ++ i) {

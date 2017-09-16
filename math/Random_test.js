@@ -89,6 +89,48 @@ define(['./Random'], (Random) => {
 			});
 		});
 
+		describe('intGenerator', () => {
+			it('returns a function which generates integers', () => {
+				const random = new Random('abc');
+				const generator = random.intGenerator();
+				expect(generator(), isInteger());
+			});
+		});
+
+		describe('nextFloat', () => {
+			it('generates floats', () => {
+				const random = new Random('abc');
+				const value = random.nextFloat();
+				expect(value, hasType('number'));
+			});
+
+			it('uses the range [0 n)', () => {
+				const random = new Random('abc');
+				for(let i = 0; i < 100; ++ i) {
+					const value = random.nextFloat(0.1);
+					expect(value, not(isLowerThan(0)));
+					expect(value, isLowerThan(0.1));
+				}
+			});
+
+			it('defaults to a range of [0 1)', () => {
+				const random = new Random('abc');
+				for(let i = 0; i < 100; ++ i) {
+					const value = random.nextFloat();
+					expect(value, not(isLowerThan(0)));
+					expect(value, isLowerThan(1));
+				}
+			});
+		});
+
+		describe('floatGenerator', () => {
+			it('returns a function which generates floats', () => {
+				const random = new Random('abc');
+				const generator = random.floatGenerator();
+				expect(generator(), hasType('number'));
+			});
+		});
+
 		describe('makeRandomSeed', () => {
 			it('generates a seed using the pseudo-random generator', () => {
 				const random = new Random('abc');
