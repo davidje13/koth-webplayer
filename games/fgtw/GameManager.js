@@ -242,11 +242,11 @@ define([
 				shots: [],
 			};
 
-			if(entry.disqualified || !entry.alive) {
+			const enemyEntry = this.entries.find((e) => (e.alive && e !== entry));
+
+			if(entry.disqualified || !entry.alive || !enemyEntry) {
 				return;
 			}
-
-			const enemyEntry = this.entries.find((e) => (e !== entry));
 
 			const params = {
 				bulletsLeft: entry.currentBullets,
