@@ -48,59 +48,15 @@ define([
 			super();
 
 			this.renderer = new BoardRenderer();
-			this.options = new StepperOptions([
-				{
-					label: '\u25A0',
-					title: 'Pause',
-					event: 'changeplay',
-					params: [{delay: 0, speed: 0}],
-				}, {
-					label: '>>',
-					title: 'Step Frame',
-					event: 'step',
-					params: [null, 1],
-				}, {
-					label: '\u215B',
-					title: 'Play 1/8 Speed',
-					event: 'changeplay',
-					params: [{delay: 4000, speed: 1}],
-				}, {
-					label: '\u00BC',
-					title: 'Play 1/4 Speed',
-					event: 'changeplay',
-					params: [{delay: 2000, speed: 1}],
-				}, {
-					label: '\u00BD',
-					title: 'Play 1/2 Speed',
-					event: 'changeplay',
-					params: [{delay: 1000, speed: 1}],
-				}, {
-					label: '\u25B6',
-					title: 'Play',
-					event: 'changeplay',
-					params: [{delay: 500, speed: 1}],
-				}, {
-					label: '\u25B6\u25B6',
-					title: 'Play Fast',
-					event: 'changeplay',
-					params: [{delay: 150, speed: 1}],
-				}, {
-					label: '\u25B6\u25B6\u25B6',
-					title: 'Play Very Fast',
-					event: 'changeplay',
-					params: [{delay: 50, speed: 1}],
-				}, {
-					label: '\u25B6\u25B6\u25B6\u25B6',
-					title: 'Play Crazy Fast',
-					event: 'changeplay',
-					params: [{delay: 1, speed: 1}],
-				}, {
-					label: '\u25B6!',
-					title: 'Fastest Possible',
-					event: 'changeplay',
-					params: [{delay: 0, speed: -1}],
-				},
-			]);
+			this.options = new StepperOptions(StepperOptions.makeSpeedButtons({
+				'-3': {delay: 4000, speed: 1},
+				'-2': {delay: 2000, speed: 1},
+				'-1': {delay: 1000, speed: 1},
+				'0': {delay: 500, speed: 1},
+				'1': {delay: 150, speed: 1},
+				'2': {delay: 50, speed: 1},
+				'3': {delay: 1, speed: 1},
+			}, {stepSingle: false}));
 			this.markers = new MarkerStore();
 			this.board = new Full2DBoard({
 				renderer: this.renderer,

@@ -21,34 +21,69 @@ define([
 		params: [],
 	};
 
+	const DEFAULT_SPEEDS = {
+		'-3': {delay: 0, speed: 1},
+	};
+
 	const SPEED_BUTTONS = [
-		{
-			label: '\u25A0',
-			title: 'Pause',
-			event: 'changeplay',
-			params: [{delay: 0, speed: 0}],
-		}, {
-			label: '>',
-			title: 'Step',
-			event: 'step',
-			params: ['single', 1],
-		}, {
-			label: '>>',
-			title: 'Step Frame',
-			event: 'step',
-			params: [null, 1],
-		}, {
-			label: '\u25B6',
-			title: 'Play',
-			event: 'changeplay',
-			params: [{delay: 0, speed: 1}],
-		}, {
-			label: '\u25B6!',
-			title: 'Fastest Possible',
-			event: 'changeplay',
-			params: [{delay: 0, speed: -1}],
-		},
+		{key: -3, label: '\u215B', title: 'Play 1/8 Speed'},
+		{key: -2, label: '\u00BC', title: 'Play 1/4 Speed'},
+		{key: -1, label: '\u00BD', title: 'Play 1/2 Speed'},
+		{key: 0, label: '\u25B6', title: 'Play'},
+		{key: 1, label: '\u25B6\u25B6', title: 'Play Fast'},
+		{key: 2, label: '\u25B6\u25B6\u25B6', title: 'Play Very Fast'},
+		{key: 3, label: '\u25B6\u25B6\u25B6\u25B6', title: 'Play Crazy Fast'},
 	];
+
+	function makeSpeedButtons(speeds, {
+		pause = true,
+		stepSingle = true,
+		stepFrame = true,
+		fastestPossible = true,
+	} = {}) {
+		const buttons = [];
+		if(pause) {
+			buttons.push({
+				label: '\u25A0',
+				title: 'Pause',
+				event: 'changeplay',
+				params: [{delay: 0, speed: 0}],
+			});
+		}
+		if(stepSingle) {
+			buttons.push({
+				label: '>',
+				title: 'Step',
+				event: 'step',
+				params: ['single', 1],
+			});
+		}
+		if(stepFrame) {
+			buttons.push({
+				label: '>>',
+				title: 'Step Frame',
+				event: 'step',
+				params: [null, 1],
+			});
+		}
+		SPEED_BUTTONS.forEach((type) => {
+			if(speeds[type.key]) {
+				buttons.push(Object.assign({
+					event: 'changeplay',
+					params: [speeds[type.key]],
+				}, type));
+			}
+		});
+		if(fastestPossible) {
+			buttons.push({
+				label: '\u25B6!',
+				title: 'Fastest Possible',
+				event: 'changeplay',
+				params: [{delay: 0, speed: -1}],
+			});
+		}
+		return buttons;
+	}
 
 	function makeButton(config, target) {
 		const element = docutil.make(
@@ -80,9 +115,13 @@ define([
 		return true;
 	}
 
-	return class StepperOptions extends EventObject {
-		constructor(speedButtons = SPEED_BUTTONS) {
+	class StepperOptions extends EventObject {
+		constructor(speedButtons) {
 			super();
+
+			if(!speedButtons) {
+				speedButtons = makeSpeedButtons(DEFAULT_SPEEDS);
+			}
 
 			this.renderPerf = null;
 			this.currentSeed = '';
@@ -206,5 +245,9 @@ define([
 		dom() {
 			return this.bar;
 		}
-	};
+	}
+
+	StepperOptions.makeSpeedButtons = makeSpeedButtons;
+
+	return StepperOptions;
 });
