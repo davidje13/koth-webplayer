@@ -28,7 +28,7 @@ define([
 			idleTimeoutFactor,
 			colourNames,
 		}) {
-			this.random = random; // a seeded random object you can use
+			this.random = random;
 
 			this.size = random.next(maxSize + 1 - minSize) + minSize;
 			this.board = new Uint8Array(this.size * this.size);

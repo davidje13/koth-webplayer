@@ -14,7 +14,6 @@ define(() => {
 
 			this.rawTeams = null;
 			this.dat = null;
-			this.dirty = true;
 			this.renderTime = 0;
 			this.renderCount = 0;
 		}
@@ -36,7 +35,6 @@ define(() => {
 			if(this.dat) {
 				this.dat.data.fill(0);
 			}
-			this.dirty = true;
 		}
 
 		repaint() {
@@ -64,13 +62,11 @@ define(() => {
 					d[p * 4 + 3] = c[3];
 				}
 			}));
-			this.dirty = false;
 		}
 
 		updateGameConfig({width, height}) {
 			if(!this.dat || width !== this.dat.width || height !== this.dat.height) {
 				this.dat = new ImageData(width, height);
-				this.dirty = true;
 			}
 		}
 

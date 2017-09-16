@@ -63,8 +63,53 @@ define([
 		return prefix + e.toString();
 	}
 
+	function findCandidates(code, varExpr) {
+		if(varExpr.indexOf('*') === -1) {
+			return new Set([varExpr]);
+		}
+		const regex = new RegExp(varExpr.replace(/\*/g, '[a-zA-Z0-9_]*'), 'g');
+		const found = new Set();
+		while(true) {
+			const p = regex.exec(code);
+			if(!p) {
+				break;
+			}
+			found.add(p[0]);
+		}
+		return found;
+	}
+
+	function buildFunctionFinder(code, returning) {
+		let parts = '';
+		for(let k in returning) {
+			if(!returning.hasOwnProperty(k)) {
+				continue;
+			}
+			parts += JSON.stringify(k) + ':';
+			const vars = findCandidates(code, returning[k]);
+			if(vars.size === 1) {
+				parts += vars.values().next().value;
+			} else if(vars.size > 1) {
+				parts += (
+					'((()=>{' +
+					vars.map((v) => 'try{return ' + v + ';}catch(e){}').join('') +
+					'})())'
+				);
+			} else {
+				parts += 'null';
+			}
+			parts += ',';
+		}
+		return 'return {' + parts + '};';
+	}
+
 	return {
-		compile: (code, parameters, pre = '') => {
+		compile: (code, parameters, {pre = '', returning = null} = {}) => {
+			let post = '';
+			if(returning !== null) {
+				post = buildFunctionFinder(code, returning);
+			}
+
 			// Wrap code in function which blocks access to obviously dangerous
 			// globals (this wrapping cannot be relied on as there may be other
 			// ways to access global scope, but should prevent accidents - other
@@ -115,7 +160,7 @@ define([
 					pre +
 					'extras = undefined;' +
 					'return (function({' + parameters.join(',') + '}) {\n' +
-						code + '\n' +
+						code + '\n' + post +
 					'}).call(parameters["this"] || {}, parameters);' +
 				'};\n'
 			);

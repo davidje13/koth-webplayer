@@ -149,7 +149,7 @@ define([
 					'eNear',
 					'setMsg',
 					'getMsg',
-				], 'Math.random = extras.MathRandom;');
+				], {pre: 'Math.random = extras.MathRandom;'});
 				entry.fn = compiledCode.fn;
 				if(compiledCode.compileError) {
 					entry.disqualified = true;

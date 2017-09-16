@@ -80,7 +80,7 @@ define([
 			totalPoints,
 			maxFrame,
 		}) {
-			this.random = random; // a seeded random object you can use
+			this.random = random;
 
 			this.cells = cells;
 			this.freeBullets = freeBullets;
@@ -179,8 +179,9 @@ define([
 			}
 			if(code !== null) {
 				const compiledCode = entryUtils.compile(
-					code + '\nreturn {attributes, main};',
-					[]
+					code,
+					[],
+					{returning: {attributes: 'attributes', main: 'main'}}
 				);
 				if(compiledCode.compileError) {
 					entry.disqualified = true;

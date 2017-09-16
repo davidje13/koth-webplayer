@@ -210,7 +210,7 @@ define([
 					'HEIGHT',
 					'FIELD_PADDING',
 					'DEFENSE_RADIUS',
-				], 'Math.random = extras.MathRandom;');
+				], {pre: 'Math.random = extras.MathRandom;'});
 				entry.fn = compiledCode.fn;
 				if(compiledCode.compileError) {
 					entry.disqualified = true;
