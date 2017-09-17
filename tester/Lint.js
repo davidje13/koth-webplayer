@@ -155,6 +155,40 @@ define(['require', 'document', 'jshint/jshint'], (require, document, jshint) => 
 					.filter((error) => (error !== null))
 				);
 
+				const testStyle = (regex, errCode, message, ln, lineNumber) => {
+					const match = ln.match(regex);
+					if(match) {
+						messages.push(
+							errCode + ' @' + (lineNumber + 1 - LINE_DIFF) +
+							':' + match.index +
+							': ' + message
+						);
+					}
+				};
+
+				code.split('\n').forEach((ln, lineNumber) => {
+					testStyle(
+						/^ [^*]/,
+						'WHITESPACE', 'incorrect indentation (prefer tabs)',
+						ln, lineNumber
+					);
+					testStyle(
+						/ \t/,
+						'WHITESPACE', 'space followed by tab',
+						ln, lineNumber
+					);
+					testStyle(
+						/[ \t]$/,
+						'WHITESPACE', 'trailing whitespace',
+						ln, lineNumber
+					);
+					testStyle(
+						/\)\{/,
+						'WHITESPACE', 'missing whitespace before code block',
+						ln, lineNumber
+					);
+				});
+
 				if(messages.length > 0) {
 					this.log('lint-failure', module + ' FAIL');
 					messages.forEach((error) => this.log('lint-item', error));

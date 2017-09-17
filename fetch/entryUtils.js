@@ -91,8 +91,8 @@ define([
 				parts += vars.values().next().value;
 			} else if(vars.size > 1) {
 				parts += (
-					'((()=>{' +
-					vars.map((v) => 'try{return ' + v + ';}catch(e){}').join('') +
+					'((() => {' +
+					vars.map((v) => 'try {return ' + v + ';} catch(e) {}').join('') +
 					'})())'
 				);
 			} else {

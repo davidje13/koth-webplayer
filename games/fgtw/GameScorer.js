@@ -68,7 +68,7 @@ define(() => {
 			if(gameTeamScores.length > 0) {
 				const bestScore = gameTeamScores[0].score;
 				gameTeamScores.forEach((place) => {
-					place = (place.score === bestScore);
+					place.winner = (place.score === bestScore);
 				});
 			}
 			return {teams: gameTeamScores};
