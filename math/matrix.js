@@ -1,67 +1,7 @@
 define(() => {
 	'use strict';
 
-	class Vec3 {
-		constructor(x = 0, y = 0, z = 0) {
-			this.x = x;
-			this.y = y;
-			this.z = z;
-		}
-
-		set(x, y, z) {
-			this.x = x;
-			this.y = y;
-			this.z = z;
-			return this;
-		}
-
-		add(v) {
-			return new Vec3(
-				this.x + v.x,
-				this.y + v.y,
-				this.z + v.z
-			);
-		}
-
-		sub(v) {
-			return new Vec3(
-				this.x - v.x,
-				this.y - v.y,
-				this.z - v.z
-			);
-		}
-
-		dot(v) {
-			return (
-				this.x * v.x +
-				this.y * v.y +
-				this.z * v.z
-			);
-		}
-
-		cross(v) {
-			return new Vec3(
-				this.y * v.z - this.z * v.y,
-				this.z * v.x - this.x * v.z,
-				this.x * v.y - this.y * v.x
-			);
-		}
-
-		length() {
-			return Math.sqrt(this.dot(this));
-		}
-
-		norm() {
-			const m = 1 / this.length();
-			return new Vec3(
-				this.x * m,
-				this.y * m,
-				this.z * m
-			);
-		}
-	}
-
-	class Mat4 {
+	class M4 {
 		constructor() {
 			this.data = new Float32Array(16); // col major
 		}
@@ -119,7 +59,7 @@ define(() => {
 		}
 
 		mult(b) {
-			const result = new Mat4();
+			const result = new M4();
 			for(let i = 0; i < 4; ++ i) {
 				for(let j = 0; j < 4; ++ j) {
 					let v = 0;
@@ -163,7 +103,7 @@ define(() => {
 			const d = this.data;
 			const det = this.det();
 			/* jshint -W014 */ // tabular form is easier to work with
-			return Mat4.of([
+			return M4.of([
 				+ d[ 5]*d[10]*d[15] + d[ 9]*d[14]*d[ 7] + d[13]*d[ 6]*d[11]
 				- d[ 5]*d[14]*d[11] - d[ 9]*d[ 6]*d[15] - d[13]*d[10]*d[ 7],
 				+ d[ 4]*d[14]*d[11] + d[ 8]*d[ 6]*d[15] + d[12]*d[10]*d[ 7]
@@ -203,11 +143,11 @@ define(() => {
 		}
 
 		static of(data) {
-			return new Mat4().setRM(data);
+			return new M4().setRM(data);
 		}
 
 		static identity() {
-			return Mat4.of([
+			return M4.of([
 				1, 0, 0, 0,
 				0, 1, 0, 0,
 				0, 0, 1, 0,
@@ -220,9 +160,9 @@ define(() => {
 			const dx = up.cross(dz).norm();
 			const dy = dz.cross(dx).norm();
 			return (
-				Mat4.identity()
+				M4.identity()
 				.translate(from.x, from.y, from.z)
-				.mult(Mat4.of([
+				.mult(M4.of([
 					dx.x, dx.y, dx.z, 0,
 					dy.x, dy.y, dy.z, 0,
 					dz.x, dz.y, dz.z, 0,
@@ -235,7 +175,7 @@ define(() => {
 			const dz = to.sub(from).norm();
 			const dx = up.cross(dz).norm();
 			const dy = dz.cross(dx).norm();
-			return Mat4.of([
+			return M4.of([
 				dx.x, dy.x, dz.x, from.x,
 				dx.y, dy.y, dz.y, from.y,
 				dx.z, dy.z, dz.z, from.z,
@@ -249,7 +189,7 @@ define(() => {
 			const y = 1 / scale;
 			const c = (zfar + znear) / (znear - zfar);
 			const d = 2 * zfar * znear / (znear - zfar);
-			return Mat4.of([
+			return M4.of([
 				x, 0, 0, 0,
 				0, y, 0, 0,
 				0, 0, c, d,
@@ -258,7 +198,7 @@ define(() => {
 		}
 	}
 
-	Mat4.Vec3 = Vec3;
-
-	return Mat4;
+	return {
+		M4,
+	};
 });

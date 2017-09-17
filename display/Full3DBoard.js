@@ -4,7 +4,8 @@ define([
 	'3d/ModelTorus',
 	'core/EventObject',
 	'core/AnimatingProperty',
-	'math/Mat4',
+	'math/matrix',
+	'math/vector',
 	'./documentUtils',
 	'./style.css',
 ], (
@@ -13,7 +14,8 @@ define([
 	ModelTorus,
 	EventObject,
 	AnimatingProperty,
-	Mat4,
+	matrix,
+	vector,
 	docutil
 ) => {
 	'use strict';
@@ -407,10 +409,10 @@ define([
 							(mark.x + 0.5) / this.boardW,
 							(mark.y + 0.5) / this.boardH
 						);
-						const matModelView = Mat4.lookObj(
+						const matModelView = matrix.M4.lookObj(
 							locn.p,
 							locn.p.add(locn.n),
-							new Mat4.Vec3(0, 0, -1)
+							new vector.V3(0, 0, -1)
 						).mult(matView);
 						prog.uniform({
 							matMV: matModelView,
@@ -450,27 +452,27 @@ define([
 			const dist = blend(dist2D, zoomDist, frac3D);
 			const aspect = this.canvas.width / this.canvas.height;
 			const fov = Math.atan(blend(1, zoomFOV, frac3D) / dist);
-			const matProjection = Mat4.perspective(fov, aspect, blend(1, 0.1, frac3D), 10.0);
+			const matProjection = matrix.M4.perspective(fov, aspect, blend(1, 0.1, frac3D), 10.0);
 			let ang = this.viewAngle;
 			if(frac3D < 1) {
 				ang = (ang % (Math.PI * 2)) * frac3D;
 			}
 
 			const focusDist = this.meshTorus.shape.rad1 - frac3D;
-			const torusFocus = new Mat4.Vec3(
+			const torusFocus = new vector.V3(
 				focusDist * Math.sin(ang * frac3D),
 				focusDist * Math.cos(ang * frac3D),
 				0
 			);
 
-			const matView = Mat4.look(
-				torusFocus.add(new Mat4.Vec3(
+			const matView = matrix.M4.look(
+				torusFocus.add(new vector.V3(
 					dist * Math.sin(ang) * Math.cos(lift),
 					dist * Math.cos(ang) * Math.cos(lift),
 					dist * Math.sin(lift)
 				)),
 				torusFocus,
-				new Mat4.Vec3(
+				new vector.V3(
 					Math.sin(ang) * 0.1 * lift,
 					Math.cos(ang) * 0.1 * lift,
 					-1

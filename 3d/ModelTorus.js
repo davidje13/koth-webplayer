@@ -1,10 +1,10 @@
 define([
 	'./webglUtils',
-	'math/Mat4',
+	'math/vector',
 	'math/Ellipse',
 ], (
 	webglUtils,
-	Mat4,
+	vector,
 	Ellipse
 ) => {
 	'use strict';
@@ -191,12 +191,12 @@ define([
 			const dz = Math.sin(a1);
 
 			return {
-				p: new Mat4.Vec3(
+				p: new vector.V3(
 					dx * (rad1 + dr * rad2A),
 					dy * (rad1 + dr * rad2A),
 					dz * rad2B
 				),
-				n: new Mat4.Vec3(
+				n: new vector.V3(
 					dx * dr * rad2B,
 					dy * dr * rad2B,
 					dz * rad2A

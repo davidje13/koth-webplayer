@@ -1,4 +1,4 @@
-define(['./webglUtils', 'math/Mat4'], (webglUtils, Mat4) => {
+define(['./webglUtils', 'math/vector'], (webglUtils, vector) => {
 	'use strict';
 
 	return class ModelPoint extends webglUtils.ModelData {
@@ -69,7 +69,7 @@ define(['./webglUtils', 'math/Mat4'], (webglUtils, Mat4) => {
 			};
 
 			const ptAt = (t, r, z) => {
-				return new Mat4.Vec3(Math.sin(t) * r, Math.cos(t) * r, z);
+				return new vector.V3(Math.sin(t) * r, Math.cos(t) * r, z);
 			};
 
 			addTri(
