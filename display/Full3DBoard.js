@@ -168,7 +168,6 @@ define([
 	};
 
 	function makeWebGL() {
-		window.devicePixelRatio = 1;
 		const canvas = docutil.make('canvas');
 		const gl = canvas.getContext('webgl');
 

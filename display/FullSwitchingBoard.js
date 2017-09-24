@@ -159,8 +159,9 @@ define([
 		repaint() {
 			const data = this.renderer.getImageData();
 			if(data) {
-				this.latestWidth = data.width;
-				this.latestHeight = data.height;
+				const dataScale = this.renderer.scale || 1;
+				this.latestWidth = data.width / dataScale;
+				this.latestHeight = data.height / dataScale;
 				this._updateSizes();
 				if(!this.board3D) {
 					// Prepare 3D board in advance to avoid glitchy animation

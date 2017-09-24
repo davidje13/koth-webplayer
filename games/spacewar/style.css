@@ -1,0 +1,22 @@
+.game-board canvas {
+	background: #000000;
+}
+
+.game-board .mark.sun {
+	border-radius: 100%;
+	z-index: 1;
+	box-shadow: 0 0 40px 10px rgba(255, 255, 255, 0.5);
+}
+
+.game-board .mark.sun:before {
+	content: "\01F31E";
+	position: relative;
+	display: block;
+	top: 50%;
+	left: 50%;
+	width: 2em;
+	margin: -0.4em -1em;
+	line-height: 1em;
+	font-size: 1em;
+	text-align: center;
+}

@@ -1,12 +1,12 @@
 define(['./LineSegment', './vector'], (LineSegment, vector) => {
 	'use strict';
 
-	describe('findIntersection', () => {
+	describe('findLineIntersection', () => {
 		it('returns the intersection point of two line segments', () => {
 			const result = new LineSegment(
 				new vector.V2(2, 3),
 				new vector.V2(4, 3)
-			).findIntersection(new LineSegment(
+			).findLineIntersection(new LineSegment(
 				new vector.V2(3, 1),
 				new vector.V2(3, 8)
 			));
@@ -19,7 +19,7 @@ define(['./LineSegment', './vector'], (LineSegment, vector) => {
 			const result = new LineSegment(
 				new vector.V2(2, 3),
 				new vector.V2(4, 3)
-			).findIntersection(new LineSegment(
+			).findLineIntersection(new LineSegment(
 				new vector.V2(3, 1),
 				new vector.V2(3, 8)
 			));
@@ -31,7 +31,7 @@ define(['./LineSegment', './vector'], (LineSegment, vector) => {
 			const result = new LineSegment(
 				new vector.V2(3.5, 3),
 				new vector.V2(4, 3)
-			).findIntersection(new LineSegment(
+			).findLineIntersection(new LineSegment(
 				new vector.V2(3, 1),
 				new vector.V2(3, 8)
 			));
@@ -42,7 +42,7 @@ define(['./LineSegment', './vector'], (LineSegment, vector) => {
 			const result = new LineSegment(
 				new vector.V2(3.5, 3),
 				new vector.V2(4, 3)
-			).findIntersection(new LineSegment(
+			).findLineIntersection(new LineSegment(
 				new vector.V2(3, 1),
 				new vector.V2(3, 8)
 			));
@@ -54,7 +54,7 @@ define(['./LineSegment', './vector'], (LineSegment, vector) => {
 			const result = new LineSegment(
 				new vector.V2(0, 1),
 				new vector.V2(0, 2)
-			).findIntersection(new LineSegment(
+			).findLineIntersection(new LineSegment(
 				new vector.V2(1, 1),
 				new vector.V2(1, 2)
 			));
@@ -65,7 +65,7 @@ define(['./LineSegment', './vector'], (LineSegment, vector) => {
 			const result = new LineSegment(
 				new vector.V2(0, 1),
 				new vector.V2(0, 2)
-			).findIntersection(new LineSegment(
+			).findLineIntersection(new LineSegment(
 				new vector.V2(1, 2),
 				new vector.V2(1, 1)
 			));
@@ -76,7 +76,7 @@ define(['./LineSegment', './vector'], (LineSegment, vector) => {
 			const result = new LineSegment(
 				new vector.V2(0, 1),
 				new vector.V2(0, 2)
-			).findIntersection(new LineSegment(
+			).findLineIntersection(new LineSegment(
 				new vector.V2(0, 1),
 				new vector.V2(0, 2)
 			));
@@ -87,7 +87,7 @@ define(['./LineSegment', './vector'], (LineSegment, vector) => {
 			const result = new LineSegment(
 				new vector.V2(0, 1),
 				new vector.V2(0, 1)
-			).findIntersection(new LineSegment(
+			).findLineIntersection(new LineSegment(
 				new vector.V2(1, 1),
 				new vector.V2(1, 1)
 			));
@@ -98,7 +98,7 @@ define(['./LineSegment', './vector'], (LineSegment, vector) => {
 			const result = new LineSegment(
 				new vector.V2(1, 2),
 				new vector.V2(3, 4)
-			).findIntersection(new LineSegment(
+			).findLineIntersection(new LineSegment(
 				new vector.V2(1, 4),
 				new vector.V2(5, 0)
 			));
