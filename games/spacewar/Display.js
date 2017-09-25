@@ -60,6 +60,40 @@ define([
 				},
 			],
 		},
+		paper: {
+			name: 'Paper',
+			palette: [
+				{
+					background:   [255, 255, 255, 255],
+					sunOutline:   [128,  96,  64, 255],
+					sunFill:      [255, 192,   0, 128],
+				},
+				{ // Unknown player
+					outline:      [ 64,  64,  64, 255],
+					fill:         [255, 255, 255, 128],
+					flameOutline: [ 64,  64,  64, 192],
+					flameFill:    [255, 255, 255, 192],
+					deadFill:     [128, 128, 128, 255],
+					missile:      [ 64,  64,  64, 255],
+				},
+				{ // Player 1
+					outline:      [128,  64,  64, 255],
+					fill:         [255,   0,   0, 128],
+					flameOutline: [128,  64,  64, 192],
+					flameFill:    [255, 230, 210, 192],
+					deadFill:     [255, 128, 128, 255],
+					missile:      [128,  64,  64, 255],
+				},
+				{ // Player 2
+					outline:      [ 64,  64, 128, 255],
+					fill:         [  0,   0, 255, 128],
+					flameOutline: [ 64,  64, 128, 192],
+					flameFill:    [220, 220, 255, 192],
+					deadFill:     [128, 128, 255, 255],
+					missile:      [ 64,  64, 128, 255],
+				},
+			],
+		},
 	};
 
 	const COLOUR_OPTIONS_SELECT = [];

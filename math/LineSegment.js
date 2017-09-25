@@ -20,17 +20,34 @@ define(() => {
 			const dr2 = d.dot(d);
 			const discriminant = radius * radius * dr2 - D * D;
 			if(discriminant <= 0) {
-				return {intersectionEntry: null, intersectionExit: null};
+				return {
+					intersectionEntry: null,
+					intersectionExit: null,
+					fractionEntry: null,
+					fractionExit: null,
+				};
 			}
 			const factor = ((d.y >= 0) ? 1 : -1) * Math.sqrt(discriminant) / dr2;
-			const p = rot90(d.mult(D / dr2));
-			return {
-				// TODO: special logic needed to distinguish entry/exit?
-				intersectionEntry: p.addMult(d, factor),
-				intersectionExit: p.addMult(d, -factor),
-				fractionEntry: 0, // TODO
-				fractionExit: 0, // TODO
-			};
+			const p = rot90(d.mult(D / dr2)).add(centre);
+			const A = p.addMult(d, -factor);
+			const B = p.addMult(d, factor);
+			const fA = A.sub(this.p1).dot(d) / dr2;
+			const fB = B.sub(this.p1).dot(d) / dr2;
+			if(fA > fB) {
+				return {
+					intersectionEntry: (fB >= 0 && fB <= 1) ? B : null,
+					intersectionExit: (fA >= 0 && fA <= 1) ? A : null,
+					fractionEntry: fB,
+					fractionExit: fA,
+				};
+			} else {
+				return {
+					intersectionEntry: (fA >= 0 && fA <= 1) ? A : null,
+					intersectionExit: (fB >= 0 && fB <= 1) ? B : null,
+					fractionEntry: fA,
+					fractionExit: fB,
+				};
+			}
 		}
 
 		findLineIntersection(line2) {
