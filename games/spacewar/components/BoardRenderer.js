@@ -190,7 +190,7 @@ define([
 				rotation: entry.rotation,
 			};
 
-			if(entry.hyperspace) {
+			if(!entry.tangible) {
 				return;
 			}
 
