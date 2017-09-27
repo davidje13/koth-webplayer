@@ -71,6 +71,14 @@ define(['./vector'], (vector) => {
 			});
 		});
 
+		describe('distance', () => {
+			it('returns the distance between two vectors', () => {
+				const vec1 = new vector.V2(4, 5);
+				const vec2 = new vector.V2(1, 1);
+				expect(vec1.distance(vec2), isNear(5, 0.0001));
+			});
+		});
+
 		describe('norm', () => {
 			it('returns a normalised vector (length = 1)', () => {
 				const v = new vector.V2(3, 4);

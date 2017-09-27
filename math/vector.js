@@ -47,6 +47,13 @@ define(() => {
 			return Math.sqrt(this.dot(this));
 		}
 
+		distance(b) {
+			return Math.sqrt(
+				(this.x - b.x) * (this.x - b.x) +
+				(this.y - b.y) * (this.y - b.y)
+			);
+		}
+
 		norm(len = 1) {
 			const m = len / this.length();
 			return new V2(
@@ -113,6 +120,14 @@ define(() => {
 
 		length() {
 			return Math.sqrt(this.dot(this));
+		}
+
+		distance(b) {
+			return Math.sqrt(
+				(this.x - b.x) * (this.x - b.x) +
+				(this.y - b.y) * (this.y - b.y) +
+				(this.z - b.z) * (this.z - b.z)
+			);
 		}
 
 		norm(len = 1) {

@@ -9,6 +9,9 @@ define([
 ) => {
 	'use strict';
 
+	// Based on the original challenge reference implementation:
+	// http://play.starmaninnovations.com/static/Spacewar/game_engine.js
+
 	function deepCopy(o) {
 		// TODO
 		return Object.assign({}, o);
@@ -346,7 +349,7 @@ define([
 			};
 		}
 
-		stepEntry(entry) {
+		callEntry(entry) {
 			entry.currentAction = null;
 			if(entry.disqualified || !entry.alive || entry.hyperspace) {
 				return;
@@ -420,7 +423,7 @@ define([
 			}
 		}
 
-		controlEntry(entry) {
+		stepEntry(entry) {
 			entry.vars = entry.newVars;
 			entry.engine = false;
 			entry.firing = false;
@@ -439,6 +442,9 @@ define([
 					this.leaveHyperspace(entry);
 				}
 			}
+		}
+
+		controlEntry(entry) {
 			if(entry.disqualified || !entry.alive || entry.hyperspace > 0) {
 				return;
 			}
@@ -448,35 +454,32 @@ define([
 			const turnRight = action.indexOf('turn right') !== -1;
 			const turn = (turnRight ? 1 : 0) - (turnLeft ? 1 : 0);
 			const engine = action.indexOf('fire engine') !== -1;
-			const fire = (
-				(action.indexOf('fire missile') !== -1) &&
-				entry.cooldown <= 0 &&
-				entry.missiles > 0
-			);
+			const fire = action.indexOf('fire missile') !== -1;
 			const hyperspace = action.indexOf('hyperspace') !== -1;
 
 			if(hyperspace) {
 				entry.hyperspace = this.config.hyperspaceFrames;
 				entry.tangible = false;
-			} else {
-				entry.rotation += turn * this.turnSpeeds[strength] * 0.5;
-				if(engine) {
-					entry.engine = true;
-					const speedLimit = Math.max(
-						entry.velocity.length(),
-						this.config.maxEngineSpeed
-					);
-					entry.velocity = cap(entry.velocity.addMult(
-						rotationVector(entry.rotation),
-						this.engineSpeeds[strength]
-					), speedLimit);
-				}
-				entry.rotation += turn * this.turnSpeeds[strength] * 0.5;
-				if(fire) {
-					entry.firing = true;
-					-- entry.missiles;
-					entry.cooldown = this.config.missileCooldownFrames;
-				}
+				return;
+			}
+
+			entry.rotation += turn * this.turnSpeeds[strength] * 0.5;
+			if(engine) {
+				entry.engine = true;
+				const speedLimit = Math.max(
+					entry.velocity.length(),
+					this.config.maxEngineSpeed
+				);
+				entry.velocity = cap(entry.velocity.addMult(
+					rotationVector(entry.rotation),
+					this.engineSpeeds[strength]
+				), speedLimit);
+			}
+			entry.rotation += turn * this.turnSpeeds[strength] * 0.5;
+			if(fire && entry.cooldown <= 0 && entry.missiles > 0) {
+				entry.firing = true;
+				-- entry.missiles;
+				entry.cooldown = this.config.missileCooldownFrames;
 			}
 		}
 
@@ -540,6 +543,15 @@ define([
 			this.missiles.length -= del;
 		}
 
+		getShapes(entry) {
+			const shapes = this.config.shapes;
+			return {
+				nose: positionShape(shapes.nose, entry),
+				leftWing: entry.leftWing ? positionShape(shapes.leftWing, entry) : null,
+				rightWing: entry.rightWing ? positionShape(shapes.rightWing, entry) : null,
+			};
+		}
+
 		checkLineHitSun(line) {
 			const hit = line.findCircleIntersection(this.sunPos, this.config.sun.radius);
 			if(hit.intersectionEntry) {
@@ -589,32 +601,17 @@ define([
 			return false;
 		}
 
-		getShapes(entry) {
-			return {
-				nose: positionShape(this.config.shapes.nose, entry),
-				leftWing: entry.leftWing ?
-					positionShape(this.config.shapes.leftWing, entry) : null,
-				rightWing: entry.rightWing ?
-					positionShape(this.config.shapes.rightWing, entry) : null,
-			};
-		}
-
 		checkMissileCollisions(missile) {
 			if(missile.dead) {
 				return;
 			}
-			let firstHit = 2;
-			let firstHitEntry = null;
-			let firstHitPos = 0;
 			const missileLine = new LineSegment(
 				missile.lastPosition,
 				missile.position
 			);
-			const sunHit = this.checkLineHitSun(missileLine);
-			if(sunHit < firstHit) {
-				firstHit = sunHit;
-				firstHitEntry = null;
-			}
+			let firstHit = this.checkLineHitSun(missileLine);
+			let firstHitEntry = null;
+			let firstHitPos = 0;
 			this.entryLookup.forEach((entry) => {
 				const shapes = entry.shapes;
 				if(!shapes) {
@@ -657,7 +654,7 @@ define([
 
 		checkShipSunCollision(entry) {
 			if(
-				entry.position.sub(this.sunPos).length() >
+				entry.position.distance(this.sunPos) >
 				this.config.sun.radius + this.config.shipMaxRadius
 			) {
 				return; // Optimisation
@@ -671,86 +668,79 @@ define([
 			}
 		}
 
+		checkShipFrozenCollision(entry, frozen) {
+			const shapes = entry.shapes;
+			const shapesF = frozen.shapes;
+			if(
+				this.checkShapeHitShape(shapes.nose, shapesF.nose) ||
+				this.checkShapeHitShape(shapes.nose, shapesF.leftWing) ||
+				this.checkShapeHitShape(shapes.nose, shapesF.rightWing)
+			) {
+				this.markDead(entry);
+				return;
+			}
+			if(
+				this.checkShapeHitShape(shapes.leftWing, shapesF.nose) ||
+				this.checkShapeHitShape(shapes.leftWing, shapesF.leftWing) ||
+				this.checkShapeHitShape(shapes.leftWing, shapesF.rightWing)
+			) {
+				entry.leftWing = false;
+			}
+			if(
+				this.checkShapeHitShape(shapes.rightWing, shapesF.nose) ||
+				this.checkShapeHitShape(shapes.rightWing, shapesF.leftWing) ||
+				this.checkShapeHitShape(shapes.rightWing, shapesF.rightWing)
+			) {
+				entry.rightWing = false;
+			}
+		}
+
+		checkShipShipDamage(victim, aggressor) {
+			const shapesV = victim.shapes;
+			const shapesA = aggressor.shapes;
+
+			if(
+				this.checkShapeHitShape(shapesV.leftWing, shapesA.nose) ||
+				this.checkShapeHitShape(shapesV.leftWing, shapesA.leftWing) ||
+				this.checkShapeHitShape(shapesV.leftWing, shapesA.rightWing)
+			) {
+				victim.leftWing = false;
+			}
+
+			if(
+				this.checkShapeHitShape(shapesV.rightWing, shapesA.nose) ||
+				this.checkShapeHitShape(shapesV.rightWing, shapesA.leftWing) ||
+				this.checkShapeHitShape(shapesV.rightWing, shapesA.rightWing)
+			) {
+				victim.rightWing = false;
+			}
+		}
+
 		checkShipShipCollision(entry1, entry2) {
-			const shapes1 = entry1.shapes;
-			const shapes2 = entry2.shapes;
 			if(!entry1.alive && !entry2.alive) {
 				return;
 			}
 			if(
-				entry1.position.sub(entry2.position).length() >
+				entry1.position.distance(entry2.position) >
 				this.config.shipMaxRadius * 2
 			) {
 				return; // Optimisation
 			}
-			if(this.checkShapeHitShape(shapes1.nose, shapes2.nose)) {
+
+			if(!entry1.alive) {
+				this.checkShipFrozenCollision(entry2, entry1);
+			} else if(!entry2.alive) {
+				this.checkShipFrozenCollision(entry1, entry2);
+			} else if(this.checkShapeHitShape(entry1.shapes.nose, entry2.shapes.nose)) {
 				if(this.markDead(entry1)) {
 					++ entry2.kills;
 				}
 				if(this.markDead(entry2)) {
 					++ entry1.kills;
 				}
-				return;
-			}
-			if(this.checkShapeHitShape(shapes1.nose, shapes2.leftWing)) {
-				if(entry2.alive) {
-					entry2.leftWing = false;
-				} else {
-					this.markDead(entry1);
-				}
-			}
-			if(this.checkShapeHitShape(shapes1.nose, shapes2.rightWing)) {
-				if(entry2.alive) {
-					entry2.rightWing = false;
-				} else {
-					this.markDead(entry1);
-				}
-			}
-			if(this.checkShapeHitShape(shapes2.nose, shapes1.leftWing)) {
-				if(entry1.alive) {
-					entry1.leftWing = false;
-				} else {
-					this.markDead(entry2);
-				}
-			}
-			if(this.checkShapeHitShape(shapes2.nose, shapes1.rightWing)) {
-				if(entry1.alive) {
-					entry1.rightWing = false;
-				} else {
-					this.markDead(entry2);
-				}
-			}
-			if(this.checkShapeHitShape(shapes1.leftWing, shapes2.leftWing)) {
-				if(entry1.alive) {
-					entry1.leftWing = false;
-				}
-				if(entry2.alive) {
-					entry2.leftWing = false;
-				}
-			}
-			if(this.checkShapeHitShape(shapes1.leftWing, shapes2.rightWing)) {
-				if(entry1.alive) {
-					entry1.leftWing = false;
-				}
-				if(entry2.alive) {
-					entry2.rightWing = false;
-				}
-			}
-			if(this.checkShapeHitShape(shapes1.rightWing, shapes2.leftWing)) {
-				if(entry1.alive) {
-					entry1.rightWing = false;
-				}
-				if(entry2.alive) {
-					entry2.leftWing = false;
-				}
-			}
-			if(this.checkShapeHitShape(shapes1.rightWing, shapes2.rightWing)) {
-				if(entry1.alive) {
-					entry1.rightWing = false;
-				}
-				if(entry2.alive) {
-					entry2.rightWing = false;
-				}
+			} else {
+				this.checkShipShipDamage(entry1, entry2);
+				this.checkShipShipDamage(entry2, entry1);
 			}
 		}
 
@@ -796,6 +786,7 @@ define([
 					this.beginCombat();
 				}
 			}
+			this.entryLookup.forEach(this.callEntry.bind(this));
 			this.entryLookup.forEach(this.stepEntry.bind(this));
 			this.entryLookup.forEach(this.controlEntry.bind(this));
 			this.entryLookup.forEach(this.moveEntry.bind(this));

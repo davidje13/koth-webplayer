@@ -72,7 +72,7 @@ define(() => {
 		}
 
 		length() {
-			return this.p2.sub(this.p1).length();
+			return this.p2.distance(this.p1);
 		}
 	};
 });
