@@ -28,6 +28,13 @@ define(() => {
 			);
 		}
 
+		mult(m) {
+			return new V2(
+				this.x * m,
+				this.y * m
+			);
+		}
+
 		dot(v) {
 			return this.x * v.x + this.y * v.y;
 		}
@@ -40,8 +47,15 @@ define(() => {
 			return Math.sqrt(this.dot(this));
 		}
 
-		norm() {
-			const m = 1 / this.length();
+		distance(b) {
+			return Math.sqrt(
+				(this.x - b.x) * (this.x - b.x) +
+				(this.y - b.y) * (this.y - b.y)
+			);
+		}
+
+		norm(len = 1) {
+			const m = len / this.length();
 			return new V2(
 				this.x * m,
 				this.y * m
@@ -80,6 +94,14 @@ define(() => {
 			);
 		}
 
+		mult(m) {
+			return new V3(
+				this.x * m,
+				this.y * m,
+				this.z * m
+			);
+		}
+
 		dot(v) {
 			return (
 				this.x * v.x +
@@ -100,8 +122,16 @@ define(() => {
 			return Math.sqrt(this.dot(this));
 		}
 
-		norm() {
-			const m = 1 / this.length();
+		distance(b) {
+			return Math.sqrt(
+				(this.x - b.x) * (this.x - b.x) +
+				(this.y - b.y) * (this.y - b.y) +
+				(this.z - b.z) * (this.z - b.z)
+			);
+		}
+
+		norm(len = 1) {
+			const m = len / this.length();
 			return new V3(
 				this.x * m,
 				this.y * m,

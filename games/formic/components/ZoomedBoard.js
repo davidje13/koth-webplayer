@@ -54,7 +54,6 @@ define([
 			this.scaleX = 0;
 			this.scaleY = 0;
 
-			window.devicePixelRatio = 1;
 			this.canvas = docutil.make('canvas');
 			this.canvas.width = 0;
 			this.canvas.height = 0;

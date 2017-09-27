@@ -24,7 +24,6 @@ define([
 			this.renderedMarks = new Map();
 
 			if(this.hasBitmap) {
-				window.devicePixelRatio = 1;
 				this.canvas = docutil.make('canvas');
 				this.canvas.width = 0;
 				this.canvas.height = 0;
@@ -85,8 +84,6 @@ define([
 					dom.textHold.appendChild(dom.text);
 					this.renderedMarks.set(key, dom);
 				}
-				const x1 = Math.floor((mark.x + 0.5) * this.scaleX);
-				const y1 = Math.floor((mark.y + 0.5) * this.scaleY);
 				docutil.updateAttrs(dom.element, {
 					'class': 'mark ' + (mark.className || ''),
 				});
@@ -100,6 +97,8 @@ define([
 				}
 				if(mark.toX !== null && mark.toY !== null) {
 					// TODO: wrapping
+					const x1 = Math.floor((mark.x + 0.5) * this.scaleX);
+					const y1 = Math.floor((mark.y + 0.5) * this.scaleY);
 					const x2 = Math.floor((mark.toX + 0.5) * this.scaleX);
 					const y2 = Math.floor((mark.toY + 0.5) * this.scaleY);
 					const l = Math.sqrt(
@@ -117,8 +116,10 @@ define([
 					});
 				} else if(mark.w !== null && mark.h !== null) {
 					// TODO: wrapping
-					const x2 = Math.floor((mark.x + mark.w + 0.5) * this.scaleX);
-					const y2 = Math.floor((mark.y + mark.h + 0.5) * this.scaleY);
+					const x1 = Math.floor(mark.x * this.scaleX);
+					const y1 = Math.floor(mark.y * this.scaleY);
+					const x2 = Math.floor((mark.x + mark.w) * this.scaleX);
+					const y2 = Math.floor((mark.y + mark.h) * this.scaleY);
 					docutil.updateStyle(dom.element, {
 						'left': x1 + 'px',
 						'top': y1 + 'px',
@@ -126,6 +127,8 @@ define([
 						'height': (y2 - y1) + 'px',
 					});
 				} else {
+					const x1 = Math.floor((mark.x + 0.5) * this.scaleX);
+					const y1 = Math.floor((mark.y + 0.5) * this.scaleY);
 					docutil.updateStyle(dom.element, {
 						'left': x1 + 'px',
 						'top': y1 + 'px',

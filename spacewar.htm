@@ -1,0 +1,133 @@
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="content-security-policy" content="
+	base-uri 'self';
+	default-src 'none';
+	child-src blob:;
+	frame-src blob:;
+	connect-src https://api.stackexchange.com;
+	script-src 'self' 'unsafe-inline' blob:;
+	worker-src blob:;
+	style-src 'self';
+	img-src 'self';
+	form-action 'none';
+">
+
+<!-- these properties are read by the engine to configure the game -->
+<title>Spacewar!</title>
+<link rel="icon" href="favicons/spacewar.png">
+<meta name="stack-exchange-site" content="codegolf">
+<meta name="stack-exchange-qid" content="67560">
+
+<meta name="team-view-columns" content='[]'>
+
+<meta name="team-type" content="free_for_all">
+<meta name="team-type-args" content='{}'>
+
+<meta name="tournament-type" content="all_v_all">
+<meta name="tournament-type-args" content='{
+	"teamLimit": 2
+}'>
+
+<meta name="match-type" content="brawl">
+<meta name="match-type-args" content='{
+	"count": 20,
+	"teamShuffle": "roundRobin"
+}'>
+
+<meta name="game-type" content="spacewar">
+<meta name="game-config" content='{
+	"width": 800,
+	"height": 600,
+	"sun": {"x": 400, "y": 300, "radius": 5, "G": 5000},
+	"startInsetX": 50,
+	"startInsetY": 50,
+	"turnSpeeds": {
+		"all": 0.087266462599716,
+		"wing": 0.043633231299858,
+		"nose": 0
+	},
+	"initialMissiles": 20,
+	"missileSpeed": 10,
+	"missileCooldownFrames": 4,
+	"missileLifetime": 75,
+	"acceleration": {
+		"all": 0.3,
+		"wing": 0.15,
+		"nose": 0
+	},
+	"maxEngineSpeed": 15,
+	"maxSpeed": 40,
+	"maxMissileSpeed": 56.56,
+	"missileSpawnDistance": 10,
+	"deathFrames": 34,
+	"resetFrames": 100,
+	"hyperspaceFrames": 34,
+	"hyperspaceFatalityRatio": {
+		"all": 0.25,
+		"wing": 0.5,
+		"nose": 0.5
+	},
+	"shapes": {
+		"all": [[-8, 16], [0, -8], [8, 16]],
+		"noseLeftWing": [[-8, 16], [0, -8], [4, 4], [0, 8], [0, 16]],
+		"noseRightWing": [[-4, 4], [0, -8], [8, 16], [0, 16], [0, 8]],
+		"leftWing": [[-8, 16], [-4, 4], [0, 8], [0, 16]],
+		"rightWing": [[4, 4], [8, 16], [0, 16], [0, 8]],
+		"nose": [[-4, 4], [0, -8], [4, 4], [0, 8]]
+	},
+	"shipMaxRadius": 20,
+	"maxFrame": 3000
+}'>
+<meta name="play-config" content='{
+	"delay": 0,
+	"speed": 1
+}'>
+<meta name="display-config" content='{
+	"scale": 1,
+	"view3D": false,
+	"shapes": {
+		"leftWing": [[-8, 16], [-4, 4], [0, 8], [0, 16]],
+		"rightWing": [[4, 4], [8, 16], [0, 16], [0, 8]],
+		"nose": [[-4, 4], [0, -8], [4, 4], [0, 8]],
+		"flame": [
+			[[-4, 16], [0, 20], [4, 16]],
+			[[-4, 16], [0, 24], [4, 16]]
+		],
+		"leftFlame": [
+			[[-4, 16], [0, 20], [0, 16]],
+			[[-4, 16], [0, 24], [0, 16]]
+		],
+		"rightFlame": [
+			[[0, 16], [0, 20], [4, 16]],
+			[[0, 16], [0, 24], [4, 16]]
+		]
+	},
+	"colourscheme": "space"
+}'>
+
+<meta name="default-code" content="/*
+ * BotName_setup is called at the start of each game
+ */
+function Bot_setup(team) {
+    return {};
+}
+
+/*
+ * BotName_getActions is called each frame
+ */
+function Bot_getActions(gameInfo, botVars) {
+    return [];
+}
+">
+
+<script src="core/require.js"></script>
+<script src="engine/entry.js" async></script>
+</head>
+<body>
+
+<noscript>This viewer requires Javascript!</noscript>
+
+</body>
+</html>

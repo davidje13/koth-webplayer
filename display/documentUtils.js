@@ -1,6 +1,11 @@
 define(['document'], (document) => {
 	'use strict';
 
+	if(!window.originalDevicePixelRatio) {
+		window.originalDevicePixelRatio = window.devicePixelRatio;
+		window.devicePixelRatio = 1;
+	}
+
 	function normaliseClasses(c) {
 		return c.replace(/  +/g, ' ').trim();
 	}
