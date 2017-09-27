@@ -74,11 +74,77 @@ define([
 		];
 	}
 
+	function shipHealth(entry) {
+		return (entry.leftWing ?
+			(entry.rightWing ? 'full ship' : 'left wing') :
+			(entry.rightWing ? 'right wing' : 'nose only')
+		);
+	}
+
+	class Entry {
+		constructor(id, side) {
+			this.id = id;
+			this.pauseOnError = false;
+			this.disqualified = false;
+			this.error = null;
+			this.errorInput = null;
+			this.errorOutput = null;
+			this.console = [];
+			this.side = side;
+			this.fn = null;
+			this.vars = null;
+			this.position = new vector.V2();
+			this.velocity = new vector.V2();
+			this.rotation = 0;
+			this.alive = true;
+			this.leftWing = true;
+			this.rightWing = true;
+			this.engine = false;
+			this.firing = false;
+			this.hyperspace = 0;
+			this.destructTimer = 0;
+			this.tangible = true;
+			this.missiles = 0;
+			this.cooldown = 0;
+			this.kills = 0;
+			this.deaths = 0;
+			this.score = 0;
+			this.codeSteps = 0;
+			this.elapsedTime = 0;
+			this.currentAction = null;
+			this.shapes = null;
+		}
+
+		reset(config) {
+			this.velocity.x = 0;
+			this.velocity.y = 0;
+			this.alive = true;
+			this.leftWing = true;
+			this.rightWing = true;
+			this.engine = false;
+			this.firing = false;
+			this.hyperspace = 0;
+			this.destructTimer = 0;
+			this.tangible = true;
+			this.missiles = config.initialMissiles;
+			this.cooldown = 0;
+		}
+
+		getStrength() {
+			return (this.leftWing ? 1 : 0) + (this.rightWing ? 1 : 0);
+		}
+	}
+
 	return class GameManager {
 		constructor(random, config) {
 			this.random = random;
 
 			this.config = config;
+			this.sunPos = null;
+			this.turnSpeeds = [];
+			this.engineSpeeds = [];
+			this.hyperspaceFatalityRatios = [];
+			this.updateConfig(config);
 
 			this.teams = config.teams;
 			this.entryLookup = new Map();
@@ -88,37 +154,7 @@ define([
 			this.simulationTime = 0;
 
 			this.teams.forEach((team, teamIndex) => team.entries.forEach((entry) => {
-				const entryObj = {
-					id: entry.id,
-					pauseOnError: false,
-					disqualified: false,
-					error: null,
-					errorInput: null,
-					errorOutput: null,
-					console: [],
-					side: teamIndex % 2,
-					fn: null,
-					vars: null,
-					position: new vector.V2(),
-					velocity: new vector.V2(),
-					rotation: 0,
-					alive: true,
-					leftWing: true,
-					rightWing: true,
-					engine: false,
-					firing: false,
-					hyperspace: 0,
-					destructTimer: 0,
-					tangible: true,
-					missiles: 0,
-					cooldown: 0,
-					kills: 0,
-					deaths: 0,
-					score: 0,
-					codeSteps: 0,
-					elapsedTime: 0,
-					currentAction: null,
-				};
+				const entryObj = new Entry(entry.id, teamIndex % 2);
 				this.entryLookup.set(entry.id, entryObj);
 				this.updateEntry(entry);
 			}));
@@ -131,19 +167,8 @@ define([
 				const dy = this.config.startInsetY;
 				entry.position.x = (entry.side === 0) ? dx : this.config.width - dx;
 				entry.position.y = this.random.next(this.config.height - dy * 2) + dy;
-				entry.velocity.x = 0;
-				entry.velocity.y = 0;
 				entry.rotation = (entry.side === 0) ? (Math.PI * 0.5) : (-Math.PI * 0.5);
-				entry.alive = true;
-				entry.leftWing = true;
-				entry.rightWing = true;
-				entry.engine = false;
-				entry.firing = false;
-				entry.hyperspace = 0;
-				entry.destructTimer = 0;
-				entry.tangible = true;
-				entry.missiles = this.config.initialMissiles;
-				entry.cooldown = 0;
+				entry.reset(this.config);
 			});
 			this.missiles.length = 0;
 		}
@@ -247,6 +272,22 @@ define([
 
 		updateConfig(config) {
 			this.config = config;
+			this.sunPos = new vector.V2(this.config.sun.x, this.config.sun.y);
+			this.turnSpeeds = [
+				this.config.turnSpeeds.nose,
+				this.config.turnSpeeds.wing,
+				this.config.turnSpeeds.all,
+			];
+			this.engineSpeeds = [
+				this.config.acceleration.nose,
+				this.config.acceleration.wing,
+				this.config.acceleration.all,
+			];
+			this.hyperspaceFatalityRatios = [
+				this.config.hyperspaceFatalityRatio.nose,
+				this.config.hyperspaceFatalityRatio.wing,
+				this.config.hyperspaceFatalityRatio.all,
+			];
 		}
 
 		handleError(entry, params, action, error) {
@@ -283,9 +324,7 @@ define([
 				red_rot: redEntry.rotation * 180 / Math.PI,
 				red_xv: redEntry.velocity.x,
 				red_yv: redEntry.velocity.y,
-				red_shape: redEntry.leftWing ?
-					(redEntry.rightWing ? 'full ship' : 'left wing') :
-					(redEntry.rightWing ? 'right wing' : 'nose only'),
+				red_shape: shipHealth(redEntry),
 				red_missileStock: redEntry.missiles,
 				red_inHyperspace: Boolean(redEntry.hyperspace),
 				red_exploded: !redEntry.alive && !redEntry.tangible,
@@ -296,9 +335,7 @@ define([
 				blue_rot: blueEntry.rotation * 180 / Math.PI,
 				blue_xv: blueEntry.velocity.x,
 				blue_yv: blueEntry.velocity.y,
-				blue_shape: blueEntry.leftWing ?
-					(blueEntry.rightWing ? 'full ship' : 'left wing') :
-					(blueEntry.rightWing ? 'right wing' : 'nose only'),
+				blue_shape: shipHealth(blueEntry),
 				blue_missileStock: blueEntry.missiles,
 				blue_inHyperspace: Boolean(blueEntry.hyperspace),
 				blue_exploded: !blueEntry.alive && !blueEntry.tangible,
@@ -370,20 +407,15 @@ define([
 		}
 
 		leaveHyperspace(entry) {
-			entry.tangible = true;
 			entry.position.x = this.random.next(this.config.width);
 			entry.position.y = this.random.next(this.config.height);
+			entry.tangible = true;
 			entry.velocity.x = 0;
 			entry.velocity.y = 0;
-			let fatality = 0;
-			if(entry.leftWing && entry.rightWing) {
-				fatality = this.config.hyperspaceFatalityRatioAll;
-			} else if(entry.leftWing || entry.rightWing) {
-				fatality = this.config.hyperspaceFatalityRatioWing;
-			} else {
-				fatality = this.config.hyperspaceFatalityRatioNose;
-			}
-			if(this.random.nextFloat() < fatality) {
+			if(
+				this.random.nextFloat() <
+				this.hyperspaceFatalityRatios[entry.getStrength()]
+			) {
 				this.markDead(entry);
 			}
 		}
@@ -410,19 +442,12 @@ define([
 			if(entry.disqualified || !entry.alive || entry.hyperspace > 0) {
 				return;
 			}
+			const strength = entry.getStrength();
 			const action = entry.currentAction || [];
-			const turnLeft = (
-				(action.indexOf('turn left') !== -1) &&
-				(entry.leftWing || entry.rightWing)
-			);
-			const turnRight = (
-				(action.indexOf('turn right') !== -1) &&
-				(entry.leftWing || entry.rightWing)
-			);
-			const engine = (
-				(action.indexOf('fire engine') !== -1) &&
-				(entry.leftWing || entry.rightWing)
-			);
+			const turnLeft = action.indexOf('turn left') !== -1;
+			const turnRight = action.indexOf('turn right') !== -1;
+			const turn = (turnRight ? 1 : 0) - (turnLeft ? 1 : 0);
+			const engine = action.indexOf('fire engine') !== -1;
 			const fire = (
 				(action.indexOf('fire missile') !== -1) &&
 				entry.cooldown <= 0 &&
@@ -434,30 +459,19 @@ define([
 				entry.hyperspace = this.config.hyperspaceFrames;
 				entry.tangible = false;
 			} else {
-				if(turnLeft && !turnRight) {
-					// TODO: dynamic turn speed (turnSpeedWing/turnSpeedNose)
-					entry.rotation -= this.config.turnSpeedAll * 0.5;
-				} else if(turnRight && !turnLeft) {
-					entry.rotation += this.config.turnSpeedAll * 0.5;
-				}
+				entry.rotation += turn * this.turnSpeeds[strength] * 0.5;
 				if(engine) {
 					entry.engine = true;
 					const speedLimit = Math.max(
 						entry.velocity.length(),
 						this.config.maxEngineSpeed
 					);
-					// TODO: dynamic acceleration (accelerationWing/accelerationNose)
 					entry.velocity = cap(entry.velocity.addMult(
 						rotationVector(entry.rotation),
-						this.config.accelerationAll *
-						(entry.leftWing + entry.rightWing) * 0.5
+						this.engineSpeeds[strength]
 					), speedLimit);
 				}
-				if(turnLeft && !turnRight) {
-					entry.rotation -= this.config.turnSpeedAll * 0.5;
-				} else if(turnRight && !turnLeft) {
-					entry.rotation += this.config.turnSpeedAll * 0.5;
-				}
+				entry.rotation += turn * this.turnSpeeds[strength] * 0.5;
 				if(fire) {
 					entry.firing = true;
 					-- entry.missiles;
@@ -470,8 +484,7 @@ define([
 			if(!entry.alive || entry.hyperspace > 0) {
 				return;
 			}
-			const sunPos = new vector.V2(this.config.sun.x, this.config.sun.y);
-			const sunDist = sunPos.sub(entry.position);
+			const sunDist = this.sunPos.sub(entry.position);
 			const gravity = this.config.sun.G / sunDist.dot(sunDist);
 			entry.velocity = cap(
 				entry.velocity.add(sunDist.norm(gravity)),
@@ -499,8 +512,7 @@ define([
 				missile.dead = true;
 				return;
 			}
-			const sunPos = new vector.V2(this.config.sun.x, this.config.sun.y);
-			const sunDist = sunPos.sub(missile.position);
+			const sunDist = this.sunPos.sub(missile.position);
 			const gravity = this.config.sun.G / sunDist.dot(sunDist);
 			missile.velocity = cap(
 				missile.velocity.add(sunDist.norm(gravity)),
@@ -529,10 +541,7 @@ define([
 		}
 
 		checkLineHitSun(line) {
-			const hit = line.findCircleIntersection(
-				new vector.V2(this.config.sun.x, this.config.sun.y),
-				this.config.sun.radius
-			);
+			const hit = line.findCircleIntersection(this.sunPos, this.config.sun.radius);
 			if(hit.intersectionEntry) {
 				return hit.fractionEntry;
 			} else {
@@ -590,163 +599,175 @@ define([
 			};
 		}
 
-		checkCollisions() {
-			const shapeMap = new Map();
+		checkMissileCollisions(missile) {
+			if(missile.dead) {
+				return;
+			}
+			let firstHit = 2;
+			let firstHitEntry = null;
+			let firstHitPos = 0;
+			const missileLine = new LineSegment(
+				missile.lastPosition,
+				missile.position
+			);
+			const sunHit = this.checkLineHitSun(missileLine);
+			if(sunHit < firstHit) {
+				firstHit = sunHit;
+				firstHitEntry = null;
+			}
 			this.entryLookup.forEach((entry) => {
-				if(!entry.tangible) {
+				const shapes = entry.shapes;
+				if(!shapes) {
 					return;
 				}
-				shapeMap.set(entry.id, this.getShapes(entry));
+				let hit = this.checkLineHitShape(missileLine, shapes.nose);
+				if(hit < firstHit) {
+					firstHit = hit;
+					firstHitEntry = entry;
+					firstHitPos = 0;
+				}
+				hit = this.checkLineHitShape(missileLine, shapes.leftWing);
+				if(hit < firstHit) {
+					firstHit = hit;
+					firstHitEntry = entry;
+					firstHitPos = 1;
+				}
+				hit = this.checkLineHitShape(missileLine, shapes.rightWing);
+				if(hit < firstHit) {
+					firstHit = hit;
+					firstHitEntry = entry;
+					firstHitPos = 2;
+				}
+			});
+			if(firstHitEntry && firstHitEntry.alive) {
+				if(firstHitPos === 0) {
+					if(this.markDead(firstHitEntry)) {
+						++ this.entryLookup.get(missile.entryID).kills;
+					}
+				} else if(firstHitPos === 1) {
+					firstHitEntry.leftWing = false;
+				} else {
+					firstHitEntry.rightWing = false;
+				}
+			}
+			if(firstHit < 1) {
+				missile.dead = true;
+			}
+		}
+
+		checkShipSunCollision(entry) {
+			if(
+				entry.position.sub(this.sunPos).length() >
+				this.config.sun.radius + this.config.shipMaxRadius
+			) {
+				return; // Optimisation
+			}
+			if(
+				this.checkHitSun(entry.shapes.nose) ||
+				this.checkHitSun(entry.shapes.leftWing) ||
+				this.checkHitSun(entry.shapes.rightWing)
+			) {
+				this.markDead(entry);
+			}
+		}
+
+		checkShipShipCollision(entry1, entry2) {
+			const shapes1 = entry1.shapes;
+			const shapes2 = entry2.shapes;
+			if(!entry1.alive && !entry2.alive) {
+				return;
+			}
+			if(
+				entry1.position.sub(entry2.position).length() >
+				this.config.shipMaxRadius * 2
+			) {
+				return; // Optimisation
+			}
+			if(this.checkShapeHitShape(shapes1.nose, shapes2.nose)) {
+				if(this.markDead(entry1)) {
+					++ entry2.kills;
+				}
+				if(this.markDead(entry2)) {
+					++ entry1.kills;
+				}
+				return;
+			}
+			if(this.checkShapeHitShape(shapes1.nose, shapes2.leftWing)) {
+				if(entry2.alive) {
+					entry2.leftWing = false;
+				} else {
+					this.markDead(entry1);
+				}
+			}
+			if(this.checkShapeHitShape(shapes1.nose, shapes2.rightWing)) {
+				if(entry2.alive) {
+					entry2.rightWing = false;
+				} else {
+					this.markDead(entry1);
+				}
+			}
+			if(this.checkShapeHitShape(shapes2.nose, shapes1.leftWing)) {
+				if(entry1.alive) {
+					entry1.leftWing = false;
+				} else {
+					this.markDead(entry2);
+				}
+			}
+			if(this.checkShapeHitShape(shapes2.nose, shapes1.rightWing)) {
+				if(entry1.alive) {
+					entry1.rightWing = false;
+				} else {
+					this.markDead(entry2);
+				}
+			}
+			if(this.checkShapeHitShape(shapes1.leftWing, shapes2.leftWing)) {
+				if(entry1.alive) {
+					entry1.leftWing = false;
+				}
+				if(entry2.alive) {
+					entry2.leftWing = false;
+				}
+			}
+			if(this.checkShapeHitShape(shapes1.leftWing, shapes2.rightWing)) {
+				if(entry1.alive) {
+					entry1.leftWing = false;
+				}
+				if(entry2.alive) {
+					entry2.rightWing = false;
+				}
+			}
+			if(this.checkShapeHitShape(shapes1.rightWing, shapes2.leftWing)) {
+				if(entry1.alive) {
+					entry1.rightWing = false;
+				}
+				if(entry2.alive) {
+					entry2.leftWing = false;
+				}
+			}
+			if(this.checkShapeHitShape(shapes1.rightWing, shapes2.rightWing)) {
+				if(entry1.alive) {
+					entry1.rightWing = false;
+				}
+				if(entry2.alive) {
+					entry2.rightWing = false;
+				}
+			}
+		}
+
+		checkCollisions() {
+			this.entryLookup.forEach((entry) => {
+				entry.shapes = entry.tangible ? this.getShapes(entry) : null;
 			});
 
-			this.missiles.forEach((missile) => {
-				if(missile.dead) {
-					return;
-				}
-				let firstHit = 2;
-				let firstHitEntry = null;
-				let firstHitPos = 0;
-				const missileLine = new LineSegment(
-					missile.lastPosition,
-					missile.position
-				);
-				const sunHit = this.checkLineHitSun(missileLine);
-				if(sunHit < firstHit) {
-					firstHit = sunHit;
-					firstHitEntry = null;
-				}
-				this.entryLookup.forEach((entry) => {
-					const shapes = shapeMap.get(entry.id);
-					if(!shapes) {
-						return;
-					}
-					let hit = this.checkLineHitShape(missileLine, shapes.nose);
-					if(hit < firstHit) {
-						firstHit = hit;
-						firstHitEntry = entry;
-						firstHitPos = 0;
-					}
-					hit = this.checkLineHitShape(missileLine, shapes.leftWing);
-					if(hit < firstHit) {
-						firstHit = hit;
-						firstHitEntry = entry;
-						firstHitPos = 1;
-					}
-					hit = this.checkLineHitShape(missileLine, shapes.rightWing);
-					if(hit < firstHit) {
-						firstHit = hit;
-						firstHitEntry = entry;
-						firstHitPos = 2;
-					}
-				});
-				if(firstHitEntry && firstHitEntry.alive) {
-					if(firstHitPos === 0) {
-						if(this.markDead(firstHitEntry)) {
-							++ this.entryLookup.get(missile.entryID).kills;
-						}
-					} else if(firstHitPos === 1) {
-						firstHitEntry.leftWing = false;
-					} else {
-						firstHitEntry.rightWing = false;
-					}
-				}
-				if(firstHit < 1) {
-					missile.dead = true;
-				}
-			});
+			this.missiles.forEach(this.checkMissileCollisions.bind(this));
 			this.entryLookup.forEach((entry1) => {
-				const shapes1 = shapeMap.get(entry1.id);
-				if(!shapes1) {
+				if(!entry1.shapes) {
 					return;
 				}
-				if(
-					this.checkHitSun(shapes1.nose) ||
-					this.checkHitSun(shapes1.leftWing) ||
-					this.checkHitSun(shapes1.rightWing)
-				) {
-					this.markDead(entry1);
-					return;
-				}
+				this.checkShipSunCollision(entry1);
 				this.entryLookup.forEach((entry2) => {
-					const shapes2 = shapeMap.get(entry2.id);
-					if(entry2 === entry1 || !shapes2) {
-						return;
-					}
-					if(
-						entry1.position.sub(entry2.position).length() >
-						this.config.shipMaxRadius * 2
-					) {
-						// optimisation
-						return;
-					}
-					if(this.checkShapeHitShape(shapes1.nose, shapes2.nose)) {
-						if(this.markDead(entry1)) {
-							++ entry2.kills;
-						}
-						if(this.markDead(entry2)) {
-							++ entry1.kills;
-						}
-						return;
-					}
-					if(this.checkShapeHitShape(shapes1.nose, shapes2.leftWing)) {
-						if(entry2.alive) {
-							entry2.leftWing = false;
-						} else {
-							this.markDead(entry1);
-						}
-					}
-					if(this.checkShapeHitShape(shapes1.nose, shapes2.rightWing)) {
-						if(entry2.alive) {
-							entry2.rightWing = false;
-						} else {
-							this.markDead(entry1);
-						}
-					}
-					if(this.checkShapeHitShape(shapes2.nose, shapes1.leftWing)) {
-						if(entry1.alive) {
-							entry1.leftWing = false;
-						} else {
-							this.markDead(entry2);
-						}
-					}
-					if(this.checkShapeHitShape(shapes2.nose, shapes1.rightWing)) {
-						if(entry1.alive) {
-							entry1.rightWing = false;
-						} else {
-							this.markDead(entry2);
-						}
-					}
-					if(this.checkShapeHitShape(shapes1.leftWing, shapes2.leftWing)) {
-						if(entry1.alive) {
-							entry1.leftWing = false;
-						}
-						if(entry2.alive) {
-							entry2.leftWing = false;
-						}
-					}
-					if(this.checkShapeHitShape(shapes1.leftWing, shapes2.rightWing)) {
-						if(entry1.alive) {
-							entry1.leftWing = false;
-						}
-						if(entry2.alive) {
-							entry2.rightWing = false;
-						}
-					}
-					if(this.checkShapeHitShape(shapes1.rightWing, shapes2.leftWing)) {
-						if(entry1.alive) {
-							entry1.rightWing = false;
-						}
-						if(entry2.alive) {
-							entry2.leftWing = false;
-						}
-					}
-					if(this.checkShapeHitShape(shapes1.rightWing, shapes2.rightWing)) {
-						if(entry1.alive) {
-							entry1.rightWing = false;
-						}
-						if(entry2.alive) {
-							entry2.rightWing = false;
-						}
+					if(entry1 !== entry2 && entry2.shapes) {
+						this.checkShipShipCollision(entry1, entry2);
 					}
 				});
 			});
