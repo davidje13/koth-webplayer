@@ -61,6 +61,7 @@ define(['require', 'document', 'jshint/jshint'], (require, document, jshint) => 
 		'itAsynchronously',
 		'expect',
 		'not',
+		'identicalTo',
 		'equals',
 		'hasType',
 		'isInteger',

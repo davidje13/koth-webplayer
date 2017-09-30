@@ -1,8 +1,10 @@
 define([
+	'core/objectUtils',
 	'fetch/entryUtils',
 	'math/vector',
 	'math/LineSegment',
 ], (
+	objectUtils,
 	entryUtils,
 	vector,
 	LineSegment
@@ -11,11 +13,6 @@ define([
 
 	// Based on the original challenge reference implementation:
 	// http://play.starmaninnovations.com/static/Spacewar/game_engine.js
-
-	function deepCopy(o) {
-		// TODO
-		return Object.assign({}, o);
-	}
 
 	function checkError(action) {
 		if(!Array.isArray(action)) {
@@ -355,7 +352,7 @@ define([
 				return;
 			}
 
-			entry.newVars = deepCopy(entry.vars);
+			entry.newVars = objectUtils.deepCopy(entry.vars);
 
 			const redEntry = this.entryGetPlayer(entry.id, 'red');
 			const blueEntry = this.entryGetPlayer(entry.id, 'blue');

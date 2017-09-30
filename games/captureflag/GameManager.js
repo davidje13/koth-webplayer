@@ -1,8 +1,10 @@
 define([
 	'core/arrayUtils',
+	'core/objectUtils',
 	'fetch/entryUtils',
 ], (
 	arrayUtils,
+	objectUtils,
 	entryUtils
 ) => {
 	'use strict';
@@ -39,11 +41,6 @@ define([
 			obj.x < zone.x + zone.w &&
 			obj.y < zone.y + zone.h
 		);
-	}
-
-	function deepCopy(o) {
-		// TODO
-		return Object.assign({}, o);
 	}
 
 	function makeAPIExtras({console, random}) {
@@ -427,7 +424,7 @@ define([
 			}
 
 			const objs = this.teamObjects[bot.teamIndex];
-			const sharedRollback = deepCopy(objs.shared);
+			const sharedRollback = objectUtils.deepCopy(objs.shared);
 			const params = this.getBotParams(bot, entry, objs);
 
 			let error = null;
