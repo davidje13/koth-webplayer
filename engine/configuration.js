@@ -8,6 +8,8 @@ define(['display/documentUtils'], (docutil) => {
 	const site = meta('stack-exchange-site');
 	const qid = meta('stack-exchange-qid');
 
+	const basePlayConfig = JSON.parse(meta('play-config', '{}'));
+
 	return {
 		pageTitle: docutil.getTitle(),
 		maxConcurrency: Math.max(1, Math.min(8, navigator.hardwareConcurrency - 3)),
@@ -19,11 +21,19 @@ define(['display/documentUtils'], (docutil) => {
 		matchType: meta('match-type', 'brawl'),
 		matchTypeArgs: JSON.parse(meta('match-type-args', '{}')),
 		baseGameConfig: JSON.parse(meta('game-config', '{}')),
-		basePlayConfig: JSON.parse(meta('play-config', '{}')),
+		basePlayConfig,
 		basePlayHiddenConfig: JSON.parse(meta(
 			'play-hidden-config',
 			'{"speed": -1, "maxTime": 250}'
 		)),
+		basePlayScreensaverConfig: JSON.parse(meta(
+			'play-screensaver-config',
+			'null'
+		)) || Object.assign({
+			swapDelay: 5000,
+		}, basePlayConfig, {
+			delay: Math.max(basePlayConfig.delay, basePlayConfig.speed > 1 ? 100 : 50),
+		}),
 		baseDisplayConfig: JSON.parse(meta('display-config', '{}')),
 		teamViewColumns: JSON.parse(meta('team-view-columns', '[]')),
 		defaultCode: meta('default-code', '// Code here\n'),

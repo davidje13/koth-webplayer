@@ -160,6 +160,10 @@ define([
 		}
 
 		clear() {
+			this.tableTeamsLookup.clear();
+			this.tableEntriesLookup.clear();
+			this.latestTeams = null;
+			this.latestState = null;
 			this.table.setData([]);
 		}
 

@@ -127,10 +127,10 @@ define([
 
 		buildTournament() {
 			// TODO: extract all of this & improve separation / APIs
-			this.tournament = new this.Tournament(this.pageConfig.tournamentTypeArgs);
+			this.tournament = new this.Tournament(null, this.pageConfig.tournamentTypeArgs);
 			this.tournament.setSubHandler((matchSeed, matchTeams, matchIndex) => {
 				matchSeed = 'M' + matchSeed;
-				const match = new this.Match(this.pageConfig.matchTypeArgs);
+				const match = new this.Match(MatchScorer, this.pageConfig.matchTypeArgs);
 				const matchDisplay = new MatchSummary({
 					name: 'Match ' + (matchIndex + 1),
 					seed: matchSeed,
@@ -167,15 +167,13 @@ define([
 					});
 				});
 				return new Promise((resolve) => {
-					match.addEventListener('complete', (matchScores) => {
-						resolve(MatchScorer.score(matchTeams, matchScores));
-					});
+					match.addEventListener('complete', (scores) => resolve(scores));
 					match.begin(matchSeed, matchTeams);
 				});
 			});
-			this.tournament.addEventListener('complete', (finalScores) => {
+			this.tournament.addEventListener('complete', (scores, finalScores) => {
 				/* globals console */
-				console.log('Tournament complete', finalScores);
+				console.log('Tournament complete', scores, finalScores);
 				// TODO
 			});
 		}
@@ -217,7 +215,7 @@ define([
 		}
 
 		buildGamePage() {
-			this.singleGameDisplay = new this.Display();
+			this.singleGameDisplay = new this.Display({});
 			const gamePageContent = docutil.make('div', {'class': 'game-page-content'}, [
 				this.singleGameDisplay.dom(),
 			]);
@@ -323,30 +321,44 @@ define([
 			});
 		}
 
+		buildScreensaverPage() {
+			this.screensaverDisplay = new this.Display({screensaver: true});
+			this.screensaverPage = docutil.make('div', {'class': 'game-page-content'}, [
+				this.screensaverDisplay.dom(),
+			]);
+
+			this.screensaverPage.addEventListener('pop', () => {
+				if(this.singleGame) {
+					this.singleGame.terminate();
+				}
+				this.singleGame = null;
+			});
+		}
+
 		beginGame(seed, teams) {
 			if(this.singleGame) {
 				this.singleGame.terminate();
 			}
-			this.singleGame = this.foregroundGames.make({
+			const game = this.singleGame = this.foregroundGames.make({
 				display: this.singleGameDisplay,
 				baseGameConfig: this.pageConfig.baseGameConfig,
 				basePlayConfig: this.pageConfig.basePlayConfig,
 				baseDisplayConfig: this.pageConfig.baseDisplayConfig,
 			});
 
-			this.singleGame.addEventListener('update', (state) => {
+			game.addEventListener('update', (state) => {
 				this.popupManager.setTeamStatuses(state.teams);
 			});
-			this.singleGame.begin(seed, teams);
+			game.begin(seed, teams);
 			const makeNav = () => {
 				return {
-					navElements: ['Game', docutil.make('p', {}, [this.singleGame.getSeed()])],
-					hash: this.singleGame.getSeed(),
+					navElements: ['Game', docutil.make('p', {}, [game.getSeed()])],
+					hash: game.getSeed(),
 					page: this.gamePage.dom(),
 				};
 			};
 			const navPos = this.nav.push(makeNav());
-			this.singleGame.addEventListener('begin', () => this.nav.swap(navPos, makeNav()));
+			game.addEventListener('begin', () => this.nav.swap(navPos, makeNav()));
 		}
 
 		beginRandomGame() {
@@ -356,12 +368,69 @@ define([
 			);
 		}
 
+		beginScreensaver() {
+			if(this.singleGame) {
+				this.singleGame.terminate();
+			}
+			const game = this.singleGame = this.foregroundGames.make({
+				display: this.screensaverDisplay,
+				baseGameConfig: this.pageConfig.baseGameConfig,
+				basePlayConfig: this.pageConfig.basePlayScreensaverConfig,
+				baseDisplayConfig: this.pageConfig.baseDisplayConfig,
+			});
+			const beginNext = () => {
+				const tournament = new this.Tournament(null, this.pageConfig.tournamentTypeArgs);
+				const matchProps = tournament.getRandomSub(
+					'T' + Random.makeRandomSeed(),
+					this.getManagedTeams()
+				);
+				const match = new this.Match(null, this.pageConfig.matchTypeArgs);
+				const gameProps = match.getRandomSub(
+					'M' + matchProps.seed,
+					matchProps.teams
+				);
+				game.begin(
+					'G' + gameProps.seed,
+					gameProps.teams
+				);
+			};
+			const makeNav = () => {
+				return {
+					navElements: ['Screensaver', docutil.make('p', {}, [
+						game.getSeed(),
+					])],
+					hash: 'screensaver',
+					page: this.screensaverPage,
+				};
+			};
+
+			beginNext();
+			const navPos = this.nav.push(makeNav());
+			game.addEventListener('complete', () => {
+				setTimeout(() => {
+					if(game !== this.singleGame) {
+						// Page has been closed
+						return;
+					}
+					beginNext();
+					this.nav.swap(navPos, makeNav());
+				}, this.pageConfig.basePlayScreensaverConfig.swapDelay);
+			});
+		}
+
 		buildWelcomePage() {
+			const btnScreensaver = docutil.make('button', {}, [
+				'Begin Screensaver',
+			]);
+			btnScreensaver.addEventListener('click',
+				this.beginScreensaver.bind(this));
+
 			const btnTournament = docutil.make('button', {}, [
 				'Begin Random Tournament',
 			]);
 			btnTournament.addEventListener('click',
 				this.beginRandomTournament.bind(this));
+
 			const btnGame = docutil.make('button', {}, [
 				'Begin Random Game',
 			]);
@@ -369,6 +438,7 @@ define([
 				this.beginRandomGame.bind(this));
 
 			const generalOptions = docutil.make('span', {'class': 'general-options'}, [
+				btnScreensaver,
 				btnTournament,
 				btnGame,
 			]);
@@ -431,6 +501,11 @@ define([
 		}
 
 		providePage(hash) {
+			if(hash === 'screensaver') {
+				this.nav.popTo(this.navRoot, {navigate: false});
+				this.beginScreensaver();
+				return true;
+			}
 			if(hash.startsWith('T')) {
 				this.nav.popTo(this.navRoot, {navigate: false});
 				this.beginTournament(hash, this.getHashTeams(hash));
@@ -532,6 +607,7 @@ define([
 			this.buildWelcomePage();
 			this.buildTournamentPage();
 			this.buildGamePage();
+			this.buildScreensaverPage();
 		}
 	};
 });

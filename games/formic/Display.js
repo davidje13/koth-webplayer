@@ -173,7 +173,7 @@ define([
 	}
 
 	return class Display extends EventObject {
-		constructor() {
+		constructor(mode) {
 			super();
 
 			this.renderer = new BoardRenderer();
@@ -251,8 +251,7 @@ define([
 			this.latestAnts = null;
 			this.latestBoard = null;
 			this.latestCurrentAnt = null;
-			this.latestW = 0;
-			this.latestH = 0;
+			this.latestSize = {width: 0, height: 0};
 			this.queenMarkerType = '';
 			this.workerMarkerType = '';
 			this.nextMoverMarkerType = '';
@@ -270,30 +269,32 @@ define([
 
 			this.root = docutil.make('section', {'class': 'game-container'}, [
 				docutil.make('div', {'class': 'visualisation-container'}, [
-					this.options.dom(),
-					this.zoomedBoard.dom(),
+					mode.screensaver ? null : this.options.dom(),
+					mode.screensaver ? null : this.zoomedBoard.dom(),
 					this.board.dom(),
-					this.visualOptions.dom(),
+					mode.screensaver ? null : this.visualOptions.dom(),
 				]),
 				this.table.dom(),
-				entryEditButton,
+				mode.screensaver ? null : entryEditButton,
 			]);
 
-			const throttledHover = rateUtils.throttle((x, y) => {
-				if(this.zoomedBoard.setFocus(x, y)) {
-					this.repositionMarkers();
-					this.board.rerender();
-				}
-			});
+			if(!mode.screensaver) {
+				const throttledHover = rateUtils.throttle((x, y) => {
+					if(this.zoomedBoard.setFocus(x, y)) {
+						this.repositionMarkers();
+						this.board.rerender();
+					}
+				});
 
-			this.board.addEventListener('hover', throttledHover);
-			this.board.addEventListener('hoveroff', () => {
-				throttledHover.abort();
-				if(this.zoomedBoard.setFocus(null)) {
-					this.repositionMarkers();
-					this.board.rerender();
-				}
-			});
+				this.board.addEventListener('hover', throttledHover);
+				this.board.addEventListener('hoveroff', () => {
+					throttledHover.abort();
+					if(this.zoomedBoard.setFocus(null)) {
+						this.repositionMarkers();
+						this.board.rerender();
+					}
+				});
+			}
 		}
 
 		clear() {
@@ -318,8 +319,8 @@ define([
 			this.renderer.updateGameConfig(config);
 			this.zoomedBoard.updateGameConfig(config);
 			this.table.updateGameConfig(config);
-			this.latestW = config.width;
-			this.latestH = config.height;
+			this.latestSize.width = config.width;
+			this.latestSize.height = config.height;
 
 			this.board.repaint();
 		}
@@ -378,7 +379,7 @@ define([
 					wrap: true,
 					clip: true,
 				});
-				const rhs = this.zoomedBoard.x < this.latestW / 2;
+				const rhs = this.zoomedBoard.x < this.latestSize.width / 2;
 				docutil.updateAttrs(this.zoomedBoard.dom(), {
 					'class': 'zoomed-board ' + (rhs ? 'right' : 'left'),
 				});
@@ -389,8 +390,8 @@ define([
 			}
 
 			if(this.foodMarkerType && this.latestBoard) {
-				const ww = this.latestW;
-				const hh = this.latestH;
+				const ww = this.latestSize.width;
+				const hh = this.latestSize.height;
 				const board = this.latestBoard;
 				for(let i = 0; i < ww * hh; ++ i) {
 					if(hasFood(board[i])) {

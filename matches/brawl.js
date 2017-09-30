@@ -24,13 +24,13 @@ define([
 	}
 
 	return class extends Match {
-		constructor({
+		constructor(scorer, {
 			count = 1,
 			teamLimit = null,
 			teamShuffle = 'random',
 			entryShuffle = 'random',
 		}) {
-			super();
+			super(scorer);
 
 			this.count = count;
 			this.teamLimit = teamLimit;
@@ -59,21 +59,18 @@ define([
 			return shuffledSubTeams;
 		}
 
-		run(random, teams) {
+		run(random, teams, subHandler) {
 			const subs = [];
 			for(let index = 0; index < this.count; ++ index) {
 				const subSeed = random.makeRandomSeed();
 				const subTeams = this.pickTeams(teams, {index, random});
-				subs.push(this.subHandler(
+				subs.push(subHandler(
 					subSeed,
 					subTeams,
 					subs.length
 				));
 			}
-			return Promise.all(subs).then((subScores) => {
-				// TODO: should score aggregation happen here?
-				this.trigger('complete', [subScores]);
-			});
+			return Promise.all(subs);
 		}
 	};
 });

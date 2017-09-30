@@ -14,19 +14,19 @@ define(['./Match'], (Match) => {
 	}
 
 	return class extends Match {
-		constructor({teamLimit = 2}) {
-			super();
+		constructor(scorer, {teamLimit = 2}) {
+			super(scorer);
 
 			this.teamLimit = teamLimit;
 		}
 
-		run(random, teams) {
+		run(random, teams, subHandler) {
 			if(teams.length <= this.teamLimit) {
-				return this.subHandler(
+				return subHandler(
 					random.makeRandomSeed(),
 					teams,
 					0
-				).then((subScore) => this.trigger('complete', [[subScore]]));
+				).then((subScore) => [subScore]);
 			}
 
 			const subs = [];
@@ -36,17 +36,14 @@ define(['./Match'], (Match) => {
 				0,
 				this.teamLimit,
 				(chosenTeams) => {
-					subs.push(this.subHandler(
+					subs.push(subHandler(
 						random.makeRandomSeed(),
 						chosenTeams,
 						subs.length
 					));
 				}
 			);
-			return Promise.all(subs).then((subScores) => {
-				// TODO: should score aggregation happen here?
-				this.trigger('complete', [subScores]);
-			});
+			return Promise.all(subs);
 		}
 	};
 });
