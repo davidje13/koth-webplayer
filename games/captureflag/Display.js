@@ -26,7 +26,7 @@ define([
 	'use strict';
 
 	return class Display extends EventObject {
-		constructor() {
+		constructor(mode) {
 			super();
 
 			this.renderer = new BoardRenderer();
@@ -88,12 +88,12 @@ define([
 
 			this.root = docutil.make('section', {'class': 'game-container'}, [
 				docutil.make('div', {'class': 'visualisation-container'}, [
-					this.options.dom(),
+					mode.screensaver ? null : this.options.dom(),
 					this.board.dom(),
-					this.visualOptions.dom(),
+					mode.screensaver ? null : this.visualOptions.dom(),
 				]),
 				this.table.dom(),
-				entryEditButton,
+				mode.screensaver ? null : entryEditButton,
 			]);
 		}
 
