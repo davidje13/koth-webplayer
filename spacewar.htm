@@ -109,6 +109,11 @@
 
 <meta name="default-code" content="/*
  * BotName_setup is called at the start of each game
+ *
+ * Input:
+ * team - 'red' (start left) or 'blue' (start right)
+ *
+ * Return: an object to pass to later Bot_getActions calls
  */
 function Bot_setup(team) {
     return {};
@@ -116,6 +121,54 @@ function Bot_setup(team) {
 
 /*
  * BotName_getActions is called each frame
+ *
+ * Input:
+ * gameInfo - an object containing the current game state
+ *   timeLeft               - time left in game (seconds)
+ *   fieldWidth             - width of board
+ *   fieldHeight            - height of board
+ *   sun_x / sun_y / sun_r  - location and kill-radius of sun
+ *   gravityStrength        - acceleration due to gravity of sun at 1 pixel away
+ *   engineThrust           - acceleration provided by engines when ship is
+ *                            undamaged (pixels/frame^2)
+ *   speedLimit             - maximum speed (pixels/frame) attainable on engine
+ *                            power
+ *   maxSpeed               - maximum speed (pixels/frame) attainable by any
+ *                            means
+ *   numMissiles            - the number of missiles currently flying
+ *   missiles               - an array of objects (x, y, xv, yv) denoting the
+ *                            current state of all flying missiles
+ *   redScore / blueScore   - score of player
+ *   red_x / red_y / blue_* - location of player
+ *   red_rot / blue_rot     - rotation of player in degrees (0 = up, 90 = right)
+ *   red_xv / red_yv / blue_* - velocity of player
+ *   red_shape / blue_shape - name of shape for player ('full ship' /
+ *                            'left wing' / 'right wing' / 'nose only') -
+ *                            matches shipShapes global
+ *   red_missileStock / blue_* - number of missiles remaining for player
+ *   red_inHyperspace / blue_* - true if the player is currently in hyperspace
+ *                               (intangible)
+ *   red_exploded / blue_*  - true if the player has exploded after dying
+ *                            (intangible)
+ *   red_alive / blue_alive - true if the player is still alive. If false and
+ *                            *_exploded is also false, the player is currently
+ *                            'frozen' and hazardous to touch
+ * botVars  - the object returned by Bot_setup (mutable)
+ *
+ * Globals:
+ * shipShapes       - an object containing vector shapes for ships in various
+ *                    states: 'full ship', 'left wing', 'right wing', 'nose'
+ * LineIntersection - a function which computes the intersection point of two
+ *                    line segments
+ * getShipCoords    - a function which returns the current shape of a ship
+ *                    ('red' or 'blue') rotated and positioned on the board
+ *
+ * Return: a list of actions:
+ *   'turn left'    - turn 5 degrees counter-clockwise
+ *   'turn right'   - turn 5 degress clockwise
+ *   'fire engine'  - accelerate forwards
+ *   'fire missile' - fire a missile (no-op if no missiles left or too rapid)
+ *   'hyperspace'   - enter hyperspace
  */
 function Bot_getActions(gameInfo, botVars) {
     return [];

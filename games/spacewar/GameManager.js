@@ -315,7 +315,7 @@ define([
 				sun_y: this.config.sun.y,
 				sun_r: this.config.sun.radius,
 				gravityStrength: this.config.sun.G,
-				engineThrust: this.config.acceleration,
+				engineThrust: this.config.acceleration.all,
 				speedLimit: this.config.maxEngineSpeed,
 				maxSpeed: this.config.maxSpeed,
 
