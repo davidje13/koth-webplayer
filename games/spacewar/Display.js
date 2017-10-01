@@ -1,27 +1,27 @@
 define([
-	'core/EventObject',
 	'core/arrayUtils',
 	'display/documentUtils',
 	'display/MarkerStore',
 	'display/FullSwitchingBoard',
 	'display/OptionsBar',
 	'./GameScorer',
-	'./components/BoardRenderer',
+	'games/common/BaseDisplay',
 	'games/common/components/LeaderboardDisplay',
 	'games/common/components/StepperOptions',
+	'./components/BoardRenderer',
 	'games/common/style.css',
 	'./style.css',
 ], (
-	EventObject,
 	arrayUtils,
 	docutil,
 	MarkerStore,
 	FullSwitchingBoard,
 	OptionsBar,
 	GameScorer,
-	BoardRenderer,
+	BaseDisplay,
 	LeaderboardDisplay,
-	StepperOptions
+	StepperOptions,
+	BoardRenderer
 ) => {
 	'use strict';
 
@@ -103,12 +103,12 @@ define([
 		}
 	}
 
-	return class Display extends EventObject {
+	return class Display extends BaseDisplay {
 		constructor(mode) {
-			super();
+			super(mode);
 
-			this.renderer = new BoardRenderer();
-			this.options = new StepperOptions(StepperOptions.makeSpeedButtons({
+			const renderer = new BoardRenderer();
+			const options = new StepperOptions(StepperOptions.makeSpeedButtons({
 				'-3': {delay: 240, speed: 1},
 				'-2': {delay: 120, speed: 1},
 				'-1': {delay: 60, speed: 1},
@@ -119,12 +119,12 @@ define([
 			}, {stepSingle: false}));
 			this.markers = new MarkerStore();
 			this.board = new FullSwitchingBoard({
-				renderer: this.renderer,
+				renderer,
 				markerStore: this.markers,
 				begin3D: null,
 				scaleX: 0,
 			});
-			this.visualOptions = new OptionsBar('changedisplay', [
+			const visualOptions = new OptionsBar('changedisplay', [
 				{attribute: 'view3D', values: [
 					{value: false, label: '2D'},
 					{value: true, label: '3D'},
@@ -136,8 +136,9 @@ define([
 					{value: 2, label: '1:2'},
 				]},
 			]);
+			visualOptions.updateDisplayConfig = visualOptions.updateAttributes;
 
-			this.table = new LeaderboardDisplay({
+			const table = new LeaderboardDisplay({
 				columns: [{
 					title: 'Missiles',
 					generator: (entry) => (entry.missiles),
@@ -161,66 +162,41 @@ define([
 				GameScorer,
 			});
 
-			this.options.addEventForwarding(this);
-			this.visualOptions.addEventForwarding(this);
+			options.addEventForwarding(this);
+			visualOptions.addEventForwarding(this);
 
-			this.renderer.setColourChoices(COLOUR_OPTIONS);
-			this.options.setRenderPerformance(this.renderer);
-			this.latestSun = null;
+			renderer.setColourChoices(COLOUR_OPTIONS);
+			options.setRenderPerformance(renderer);
 			this.focussed = [];
 
-			const entryEditButton = docutil.make(
-				'button',
-				{'class': 'entry-edit-button'},
-				['Edit Entries']
-			);
-			entryEditButton.addEventListener('click', () => {
-				this.trigger('editentries');
-			});
-
-			this.root = docutil.make('section', {'class': 'game-container'}, [
-				docutil.make('div', {'class': 'visualisation-container'}, [
-					mode.screensaver ? null : this.options.dom(),
-					this.board.dom(),
-					mode.screensaver ? null : this.visualOptions.dom(),
-				]),
-				this.table.dom(),
-				mode.screensaver ? null : entryEditButton,
-			]);
+			this.addVisualisationChild(options, {screensaver: false});
+			this.addVisualisationChild(this.board);
+			this.addVisualisationChild(visualOptions, {screensaver: false});
+			this.addChild(table);
+			this.addChild(renderer);
 		}
 
 		clear() {
-			this.latestTeamStatuses = null;
-			this.latestCells = 0;
-			this.latestFrame = 0;
-			this.latestCycle = 0;
-
-			this.renderer.clear();
-			this.table.clear();
-
+			super.clear();
+			this.markers.clear();
 			this.board.repaint();
 		}
 
 		updatePlayConfig(config) {
-			this.options.updatePlayConfig(config);
+			super.updatePlayConfig(config);
 		}
 
 		updateGameConfig(config) {
-			this.options.updateGameConfig(config);
-			this.renderer.updateGameConfig(config);
-			this.table.updateGameConfig(config);
-			this.latestSun = config.sun;
-
+			super.updateGameConfig(config);
 			this.board.repaint();
 		}
 
 		updateDisplayConfig(config) {
+			super.updateDisplayConfig(config);
+
 			this.board.setScale(config.scale);
 			this.board.setWireframe(config.wireframe);
 			this.board.switch3D(config.view3D, true);
-
-			this.renderer.updateDisplayConfig(config);
-			this.visualOptions.updateAttributes(config);
 
 			if(
 				!arrayUtils.shallowEqual(config.focussed, this.focussed)
@@ -233,10 +209,7 @@ define([
 		}
 
 		updateState(state) {
-			this.options.updateState(state);
-			this.table.updateState(state);
-			this.renderer.updateState(state);
-
+			super.updateState(state);
 			this.repositionMarkers();
 			this.board.repaint();
 		}
@@ -244,12 +217,13 @@ define([
 		repositionMarkers() {
 			this.markers.clear();
 
-			if(this.latestSun) {
+			if(this.latestGameConfig.sun) {
+				const sun = this.latestGameConfig.sun;
 				this.markers.mark('sun', {
-					x: this.latestSun.x - this.latestSun.radius,
-					y: this.latestSun.y - this.latestSun.radius,
-					w: this.latestSun.radius * 2,
-					h: this.latestSun.radius * 2,
+					x: sun.x - sun.radius,
+					y: sun.y - sun.radius,
+					w: sun.radius * 2,
+					h: sun.radius * 2,
 					className: 'sun',
 					wrap: true,
 					clip: true,

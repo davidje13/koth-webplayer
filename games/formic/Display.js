@@ -1,5 +1,4 @@
 define([
-	'core/EventObject',
 	'core/arrayUtils',
 	'core/rateUtils',
 	'3d/ModelPoint',
@@ -10,14 +9,13 @@ define([
 	'display/FullSwitchingBoard',
 	'display/OptionsBar',
 	'./GameScorer',
+	'games/common/BaseDisplay',
 	'games/common/components/LeaderboardDisplay',
 	'games/common/components/StepperOptions',
 	'./components/BoardRenderer',
 	'./components/ZoomedBoard',
-	'games/common/style.css',
 	'./style.css',
 ], (
-	EventObject,
 	arrayUtils,
 	rateUtils,
 	ModelPoint,
@@ -28,6 +26,7 @@ define([
 	FullSwitchingBoard,
 	OptionsBar,
 	GameScorer,
+	BaseDisplay,
 	LeaderboardDisplay,
 	StepperOptions,
 	BoardRenderer,
@@ -172,12 +171,12 @@ define([
 		return target;
 	}
 
-	return class Display extends EventObject {
+	return class Display extends BaseDisplay {
 		constructor(mode) {
-			super();
+			super(mode);
 
-			this.renderer = new BoardRenderer();
-			this.options = new StepperOptions(StepperOptions.makeSpeedButtons({
+			const renderer = new BoardRenderer();
+			const options = new StepperOptions(StepperOptions.makeSpeedButtons({
 				'-3': {delay: 1000, speed: 1},
 				'-2': {delay: 500, speed: 1},
 				'-1': {delay: 250, speed: 1},
@@ -187,7 +186,7 @@ define([
 				'3': {delay: 0, speed: 500},
 			}));
 
-			this.visualOptions = new OptionsBar('changedisplay', [
+			const visualOptions = new OptionsBar('changedisplay', [
 				{attribute: 'colourscheme', values: COLOUR_OPTIONS_SELECT},
 				{attribute: 'view3D', values: [
 					{value: false, label: '2D'},
@@ -211,12 +210,13 @@ define([
 					{value: 'pointer', label: 'Pointer'},
 				]},
 			]);
+			visualOptions.updateDisplayConfig = visualOptions.updateAttributes;
+
 			this.markers = new MarkerStore();
-			this.markerTypes3D = make3DMarkers();
 			this.board = new FullSwitchingBoard({
-				renderer: this.renderer,
+				renderer,
 				markerStore: this.markers,
-				markerTypes3D: this.markerTypes3D,
+				markerTypes3D: make3DMarkers(),
 				begin3D: null,
 				scaleX: 0,
 			});
@@ -226,7 +226,7 @@ define([
 				scaleX: 16,
 			});
 
-			this.table = new LeaderboardDisplay({
+			const table = new LeaderboardDisplay({
 				columns: [{
 					title: 'Food',
 					generator: (entry) => (entry.food),
@@ -241,42 +241,25 @@ define([
 				GameScorer,
 			});
 
-			this.renderer.setColourChoices(COLOUR_OPTIONS);
+			renderer.setColourChoices(COLOUR_OPTIONS);
 			this.zoomedBoard.setColourChoices(COLOUR_OPTIONS);
-			this.options.setRenderPerformance(this.renderer);
+			options.setRenderPerformance(renderer);
 
-			this.options.addEventForwarding(this);
-			this.visualOptions.addEventForwarding(this);
+			options.addEventForwarding(this);
+			visualOptions.addEventForwarding(this);
 
-			this.latestAnts = null;
-			this.latestBoard = null;
-			this.latestCurrentAnt = null;
-			this.latestSize = {width: 0, height: 0};
 			this.queenMarkerType = '';
 			this.workerMarkerType = '';
 			this.nextMoverMarkerType = '';
 			this.foodMarkerType = '';
 			this.focussed = [];
 
-			const entryEditButton = docutil.make(
-				'button',
-				{'class': 'entry-edit-button'},
-				['Edit Entries']
-			);
-			entryEditButton.addEventListener('click', () => {
-				this.trigger('editentries');
-			});
-
-			this.root = docutil.make('section', {'class': 'game-container'}, [
-				docutil.make('div', {'class': 'visualisation-container'}, [
-					mode.screensaver ? null : this.options.dom(),
-					mode.screensaver ? null : this.zoomedBoard.dom(),
-					this.board.dom(),
-					mode.screensaver ? null : this.visualOptions.dom(),
-				]),
-				this.table.dom(),
-				mode.screensaver ? null : entryEditButton,
-			]);
+			this.addVisualisationChild(options, {screensaver: false});
+			this.addVisualisationChild(this.zoomedBoard, {screensaver: false});
+			this.addVisualisationChild(this.board);
+			this.addVisualisationChild(visualOptions, {screensaver: false});
+			this.addChild(table);
+			this.addChild(renderer);
 
 			if(!mode.screensaver) {
 				const throttledHover = rateUtils.throttle((x, y) => {
@@ -298,37 +281,22 @@ define([
 		}
 
 		clear() {
-			this.latestAnts = null;
-			this.latestBoard = null;
-			this.latestCurrentAnt = null;
-
-			this.renderer.clear();
-			this.zoomedBoard.clear();
-			this.table.clear();
-
+			super.clear();
 			this.markers.clear();
 			this.board.repaint();
 		}
 
 		updatePlayConfig(config) {
-			this.options.updatePlayConfig(config);
+			super.updatePlayConfig(config);
 		}
 
 		updateGameConfig(config) {
-			this.options.updateGameConfig(config);
-			this.renderer.updateGameConfig(config);
-			this.zoomedBoard.updateGameConfig(config);
-			this.table.updateGameConfig(config);
-			this.latestSize.width = config.width;
-			this.latestSize.height = config.height;
-
+			super.updateGameConfig(config);
 			this.board.repaint();
 		}
 
 		updateDisplayConfig(config) {
-			this.visualOptions.updateAttributes(config);
-			this.renderer.updateDisplayConfig(config);
-			this.zoomedBoard.updateDisplayConfig(config);
+			super.updateDisplayConfig(config);
 
 			this.board.setScale(config.scale);
 			this.board.setWireframe(config.wireframe);
@@ -353,15 +321,7 @@ define([
 		}
 
 		updateState(state) {
-			this.options.updateState(state);
-			this.renderer.updateState(state);
-			this.zoomedBoard.updateState(state);
-			this.table.updateState(state);
-
-			this.latestAnts = state.ants;
-			this.latestBoard = state.board;
-			this.latestCurrentAnt = state.currentAnt;
-
+			super.updateState(state);
 			this.repositionMarkers();
 			this.board.repaint();
 		}
@@ -369,7 +329,7 @@ define([
 		repositionMarkers() {
 			this.markers.clear();
 
-			if(this.zoomedBoard.hasFocus() && this.latestBoard) {
+			if(this.zoomedBoard.hasFocus() && this.latestState.board) {
 				this.markers.mark('zoom', {
 					x: this.zoomedBoard.x - this.zoomedBoard.width / 2,
 					y: this.zoomedBoard.y - this.zoomedBoard.height / 2,
@@ -379,7 +339,7 @@ define([
 					wrap: true,
 					clip: true,
 				});
-				const rhs = this.zoomedBoard.x < this.latestSize.width / 2;
+				const rhs = this.zoomedBoard.x < this.latestGameConfig.width / 2;
 				docutil.updateAttrs(this.zoomedBoard.dom(), {
 					'class': 'zoomed-board ' + (rhs ? 'right' : 'left'),
 				});
@@ -389,10 +349,10 @@ define([
 				});
 			}
 
-			if(this.foodMarkerType && this.latestBoard) {
-				const ww = this.latestSize.width;
-				const hh = this.latestSize.height;
-				const board = this.latestBoard;
+			if(this.foodMarkerType && this.latestState.board) {
+				const ww = this.latestGameConfig.width;
+				const hh = this.latestGameConfig.height;
+				const board = this.latestState.board;
 				for(let i = 0; i < ww * hh; ++ i) {
 					if(hasFood(board[i])) {
 						this.markers.mark('food-' + i, {
@@ -409,8 +369,8 @@ define([
 				this.queenMarkerType ||
 				this.workerMarkerType ||
 				this.nextMoverMarkerType
-			) && this.latestAnts) {
-				this.latestAnts.forEach((ant, index) => {
+			) && this.latestState.ants) {
+				this.latestState.ants.forEach((ant, index) => {
 					if(this.focussed.length) {
 						if(this.focussed.indexOf(ant.entry) === -1) {
 							return;
@@ -426,7 +386,7 @@ define([
 							className = 'worker-locator-' + this.workerMarkerType;
 						}
 					}
-					if(index === this.latestCurrentAnt && this.nextMoverMarkerType) {
+					if(index === this.latestState.currentAnt && this.nextMoverMarkerType) {
 						className = 'next-mover-locator-' + this.nextMoverMarkerType;
 					}
 					if(className) {

@@ -1,21 +1,21 @@
 define([
-	'core/EventObject',
 	'core/arrayUtils',
 	'display/documentUtils',
 	'display/MarkerStore',
 	'display/Full2DBoard',
 	'./GameScorer',
+	'games/common/BaseDisplay',
 	'games/common/components/LeaderboardDisplay',
 	'games/common/components/StepperOptions',
 	'games/common/style.css',
 	'./style.css',
 ], (
-	EventObject,
 	arrayUtils,
 	docutil,
 	MarkerStore,
 	Full2DBoard,
 	GameScorer,
+	BaseDisplay,
 	LeaderboardDisplay,
 	StepperOptions
 ) => {
@@ -43,12 +43,12 @@ define([
 		}
 	}
 
-	return class Display extends EventObject {
+	return class Display extends BaseDisplay {
 		constructor(mode) {
-			super();
+			super(mode);
 
-			this.renderer = new BoardRenderer();
-			this.options = new StepperOptions(StepperOptions.makeSpeedButtons({
+			const renderer = new BoardRenderer();
+			const options = new StepperOptions(StepperOptions.makeSpeedButtons({
 				'-3': {delay: 4000, speed: 1},
 				'-2': {delay: 2000, speed: 1},
 				'-1': {delay: 1000, speed: 1},
@@ -59,12 +59,12 @@ define([
 			}, {stepSingle: false}));
 			this.markers = new MarkerStore();
 			this.board = new Full2DBoard({
-				renderer: this.renderer,
+				renderer,
 				markerStore: this.markers,
 				scaleX: 0,
 			});
 
-			this.table = new LeaderboardDisplay({
+			const table = new LeaderboardDisplay({
 				columns: [{
 					title: 'Alive?',
 					generator: (entry) => (entry.alive ? 'yes' : 'no'),
@@ -90,60 +90,33 @@ define([
 				GameScorer,
 			});
 
-			this.options.addEventForwarding(this);
+			options.addEventForwarding(this);
 
-			this.latestTeamStatuses = null;
-			this.latestCells = 0;
-			this.latestFrame = 0;
-			this.latestCycle = 0;
 			this.focussed = [];
 
-			const entryEditButton = docutil.make(
-				'button',
-				{'class': 'entry-edit-button'},
-				['Edit Entries']
-			);
-			entryEditButton.addEventListener('click', () => {
-				this.trigger('editentries');
-			});
-
-			this.root = docutil.make('section', {'class': 'game-container'}, [
-				docutil.make('div', {'class': 'visualisation-container'}, [
-					mode.screensaver ? null : this.options.dom(),
-					this.board.dom(),
-				]),
-				this.table.dom(),
-				mode.screensaver ? null : entryEditButton,
-			]);
+			this.addVisualisationChild(options, {screensaver: false});
+			this.addVisualisationChild(this.board);
+			this.addChild(table);
+			this.addChild(renderer);
 		}
 
 		clear() {
-			this.latestTeamStatuses = null;
-			this.latestCells = 0;
-			this.latestFrame = 0;
-			this.latestCycle = 0;
-
-			this.renderer.clear();
-			this.table.clear();
-
+			super.clear();
+			this.markers.clear();
 			this.board.repaint();
 		}
 
 		updatePlayConfig(config) {
-			this.options.updatePlayConfig(config);
+			super.updatePlayConfig(config);
 		}
 
 		updateGameConfig(config) {
-			this.options.updateGameConfig(config);
-			this.renderer.updateGameConfig(config);
-			this.table.updateGameConfig(config);
-
-			this.latestCells = config.cells;
-
+			super.updateGameConfig(config);
 			this.board.repaint();
 		}
 
 		updateDisplayConfig(config) {
+			super.updateDisplayConfig(config);
 			this.board.setScale(config.scaleX, config.scaleY);
 
 			if(
@@ -157,13 +130,7 @@ define([
 		}
 
 		updateState(state) {
-			this.options.updateState(state);
-			this.table.updateState(state);
-
-			this.latestTeamStatuses = state.teams;
-			this.latestFrame = state.completedFrame;
-			this.latestCycle = state.completedCycle;
-
+			super.updateState(state);
 			this.repositionMarkers();
 			this.board.repaint();
 		}
@@ -171,11 +138,11 @@ define([
 		repositionMarkers() {
 			this.markers.clear();
 
-			if(!this.latestTeamStatuses) {
+			if(!this.latestState.teams) {
 				return;
 			}
-			for(let y = 0; y < this.latestTeamStatuses.length; ++ y) {
-				for(let x = 0; x < this.latestCells; ++ x) {
+			for(let y = 0; y < this.latestState.teams.length; ++ y) {
+				for(let x = 0; x < this.latestGameConfig.cells; ++ x) {
 					this.markers.mark('cell-' + x + '-' + y, {
 						x,
 						y,
@@ -185,7 +152,7 @@ define([
 					});
 				}
 			}
-			this.latestTeamStatuses.forEach((teamStatus, teamIndex) => {
+			this.latestState.teams.forEach((teamStatus, teamIndex) => {
 				teamStatus.entries.forEach((entryStatus) => {
 					let className = entryStatus.alive ? 'player' : 'player dead';
 					if(this.focussed.indexOf(entryStatus.id) !== -1) {
@@ -198,16 +165,18 @@ define([
 						wrap: false,
 						clip: false,
 					});
-					const shots = entryStatus.shotHistory[this.latestFrame] || [];
+					const completedFrame = this.latestState.completedFrame;
+					const completedCycle = this.latestState.completedCycle;
+					const shots = entryStatus.shotHistory[completedFrame] || [];
 					for(let i = 0; i < shots.length; ++ i) {
 						this.markers.mark('shot-' + entryStatus.id + '-' + i, {
 							x: entryStatus.cell - 1,
 							y: teamIndex,
 							toX: shots[i] - 1,
-							toY: (teamIndex + 1) % this.latestTeamStatuses.length,
+							toY: (teamIndex + 1) % this.latestState.teams.length,
 							className: (
 								'shot' +
-								(i === this.latestCycle - 1 ? ' latest' : '')
+								(i === completedCycle - 1 ? ' latest' : '')
 							),
 							wrap: false,
 							clip: false,

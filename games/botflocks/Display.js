@@ -1,24 +1,23 @@
 define([
-	'core/EventObject',
 	'core/arrayUtils',
 	'display/documentUtils',
 	'display/MarkerStore',
 	'display/Full2DBoard',
 	'display/OptionsBar',
 	'./GameScorer',
+	'games/common/BaseDisplay',
 	'games/common/components/LeaderboardDisplay',
 	'games/common/components/StepperOptions',
 	'./components/BoardRenderer',
-	'games/common/style.css',
 	'./style.css',
 ], (
-	EventObject,
 	arrayUtils,
 	docutil,
 	MarkerStore,
 	Full2DBoard,
 	OptionsBar,
 	GameScorer,
+	BaseDisplay,
 	LeaderboardDisplay,
 	StepperOptions,
 	BoardRenderer
@@ -77,12 +76,12 @@ define([
 		return docutil.make('span', {}, [colSample, entry.title]);
 	}
 
-	return class Display extends EventObject {
+	return class Display extends BaseDisplay {
 		constructor(mode) {
-			super();
+			super(mode);
 
-			this.renderer = new BoardRenderer();
-			this.options = new StepperOptions(StepperOptions.makeSpeedButtons({
+			const renderer = new BoardRenderer();
+			const options = new StepperOptions(StepperOptions.makeSpeedButtons({
 				'-3': {delay: 1000, speed: 1},
 				'-2': {delay: 500, speed: 1},
 				'-1': {delay: 250, speed: 1},
@@ -91,7 +90,7 @@ define([
 				'2': {delay: 0, speed: 25},
 				'3': {delay: 0, speed: 50},
 			}, {stepSingle: false}));
-			this.visualOptions = new OptionsBar('changedisplay', [
+			const visualOptions = new OptionsBar('changedisplay', [
 				{attribute: 'colourscheme', values: COLOUR_OPTIONS_SELECT},
 				{attribute: 'scale', values: [
 					{value: 1, label: '1:1'},
@@ -106,9 +105,11 @@ define([
 					{value: 'ring', label: 'Ring'},
 				]},
 			]);
+			visualOptions.updateDisplayConfig = visualOptions.updateAttributes;
+
 			this.markers = new MarkerStore();
 			this.board = new Full2DBoard({
-				renderer: this.renderer,
+				renderer,
 				markerStore: this.markers,
 				scaleX: 0,
 			});
@@ -123,62 +124,39 @@ define([
 			});
 			this.table.setCustomData({colourChoices: COLOUR_OPTIONS});
 
-			this.renderer.setColourChoices(COLOUR_OPTIONS);
-			this.options.setRenderPerformance(this.renderer);
+			renderer.setColourChoices(COLOUR_OPTIONS);
+			options.setRenderPerformance(renderer);
 
-			this.options.addEventForwarding(this);
-			this.visualOptions.addEventForwarding(this);
+			options.addEventForwarding(this);
+			visualOptions.addEventForwarding(this);
 
-			this.latestTeamStatuses = null;
-			this.latestTarget = null;
 			this.targetMarkerType = '';
 			this.focussed = [];
 
-			const entryEditButton = docutil.make(
-				'button',
-				{'class': 'entry-edit-button'},
-				['Edit Entries']
-			);
-			entryEditButton.addEventListener('click', () => {
-				this.trigger('editentries');
-			});
-
-			this.root = docutil.make('section', {'class': 'game-container'}, [
-				docutil.make('div', {'class': 'visualisation-container'}, [
-					mode.screensaver ? null : this.options.dom(),
-					this.board.dom(),
-					mode.screensaver ? null : this.visualOptions.dom(),
-				]),
-				this.table.dom(),
-				mode.screensaver ? null : entryEditButton,
-			]);
+			this.addVisualisationChild(options, {screensaver: false});
+			this.addVisualisationChild(this.board);
+			this.addVisualisationChild(visualOptions, {screensaver: false});
+			this.addChild(this.table);
+			this.addChild(renderer);
 		}
 
 		clear() {
-			this.renderer.clear();
-			this.table.clear();
-
+			super.clear();
 			this.markers.clear();
 			this.board.repaint();
 		}
 
 		updatePlayConfig(config) {
-			this.options.updatePlayConfig(config);
+			super.updatePlayConfig(config);
 		}
 
 		updateGameConfig(config) {
-			this.options.updateGameConfig(config);
-			this.renderer.updateGameConfig(config);
-			this.table.updateGameConfig(config);
-			this.latestW = config.width;
-			this.latestH = config.height;
-
+			super.updateGameConfig(config);
 			this.board.repaint();
 		}
 
 		updateDisplayConfig(config) {
-			this.visualOptions.updateAttributes(config);
-			this.renderer.updateDisplayConfig(config);
+			super.updateDisplayConfig(config);
 			this.table.setCustomData({colourscheme: config.colourscheme});
 
 			this.board.setScale(config.scale);
@@ -196,12 +174,7 @@ define([
 		}
 
 		updateState(state) {
-			this.options.updateState(state);
-			this.renderer.updateState(state);
-			this.table.updateState(state);
-
-			this.latestTeamStatuses = state.teams;
-			this.latestTarget = state.target;
+			super.updateState(state);
 
 			this.repositionMarkers();
 			this.board.repaint();
@@ -210,18 +183,18 @@ define([
 		repositionMarkers() {
 			this.markers.clear();
 
-			if(this.targetMarkerType && this.latestTarget) {
+			if(this.targetMarkerType && this.latestState.target) {
 				this.markers.mark('target', {
-					x: this.latestTarget.x,
-					y: this.latestTarget.y,
+					x: this.latestState.target.x,
+					y: this.latestState.target.y,
 					className: 'target-locator-' + this.targetMarkerType,
 					wrap: false,
 					clip: false,
 				});
 			}
 
-			if(this.focussed.length && this.latestTeamStatuses) {
-				this.latestTeamStatuses.forEach((teamStatus) => {
+			if(this.focussed.length && this.latestState.teams) {
+				this.latestState.teams.forEach((teamStatus) => {
 					teamStatus.entries.forEach((entryStatus) => {
 						if(this.focussed.indexOf(entryStatus.id) === -1) {
 							return;
