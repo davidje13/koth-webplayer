@@ -45,7 +45,7 @@ define([
 	}
 
 	return class Display extends EventObject {
-		constructor() {
+		constructor(mode) {
 			super();
 
 			this.latestDisplaySize = 0;
@@ -106,12 +106,12 @@ define([
 
 			this.root = docutil.make('section', {'class': 'game-container'}, [
 				docutil.make('div', {'class': 'visualisation-container'}, [
-					this.options.dom(),
+					mode.screensaver ? null : this.options.dom(),
 					this.board.dom(),
-					this.visualOptions.dom(),
+					mode.screensaver ? null : this.visualOptions.dom(),
 				]),
 				this.table.dom(),
-				entryEditButton,
+				mode.screensaver ? null : entryEditButton,
 			]);
 		}
 
@@ -187,6 +187,8 @@ define([
 					this.markers.mark('cell-' + x + '-' + y, {
 						x,
 						y,
+						w: 1,
+						h: 1,
 						className: (token ? ('token C' + col) : 'cell'),
 						content: token ? String(value) : null,
 						wrap: false,

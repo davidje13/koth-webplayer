@@ -1,39 +1,49 @@
 .game-board .mark.cell {
-	margin: -20px;
-	width: 40px;
-	height: 40px;
+	z-index: 1;
+}
+
+.game-board .mark.cell:before {
+	content: "";
+	display: block;
+	width: 80%;
+	height: 80%;
+	margin: 10%;
 	border-radius: 100%;
 	box-sizing: border-box;
-	z-index: 1;
 	background: rgba(0, 0, 0, 0.05);
 	box-shadow: inset 0 5px 20px rgba(0, 0, 0, 0.5);
 }
 
 .game-board .mark.token {
-	margin: -20px;
-	width: 40px;
-	height: 40px;
-	border-radius: 100%;
-	box-sizing: border-box;
 	z-index: 2;
-	box-shadow:
-		inset 0 -5px 20px rgba(0, 0, 0, 0.2),
-		0 2px 4px rgba(0, 0, 0, 0.2);
 	font-size: 20px;
-	line-height: 40px;
+	line-height: 0;
 	text-align: center;
 	color: #FFFFFF;
 }
 
-.game-board .mark.C0 {
+.game-board .mark.token:before {
+	content: "";
+	display: block;
+	width: 80%;
+	height: 80%;
+	margin: 10% 10% -40%;
+	border-radius: 100%;
+	box-sizing: border-box;
+	box-shadow:
+		inset 0 -5px 20px rgba(0, 0, 0, 0.2),
+		0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.game-board .mark.C0:before {
 	background: #EE4422;
 }
 
-.game-board .mark.C1 {
+.game-board .mark.C1:before {
 	background: #66EE22;
 }
 
-.game-board .mark.C2 {
+.game-board .mark.C2:before {
 	background: #2266EE;
 }
 
