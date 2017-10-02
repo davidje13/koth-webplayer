@@ -144,6 +144,33 @@ define([
 			dom.visible = 1;
 		}
 
+		_updateMark(mark, dom) {
+			if(mark.toX !== null && mark.toY !== null) {
+				this._updateLineMark(mark, dom);
+			} else if(mark.w !== null && mark.h !== null) {
+				this._updateBoxMark(mark, dom);
+			} else {
+				this._updatePointMark(mark, dom);
+			}
+			if(typeof mark.content === 'string') {
+				docutil.updateText(dom.text, mark.content);
+				docutil.setParent(dom.textHold, dom.elements[0]);
+			} else if(mark.content) {
+				docutil.setParent(mark.content, dom.elements[0]);
+			} else {
+				dom.elements.forEach((element) => docutil.empty(element));
+			}
+			const className = 'mark ' + (mark.className || '');
+			const container = mark.clip ? this.boardClip : this.board;
+			for(let i = 0; i < dom.visible; ++ i) {
+				docutil.updateAttrs(dom.elements[i], {'class': className});
+				docutil.setParent(dom.elements[i], container);
+			}
+			for(let i = dom.visible; i < dom.elements.length; ++ i) {
+				docutil.setParent(dom.elements[i], null);
+			}
+		}
+
 		rerender() {
 			const markers = this.markerStore ? this.markerStore.marks : EMPTY_MAP;
 
@@ -163,30 +190,7 @@ define([
 					dom.textHold.appendChild(dom.text);
 					this.renderedMarks.set(key, dom);
 				}
-				if(mark.toX !== null && mark.toY !== null) {
-					this._updateLineMark(mark, dom);
-				} else if(mark.w !== null && mark.h !== null) {
-					this._updateBoxMark(mark, dom);
-				} else {
-					this._updatePointMark(mark, dom);
-				}
-				if(typeof mark.content === 'string') {
-					docutil.updateText(dom.text, mark.content);
-					docutil.setParent(dom.textHold, dom.elements[0]);
-				} else if(mark.content) {
-					docutil.setParent(mark.content, dom.elements[0]);
-				} else {
-					dom.elements.forEach((element) => docutil.empty(element));
-				}
-				const className = 'mark ' + (mark.className || '');
-				const container = mark.clip ? this.boardClip : this.board;
-				for(let i = 0; i < dom.visible; ++ i) {
-					docutil.updateAttrs(dom.elements[i], {'class': className});
-					docutil.setParent(dom.elements[i], container);
-				}
-				for(let i = dom.visible; i < dom.elements.length; ++ i) {
-					docutil.setParent(dom.elements[i], null);
-				}
+				this._updateMark(mark, dom);
 			});
 
 			this.renderedMarks.forEach((dom, key) => {
