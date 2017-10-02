@@ -70,76 +70,128 @@ define([
 			});
 		}
 
+		_positionMarkElements(mark, dom, {x, y, cx, cy}, styles) {
+			docutil.updateStyle(dom.elements[0], Object.assign({
+				'left': x + 'px',
+				'top': y + 'px',
+			}, styles));
+			if(!mark.wrap) {
+				dom.visible = 1;
+				return;
+			}
+			const w = this.canvas.width * this.scaleX / this.dataScale;
+			const h = this.canvas.height * this.scaleY / this.dataScale;
+			const dx = (cx > w / 2) ? -w : w;
+			const dy = (cy > h / 2) ? -h : h;
+			docutil.updateStyle(dom.elements[1], Object.assign({
+				'left': (x + dx) + 'px',
+				'top': y + 'px',
+			}, styles));
+			docutil.updateStyle(dom.elements[2], Object.assign({
+				'left': x + 'px',
+				'top': (y + dy) + 'px',
+			}, styles));
+			docutil.updateStyle(dom.elements[3], Object.assign({
+				'left': (x + dx) + 'px',
+				'top': (y + dy) + 'px',
+			}, styles));
+			dom.visible = 4;
+		}
+
+		_updateLineMark(mark, dom) {
+			const x1 = Math.floor((mark.x + 0.5) * this.scaleX);
+			const y1 = Math.floor((mark.y + 0.5) * this.scaleY);
+			const x2 = Math.floor((mark.toX + 0.5) * this.scaleX);
+			const y2 = Math.floor((mark.toY + 0.5) * this.scaleY);
+			const l = Math.sqrt(
+				(x2 - x1) * (x2 - x1) +
+				(y2 - y1) * (y2 - y1)
+			);
+			const x = (x1 + x2 - l) * 0.5;
+			const y = (y1 + y2) * 0.5;
+			this._positionMarkElements(mark, dom, {x, y, cx: x, cy: y}, {
+				'transform': 'rotate(' + Math.atan2(
+					y2 - y1,
+					x2 - x1
+				) + 'rad)',
+				'width': l + 'px',
+			});
+		}
+
+		_updateBoxMark(mark, dom) {
+			const x1 = Math.floor(mark.x * this.scaleX);
+			const y1 = Math.floor(mark.y * this.scaleY);
+			const x2 = Math.floor((mark.x + mark.w) * this.scaleX);
+			const y2 = Math.floor((mark.y + mark.h) * this.scaleY);
+			this._positionMarkElements(mark, dom, {
+				x: x1,
+				y: y1,
+				cx: (x1 + x2) / 2,
+				cy: (y1 + y2) / 2,
+			}, {
+				'width': (x2 - x1) + 'px',
+				'height': (y2 - y1) + 'px',
+			});
+		}
+
+		_updatePointMark(mark, dom) {
+			const x1 = Math.floor((mark.x + 0.5) * this.scaleX);
+			const y1 = Math.floor((mark.y + 0.5) * this.scaleY);
+			docutil.updateStyle(dom.elements[0], {
+				'left': x1 + 'px',
+				'top': y1 + 'px',
+			});
+			dom.visible = 1;
+		}
+
 		rerender() {
 			const markers = this.markerStore ? this.markerStore.marks : EMPTY_MAP;
 
 			markers.forEach((mark, key) => {
 				let dom = this.renderedMarks.get(key);
 				if(!dom) {
+					const elements = [];
+					for(let i = 0; i < 4; ++ i) {
+						elements.push(docutil.make('div'));
+					}
 					dom = {
-						element: docutil.make('div'),
+						elements,
 						textHold: docutil.make('span'),
 						text: docutil.text(),
+						visible: 0,
 					};
 					dom.textHold.appendChild(dom.text);
 					this.renderedMarks.set(key, dom);
 				}
-				docutil.updateAttrs(dom.element, {
-					'class': 'mark ' + (mark.className || ''),
-				});
+				if(mark.toX !== null && mark.toY !== null) {
+					this._updateLineMark(mark, dom);
+				} else if(mark.w !== null && mark.h !== null) {
+					this._updateBoxMark(mark, dom);
+				} else {
+					this._updatePointMark(mark, dom);
+				}
 				if(typeof mark.content === 'string') {
 					docutil.updateText(dom.text, mark.content);
-					docutil.setParent(dom.textHold, dom.element);
+					docutil.setParent(dom.textHold, dom.elements[0]);
 				} else if(mark.content) {
-					docutil.setParent(mark.content, dom.element);
+					docutil.setParent(mark.content, dom.elements[0]);
 				} else {
-					docutil.empty(dom.element);
+					dom.elements.forEach((element) => docutil.empty(element));
 				}
-				if(mark.toX !== null && mark.toY !== null) {
-					// TODO: wrapping
-					const x1 = Math.floor((mark.x + 0.5) * this.scaleX);
-					const y1 = Math.floor((mark.y + 0.5) * this.scaleY);
-					const x2 = Math.floor((mark.toX + 0.5) * this.scaleX);
-					const y2 = Math.floor((mark.toY + 0.5) * this.scaleY);
-					const l = Math.sqrt(
-						(x2 - x1) * (x2 - x1) +
-						(y2 - y1) * (y2 - y1)
-					);
-					docutil.updateStyle(dom.element, {
-						'left': (x1 + x2 - l) * 0.5 + 'px',
-						'top': (y1 + y2) * 0.5 + 'px',
-						'transform': 'rotate(' + Math.atan2(
-							y2 - y1,
-							x2 - x1
-						) + 'rad)',
-						'width': l + 'px',
-					});
-				} else if(mark.w !== null && mark.h !== null) {
-					// TODO: wrapping
-					const x1 = Math.floor(mark.x * this.scaleX);
-					const y1 = Math.floor(mark.y * this.scaleY);
-					const x2 = Math.floor((mark.x + mark.w) * this.scaleX);
-					const y2 = Math.floor((mark.y + mark.h) * this.scaleY);
-					docutil.updateStyle(dom.element, {
-						'left': x1 + 'px',
-						'top': y1 + 'px',
-						'width': (x2 - x1) + 'px',
-						'height': (y2 - y1) + 'px',
-					});
-				} else {
-					const x1 = Math.floor((mark.x + 0.5) * this.scaleX);
-					const y1 = Math.floor((mark.y + 0.5) * this.scaleY);
-					docutil.updateStyle(dom.element, {
-						'left': x1 + 'px',
-						'top': y1 + 'px',
-					});
+				const className = 'mark ' + (mark.className || '');
+				const container = mark.clip ? this.boardClip : this.board;
+				for(let i = 0; i < dom.visible; ++ i) {
+					docutil.updateAttrs(dom.elements[i], {'class': className});
+					docutil.setParent(dom.elements[i], container);
 				}
-				docutil.setParent(dom.element, mark.clip ? this.boardClip : this.board);
+				for(let i = dom.visible; i < dom.elements.length; ++ i) {
+					docutil.setParent(dom.elements[i], null);
+				}
 			});
 
 			this.renderedMarks.forEach((dom, key) => {
 				if(!markers.has(key)) {
-					docutil.setParent(dom.element, null);
+					dom.elements.forEach((element) => docutil.setParent(element, null));
 					this.renderedMarks.delete(key);
 				}
 			});
