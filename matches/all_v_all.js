@@ -14,8 +14,8 @@ define(['./Match'], (Match) => {
 	}
 
 	return class extends Match {
-		constructor(scorer, {teamLimit = 2}) {
-			super(scorer);
+		constructor({teamLimit = 2}) {
+			super();
 
 			this.teamLimit = teamLimit;
 		}

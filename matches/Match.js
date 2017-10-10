@@ -1,19 +1,10 @@
-define([
-	'core/EventObject',
-	'math/Random',
-], (
-	EventObject,
-	Random
-) => {
+define(['math/Random'], (Random) => {
 	'use strict';
 
-	return class Match extends EventObject {
-		constructor(scorer) {
-			super();
-
+	return class Match {
+		constructor() {
 			this.subHandler = null;
 			this.seed = null;
-			this.scorer = scorer;
 		}
 
 		setSubHandler(handler) {
@@ -34,12 +25,7 @@ define([
 				new Random(this.seed),
 				teams,
 				this.subHandler
-			).then((scores) => {
-				this.trigger('complete', [
-					this.scorer ? this.scorer.score(teams, scores) : null,
-					scores,
-				]);
-			});
+			);
 		}
 
 		getRandomSub(seed, teams) {

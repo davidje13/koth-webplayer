@@ -5,6 +5,7 @@ define([
 	'display/SplitView',
 	'display/MatchSummary',
 	'math/Random',
+	'./TournamentRunner',
 	'./GameOrchestrator',
 	'./EntryManager',
 	'./MatchScorer',
@@ -16,6 +17,7 @@ define([
 	SplitView,
 	MatchSummary,
 	Random,
+	TournamentRunner,
 	GameOrchestrator,
 	EntryManager,
 	MatchScorer,
@@ -80,6 +82,25 @@ define([
 		});
 	}
 
+	class TournamentGameRunner {
+		constructor({gameRunner, gameOpts, GameScorer}, display) {
+			this.GameScorer = GameScorer;
+			this.display = display;
+			this.game = gameRunner.make(gameOpts);
+		}
+
+		begin(seed, teams) {
+			return new Promise((resolve) => {
+				this.game.addEventListener('complete', (state) => {
+					const config = this.game.getGameConfig();
+					this.game.terminate();
+					resolve(this.GameScorer.score(config, state));
+				});
+				this.game.begin(seed, teams);
+			});
+		}
+	}
+
 	return class Engine {
 		constructor(pageConfig, nav) {
 			this.pageConfig = pageConfig;
@@ -126,56 +147,68 @@ define([
 		}
 
 		buildTournament() {
-			// TODO: extract all of this & improve separation / APIs
-			this.tournament = new this.Tournament(null, this.pageConfig.tournamentTypeArgs);
-			this.tournament.setSubHandler((matchSeed, matchTeams, matchIndex) => {
-				matchSeed = 'M' + matchSeed;
-				const match = new this.Match(MatchScorer, this.pageConfig.matchTypeArgs);
-				const matchDisplay = new MatchSummary({
-					name: 'Match ' + (matchIndex + 1),
-					seed: matchSeed,
-					teams: matchTeams,
-					matchScorer: MatchScorer,
-				});
-				this.tournamentDisplay.appendChild(matchDisplay.dom());
-				match.setSubHandler((gameSeed, gameTeams) => {
-					gameSeed = 'G' + gameSeed;
-					const game = this.backgroundGames.make({
+			const structureGame = {
+				seedPrefix: 'G',
+				runner: TournamentGameRunner,
+				args: {
+					gameRunner: this.backgroundGames,
+					gameOpts: {
 						baseGameConfig: this.pageConfig.baseGameConfig,
 						basePlayConfig: this.pageConfig.basePlayHiddenConfig,
 						baseDisplayConfig: this.pageConfig.baseDisplayConfig,
-					});
-					const gameDisplayToken = matchDisplay.addGame(gameSeed);
+					},
+					GameScorer: this.GameScorer,
+				},
+				display: ({seed, teams, parentDisplay, runner, args}) => {
+					const displayToken = parentDisplay.addGame(seed);
+					const game = runner.game;
 					// TODO: better API for this
-					matchDisplay.addEventListener('gametitleclick', (token) => {
-						if(token === gameDisplayToken) {
-							this.beginGame(gameSeed, gameTeams);
+					parentDisplay.addEventListener('gametitleclick', (token) => {
+						if(token === displayToken) {
+							this.beginGame(seed, teams);
 						}
 					});
-					return new Promise((resolve) => {
-						game.addEventListener('update', (state) => {
-							const config = game.getGameConfig();
-							const score = this.GameScorer.score(config, state);
-							matchDisplay.updateGameState(gameDisplayToken, state.progress, score);
-						});
-						game.addEventListener('complete', (state) => {
-							const config = game.getGameConfig();
-							game.terminate();
-							resolve(this.GameScorer.score(config, state));
-						});
-						game.begin(gameSeed, gameTeams);
+					game.addEventListener('update', (state) => {
+						const config = game.getGameConfig();
+						parentDisplay.updateGameState(
+							displayToken,
+							state.progress,
+							args.GameScorer.score(config, state)
+						);
 					});
-				});
-				return new Promise((resolve) => {
-					match.addEventListener('complete', (scores) => resolve(scores));
-					match.begin(matchSeed, matchTeams);
-				});
-			});
-			this.tournament.addEventListener('complete', (scores, finalScores) => {
-				/* globals console */
-				console.log('Tournament complete', scores, finalScores);
-				// TODO
-			});
+				},
+			};
+
+			const structureMatch = {
+				seedPrefix: 'M',
+				runner: this.Match,
+				args: this.pageConfig.matchTypeArgs,
+				scorer: MatchScorer,
+				display: ({seed, teams, index, parentDisplay, scorer}) => {
+					const matchDisplay = new MatchSummary({
+						name: 'Match ' + (index + 1),
+						seed,
+						teams,
+						matchScorer: scorer,
+					});
+					parentDisplay.appendChild(matchDisplay.dom());
+					return matchDisplay;
+				},
+				sub: structureGame,
+			};
+
+			const structureTournament = {
+				seedPrefix: 'T',
+				runner: this.Tournament,
+				args: this.pageConfig.tournamentTypeArgs,
+				scorer: null,
+				display: () => {
+					return this.tournamentDisplay;
+				},
+				sub: structureMatch,
+			};
+
+			this.tournament = new TournamentRunner(structureTournament);
 		}
 
 		buildTournamentPage() {
@@ -198,7 +231,11 @@ define([
 		beginTournament(seed, teams) {
 			this.backgroundGames.terminateAll();
 			docutil.empty(this.tournamentDisplay);
-			this.tournament.begin(seed, teams);
+			this.tournament.begin(seed, teams).then((scores) => {
+				/* globals console */
+				console.log('Tournament complete', scores);
+				// TODO
+			});
 			this.nav.push({
 				navElements: ['Tournament', docutil.make('p', {}, [seed])],
 				hash: seed,
@@ -379,20 +416,11 @@ define([
 				baseDisplayConfig: this.pageConfig.baseDisplayConfig,
 			});
 			const beginNext = () => {
-				const tournament = new this.Tournament(null, this.pageConfig.tournamentTypeArgs);
-				const matchProps = tournament.getRandomSub(
+				const gameProps = this.tournament.randomGame(
 					'T' + Random.makeRandomSeed(),
 					this.getManagedTeams()
 				);
-				const match = new this.Match(null, this.pageConfig.matchTypeArgs);
-				const gameProps = match.getRandomSub(
-					'M' + matchProps.seed,
-					matchProps.teams
-				);
-				game.begin(
-					'G' + gameProps.seed,
-					gameProps.teams
-				);
+				game.begin(gameProps.seed, gameProps.teams);
 			};
 			const makeNav = () => {
 				return {

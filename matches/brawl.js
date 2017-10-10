@@ -24,13 +24,13 @@ define([
 	}
 
 	return class extends Match {
-		constructor(scorer, {
+		constructor({
 			count = 1,
 			teamLimit = null,
 			teamShuffle = 'random',
 			entryShuffle = 'random',
 		}) {
-			super(scorer);
+			super();
 
 			this.count = count;
 			this.teamLimit = teamLimit;
