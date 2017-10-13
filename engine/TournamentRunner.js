@@ -14,37 +14,35 @@ define(() => {
 		);
 	};
 
-	const begin = (seed, teams, index, parentDisplay, structure) => {
+	const begin = (structure, progressCallback, parentDisplay, info) => {
 		const runner = new structure.runner(structure.args);
 		let display = null;
 		if(structure.display) {
-			display = structure.display({
-				seed,
-				teams,
-				index,
-				parentDisplay,
-				runner,
-				scorer: structure.scorer,
-				args: structure.args,
-			});
+			display = structure.display(parentDisplay, info);
 		}
 		if(structure.sub) {
-			runner.setSubHandler((subSeed, subTeams, subIndex) => {
-				return begin(
-					structure.sub.seedPrefix + subSeed,
-					subTeams,
-					subIndex,
-					display,
-					structure.sub
-				);
+			runner.setSubHandler((subInfo, subProgress) => {
+				return begin(structure.sub, subProgress, display, {
+					seed: structure.sub.seedPrefix + subInfo.seed,
+					teams: subInfo.teams,
+					index: subInfo.index,
+				});
 			});
 		}
-		return runner.begin(seed, teams).then((scores) => {
-			if(!structure.scorer) {
-				return scores;
+		const scorer = (scores) => structure.scorer.score(info.teams, scores);
+		return runner.begin(
+			info.seed,
+			info.teams,
+			(progress, scores) => {
+				const aggScores = scorer(scores);
+				if(display && display.updateProgress) {
+					display.updateProgress(progress, aggScores);
+				}
+				if(progressCallback) {
+					progressCallback(progress, aggScores);
+				}
 			}
-			return structure.scorer.score(teams, scores);
-		});
+		).then(scorer);
 	};
 
 	return class TournamentRunner {
@@ -52,8 +50,12 @@ define(() => {
 			this.structure = structure;
 		}
 
-		begin(seed, teams) {
-			return begin(seed, teams, 0, null, this.structure);
+		begin(seed, teams, progressCallback = null) {
+			return begin(this.structure, progressCallback, null, {
+				seed,
+				teams,
+				index: 0,
+			});
 		}
 
 		randomGame(seed, teams) {

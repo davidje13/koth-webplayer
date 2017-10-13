@@ -12,15 +12,51 @@ define([
 ) => {
 	'use strict';
 
+	class GameColumn extends EventObject {
+		constructor(seed, label) {
+			super();
+
+			this.scoresCallback = null;
+			const link = docutil.make('a', {'href': '#' + seed}, [label]);
+			link.addEventListener('click', (e) => {
+				e.preventDefault();
+				this.trigger('titleclick');
+			});
+			this.progress = new Loader('', null);
+			this.title = docutil.make('header', {}, [
+				docutil.make('h4', {}, [link]),
+				this.progress.dom(),
+//				docutil.make('p', {}, [seed]),
+			]);
+		}
+
+		setScoresCallback(callback) {
+			this.scoresCallback = callback;
+		}
+
+		updateProgress(progress, scores) {
+			this.progress.setState(progress);
+			if(this.scoresCallback) {
+				this.scoresCallback(scores);
+			}
+		}
+	}
+
 	return class MatchSummary extends EventObject {
-		constructor({name = 'Match', seed = '', teams, matchScorer}) {
+		constructor({name = 'Match', seed = '', teams}) {
 			super();
 
 			this.name = name;
 			this.matchSeed = seed;
 			this.teams = teams;
-			this.matchScorer = matchScorer;
-			this.gameScores = [];
+			this.matchScores = {
+				teams: teams.map((team) => ({
+					id: team.id,
+					winner: false,
+					score: null,
+					certainty: null,
+				})),
+			};
 			this.games = [];
 			this.tableTeamsLookup = new Map();
 			teams.forEach((team) => {
@@ -43,8 +79,7 @@ define([
 		}
 
 		sendData() {
-			const matchScore = this.matchScorer.score(this.teams, this.gameScores);
-			this.table.setData(matchScore.teams.map((matchTeamScore) => {
+			this.table.setData(this.matchScores.teams.map((matchTeamScore) => {
 				const tableTeam = this.tableTeamsLookup.get(matchTeamScore.id);
 				if(matchTeamScore.score !== null) {
 					tableTeam.score.value = matchTeamScore.score.toFixed(1);
@@ -64,9 +99,9 @@ define([
 		}
 
 		updateColumns() {
-			const gameCols = this.games.map((game, index) => ({
+			const gameCols = this.games.map((game) => ({
 				title: game.title,
-				attribute: 'game' + index,
+				attribute: game.id,
 				autohide: true,
 			}));
 
@@ -94,41 +129,26 @@ define([
 			this.sendData();
 		}
 
-		addGame(seed) {
-			const index = this.games.length;
-			const link = docutil.make('a', {'href': '#' + seed}, ['G' + (index + 1)]);
-			link.addEventListener('click', (e) => {
-				e.preventDefault();
-				this.trigger('gametitleclick', [index]);
+		addGame(seed, name) {
+			const game = new GameColumn(seed, name);
+			game.id = 'game' + this.games.length;
+			game.setScoresCallback((scores) => {
+				scores.teams.forEach((gameTeamScore) => {
+					this.tableTeamsLookup.get(gameTeamScore.id)[game.id] = {
+						value: gameTeamScore.score,
+						className: gameTeamScore.winner ? 'win' : '',
+					};
+				});
+
+//				this.sendData();
 			});
-			const progress = new Loader('', null);
-			this.games.push({
-				seed,
-				link,
-				progress,
-				title: docutil.make('header', {}, [
-					docutil.make('h4', {}, [link]),
-					progress.dom(),
-//					docutil.make('p', {}, [seed]),
-				]),
-			});
-			this.gameScores.push({teams: []});
+			this.games.push(game);
 			this.updateColumns();
-			return index;
+			return game;
 		}
 
-		updateGameState(token, progress, gameScore) {
-			const game = this.games[token];
-			game.progress.setState(progress);
-
-			this.gameScores[token] = gameScore;
-			gameScore.teams.forEach((gameTeamScore) => {
-				this.tableTeamsLookup.get(gameTeamScore.id)['game' + token] = {
-					value: gameTeamScore.score,
-					className: gameTeamScore.winner ? 'win' : '',
-				};
-			});
-
+		updateProgress(progress, scores) {
+			this.matchScores = scores;
 			this.sendData();
 		}
 

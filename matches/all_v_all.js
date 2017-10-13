@@ -1,18 +1,6 @@
 define(['./Match'], (Match) => {
 	'use strict';
 
-	function buildSubs(teams, current, begin, remaining, subHandler) {
-		if(!remaining) {
-			subHandler(current.slice());
-			return;
-		}
-		for(let i = begin; i < teams.length; ++ i) {
-			current.push(teams[i]);
-			buildSubs(teams, current, i + 1, remaining - 1, subHandler);
-			current.pop();
-		}
-	}
-
 	return class extends Match {
 		constructor({teamLimit = 2}) {
 			super();
@@ -20,30 +8,32 @@ define(['./Match'], (Match) => {
 			this.teamLimit = teamLimit;
 		}
 
-		run(random, teams, subHandler) {
+		run(random, teams, subHandler, progressCallback) {
+			const subs = new Match.SimpleSubgameManager(
+				subHandler,
+				progressCallback
+			);
+
 			if(teams.length <= this.teamLimit) {
-				return subHandler(
-					random.makeRandomSeed(),
-					teams,
-					0
-				).then((subScore) => [subScore]);
+				subs.add(random.makeRandomSeed(), teams);
+				return subs.promise();
 			}
 
-			const subs = [];
-			buildSubs(
-				teams,
-				[],
-				0,
-				this.teamLimit,
-				(chosenTeams) => {
-					subs.push(subHandler(
-						random.makeRandomSeed(),
-						chosenTeams,
-						subs.length
-					));
+			const current = [];
+			function buildSubs(begin, remaining) {
+				if(remaining <= 0) {
+					subs.add(random.makeRandomSeed(), current.slice());
+					return;
 				}
-			);
-			return Promise.all(subs);
+				for(let i = begin; i < teams.length; ++ i) {
+					current.push(teams[i]);
+					buildSubs(i + 1, remaining - 1);
+					current.pop();
+				}
+			}
+
+			buildSubs(0, this.teamLimit);
+			return subs.promise();
 		}
 	};
 });

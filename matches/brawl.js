@@ -59,18 +59,17 @@ define([
 			return shuffledSubTeams;
 		}
 
-		run(random, teams, subHandler) {
-			const subs = [];
+		run(random, teams, subHandler, progressCallback) {
+			const subs = new Match.SimpleSubgameManager(
+				subHandler,
+				progressCallback
+			);
 			for(let index = 0; index < this.count; ++ index) {
 				const subSeed = random.makeRandomSeed();
 				const subTeams = this.pickTeams(teams, {index, random});
-				subs.push(subHandler(
-					subSeed,
-					subTeams,
-					subs.length
-				));
+				subs.add(subSeed, subTeams);
 			}
-			return Promise.all(subs);
+			return subs.promise();
 		}
 	};
 });

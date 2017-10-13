@@ -83,18 +83,20 @@ define([
 	}
 
 	class TournamentGameRunner {
-		constructor({gameRunner, gameOpts, GameScorer}, display) {
-			this.GameScorer = GameScorer;
-			this.display = display;
+		constructor({gameRunner, gameOpts}) {
 			this.game = gameRunner.make(gameOpts);
 		}
 
-		begin(seed, teams) {
+		begin(seed, teams, progressCallback) {
 			return new Promise((resolve) => {
 				this.game.addEventListener('complete', (state) => {
 					const config = this.game.getGameConfig();
 					this.game.terminate();
-					resolve(this.GameScorer.score(config, state));
+					resolve({config, state});
+				});
+				this.game.addEventListener('update', (state) => {
+					const config = this.game.getGameConfig();
+					progressCallback(state.progress, {config, state});
 				});
 				this.game.begin(seed, teams);
 			});
@@ -147,6 +149,11 @@ define([
 		}
 
 		buildTournament() {
+			const gameScorer = {
+				score: (teams, {config, state}) => {
+					return this.GameScorer.score(config, state);
+				},
+			};
 			const structureGame = {
 				seedPrefix: 'G',
 				runner: TournamentGameRunner,
@@ -157,25 +164,14 @@ define([
 						basePlayConfig: this.pageConfig.basePlayHiddenConfig,
 						baseDisplayConfig: this.pageConfig.baseDisplayConfig,
 					},
-					GameScorer: this.GameScorer,
 				},
-				display: ({seed, teams, parentDisplay, runner, args}) => {
-					const displayToken = parentDisplay.addGame(seed);
-					const game = runner.game;
-					// TODO: better API for this
-					parentDisplay.addEventListener('gametitleclick', (token) => {
-						if(token === displayToken) {
-							this.beginGame(seed, teams);
-						}
+				scorer: gameScorer,
+				display: (parent, {seed, teams, index}) => {
+					const disp = parent.addGame(seed, 'G' + (index + 1));
+					disp.addEventListener('titleclick', () => {
+						this.beginGame(seed, teams);
 					});
-					game.addEventListener('update', (state) => {
-						const config = game.getGameConfig();
-						parentDisplay.updateGameState(
-							displayToken,
-							state.progress,
-							args.GameScorer.score(config, state)
-						);
-					});
+					return disp;
 				},
 			};
 
@@ -184,14 +180,13 @@ define([
 				runner: this.Match,
 				args: this.pageConfig.matchTypeArgs,
 				scorer: MatchScorer,
-				display: ({seed, teams, index, parentDisplay, scorer}) => {
+				display: (parent, {seed, teams, index}) => {
 					const matchDisplay = new MatchSummary({
 						name: 'Match ' + (index + 1),
 						seed,
 						teams,
-						matchScorer: scorer,
 					});
-					parentDisplay.appendChild(matchDisplay.dom());
+					parent.appendChild(matchDisplay.dom());
 					return matchDisplay;
 				},
 				sub: structureGame,
@@ -201,7 +196,7 @@ define([
 				seedPrefix: 'T',
 				runner: this.Tournament,
 				args: this.pageConfig.tournamentTypeArgs,
-				scorer: null,
+				scorer: {score: (teams, scores) => scores}, // TODO
 				display: () => {
 					return this.tournamentDisplay;
 				},

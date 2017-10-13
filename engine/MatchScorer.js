@@ -31,6 +31,9 @@ define(['math/statistics'], (statistics) => {
 				return teamAgg;
 			});
 			gameScores.forEach((gameScore) => {
+				if(!gameScore) {
+					return;
+				}
 				gameScore.teams.forEach((gameTeamScore) => {
 					const teamItem = teamLookup.get(gameTeamScore.id);
 					teamItem.total += gameTeamScore.score;
