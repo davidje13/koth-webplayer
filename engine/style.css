@@ -127,8 +127,19 @@ h4 a:active, h4 a:hover {
 	margin: 0 auto;
 }
 
+.error.wide {
+	width: 800px;
+	max-width: 90%;
+}
+
 .error button {
 	margin: 10px 10px 0;
+}
+
+.error pre {
+	font-size: 0.8em;
+	text-align: left;
+	overflow: auto;
 }
 
 .initial-load .message {

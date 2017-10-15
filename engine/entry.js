@@ -31,6 +31,41 @@ require([
 		])],
 	});
 
+	function stringifyError(e) {
+		if(!e) {
+			return '';
+		}
+		let msg = e.toString();
+		if(e.stack) {
+			// WORKAROUND (Safari): e.stack is not string-like unless it
+			// has a non-empty string appended
+			const stack = e.stack + '.';
+			if(stack.indexOf(msg) !== -1) {
+				msg = stack;
+			} else {
+				msg += ' : ' + stack;
+			}
+		}
+		return msg;
+	}
+
+	function removeLoader() {
+		window.removeEventListener('error', handleLoadError);
+		window.removeEventListener('unhandledrejection', handleLoadError);
+		navigation.removeLoader();
+	}
+
+	function handleLoadError(e) {
+		removeLoader();
+		docutil.body.appendChild(docutil.make('div', {'class': 'error wide'}, [
+			'Failed to load',
+			docutil.make('pre', {}, [stringifyError(e)]),
+		]));
+	}
+
+	window.addEventListener('error', handleLoadError);
+	window.addEventListener('unhandledrejection', handleLoadError);
+
 	navigation.setLoadState('user interface', 0.1);
 	require(['engine/Engine'], (Engine) => {
 		const engine = new Engine(pageConfig, navigation.nav);
@@ -44,12 +79,12 @@ require([
 				);
 			});
 		}).then(() => {
-			navigation.removeLoader();
+			removeLoader();
 			engine.begin();
 			navigation.addPageProvider(engine);
 			navigation.checkNavigation();
 		}, (error) => {
-			navigation.removeLoader();
+			removeLoader();
 			const ignoreBtn = docutil.make('button', {}, ['Continue Anyway']);
 			const errorDom = docutil.make('div', {'class': 'error'}, [
 				'Failed to load entries: ' + error,
@@ -62,6 +97,6 @@ require([
 				navigation.checkNavigation();
 			});
 			docutil.body.appendChild(errorDom);
-		});
+		}).catch(handleLoadError);
 	});
 });
