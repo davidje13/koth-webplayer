@@ -1,24 +1,6 @@
 define(() => {
 	'use strict';
 
-	const SCORING = [
-		15,
-		14,
-		13,
-		12,
-		11,
-		10,
-		9,
-		8,
-		7,
-		6,
-		5,
-		4,
-		3,
-		2,
-		1,
-	];
-
 	const scoreSorter = (a, b) => {
 		if(a.disqualified !== b.disqualified) {
 			return a.disqualified ? 1 : -1;
@@ -64,19 +46,32 @@ define(() => {
 			});
 			gameTeamScores.sort(scoreSorter);
 
-			let tiedPos = 0;
+			// Score = number of teams with food strictly less than current team
 			let tiedFood = 0;
-			for(let i = 0; i < gameTeamScores.length; ++ i) {
+			let tiedTeams = 0;
+			let accumScore = 0;
+			for(let i = gameTeamScores.length; (i --) > 0;) {
 				const place = gameTeamScores[i];
 				if(place.food !== tiedFood) {
-					tiedPos = i;
 					tiedFood = place.food;
+					accumScore += tiedTeams;
+					tiedTeams = 0;
 				}
-				if(!place.disqualified && place.food > 0) {
-					place.winner = (tiedPos === 0);
-					place.score = SCORING[tiedPos];
+				if(!place.disqualified) {
+					place.score = accumScore;
 				}
+				++ tiedTeams;
 			}
+
+			// Winners = teams tied for most food
+			for(let i = 0; i < gameTeamScores.length; ++ i) {
+				const place = gameTeamScores[i];
+				if(place.disqualified || place.food < gameTeamScores[0].food) {
+					break;
+				}
+				place.winner = true;
+			}
+
 			return {teams: gameTeamScores};
 		},
 	};
