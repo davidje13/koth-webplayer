@@ -48,6 +48,14 @@ define([
 				this.trigger('hoveroff');
 			});
 
+			this.boardClip.addEventListener('click', () => {
+				const bounds = this.boardClip.getBoundingClientRect();
+				this.trigger('click', [
+					(event.clientX - bounds.left) / this.scaleX,
+					(event.clientY - bounds.top) / this.scaleY,
+				]);
+			});
+
 			this.setScale(scaleX, scaleY);
 		}
 

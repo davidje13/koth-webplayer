@@ -253,6 +253,7 @@ define([
 			this.nextMoverMarkerType = '';
 			this.foodMarkerType = '';
 			this.focussed = [];
+			this.zoomTracking = true;
 
 			this.addVisualisationChild(options, {screensaver: false});
 			this.addVisualisationChild(this.zoomedBoard, {screensaver: false});
@@ -262,22 +263,38 @@ define([
 			this.addChild(renderer);
 
 			if(!mode.screensaver) {
-				const throttledHover = rateUtils.throttle((x, y) => {
-					if(this.zoomedBoard.setFocus(x, y)) {
-						this.repositionMarkers();
-						this.board.rerender();
-					}
-				});
-
-				this.board.addEventListener('hover', throttledHover);
-				this.board.addEventListener('hoveroff', () => {
-					throttledHover.abort();
-					if(this.zoomedBoard.setFocus(null)) {
-						this.repositionMarkers();
-						this.board.rerender();
-					}
-				});
+				this._setupZoomWindow();
 			}
+		}
+
+		_setupZoomWindow() {
+			const throttledHover = rateUtils.throttle((x, y) => {
+				if(!this.zoomTracking) {
+					return;
+				}
+				if(this.zoomedBoard.setFocus(x, y)) {
+					this.repositionMarkers();
+					this.board.rerender();
+				}
+			});
+
+			this.board.addEventListener('hover', throttledHover);
+			this.board.addEventListener('hoveroff', () => {
+				throttledHover.abort();
+				if(!this.zoomTracking) {
+					return;
+				}
+				if(this.zoomedBoard.setFocus(null)) {
+					this.repositionMarkers();
+					this.board.rerender();
+				}
+			});
+
+			this.board.addEventListener('click', (x, y) => {
+				this.zoomTracking = !this.zoomTracking;
+				this.zoomedBoard.setClass(this.zoomTracking ? '' : 'fixed');
+				throttledHover(x, y);
+			});
 		}
 
 		clear() {
@@ -335,18 +352,14 @@ define([
 					y: this.zoomedBoard.y - this.zoomedBoard.height / 2,
 					w: this.zoomedBoard.width,
 					h: this.zoomedBoard.height,
-					className: 'zoom-locator',
+					className: this.zoomTracking ? 'zoom-locator' : 'zoom-locator-fixed',
 					wrap: true,
 					clip: true,
 				});
 				const rhs = this.zoomedBoard.x < this.latestGameConfig.width / 2;
-				docutil.updateAttrs(this.zoomedBoard.dom(), {
-					'class': 'zoomed-board ' + (rhs ? 'right' : 'left'),
-				});
+				this.zoomedBoard.setClass(rhs ? 'right' : 'left', 'side');
 			} else {
-				docutil.updateAttrs(this.zoomedBoard.dom(), {
-					'class': 'zoomed-board',
-				});
+				this.zoomedBoard.setClass(null, 'side');
 			}
 
 			if(this.foodMarkerType && this.latestState.board) {
