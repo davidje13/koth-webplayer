@@ -294,6 +294,8 @@ define([
 				this.zoomTracking = !this.zoomTracking;
 				this.zoomedBoard.setClass(this.zoomTracking ? '' : 'fixed');
 				throttledHover(x, y);
+				this.repositionMarkers();
+				this.board.rerender();
 			});
 		}
 
