@@ -19,6 +19,7 @@ define([
 		const changed = entry.code !== entry.originalCode;
 		const enabledToggle = docutil.make('input', {
 			type: 'checkbox',
+			title: 'Enable / Disable entry',
 		});
 		if(entry.enabled) {
 			enabledToggle.setAttribute('checked', 'checked');
@@ -70,8 +71,17 @@ define([
 				...extraColumns,
 			];
 			if(this.allowTeamModification) {
+				this.enableAll = docutil.make('input', {
+					type: 'checkbox',
+					title: 'Enable / Disable All',
+				});
+				this.enableAll.addEventListener('change', (event) => {
+					this._changeEnableAll(event.target.checked);
+				});
+				this.enableAll.checked = false;
+				this.enableAll.indeterminate = true;
 				columns.push({
-					title: '',
+					title: this.enableAll,
 					attribute: 'enabled',
 					className: 'enabled-opt',
 				});
@@ -174,6 +184,43 @@ define([
 			return (selectedItem ? selectedItem.datum.baseEntry : null);
 		}
 
+		_updateEnableAll() {
+			if(!this.enableAll) {
+				return;
+			}
+			let anyEnabled = false;
+			let anyDisabled = false;
+			this.teams.forEach((team) => team.entries.forEach((entry) => {
+				if(entry.enabled) {
+					anyEnabled = true;
+				} else {
+					anyDisabled = true;
+				}
+			}));
+			if(anyEnabled) {
+				this.enableAll.checked = true;
+				this.enableAll.indeterminate = anyDisabled;
+			} else {
+				this.enableAll.checked = false;
+				this.enableAll.indeterminate = false;
+			}
+		}
+
+		_changeEnableAll(enabled) {
+			if(!this.teams) {
+				return;
+			}
+			this.teams.forEach((team) => team.entries.forEach((entry) => {
+				if(entry.enabled !== enabled) {
+					this.trigger('change', [{
+						entry,
+						enabled,
+					}]);
+				}
+			}));
+			this._updateEnableAll();
+		}
+
 		_triggerEnabledChange(entry, enabled) {
 			if(entry.enabled !== enabled) {
 				this.trigger('change', [{
@@ -264,6 +311,7 @@ define([
 					treeData.push({label: button, selectable: false});
 				}
 			}
+			this._updateEnableAll();
 			this.tree.setData(treeData);
 			this.setTeamStatuses(this.teamStatuses);
 		}

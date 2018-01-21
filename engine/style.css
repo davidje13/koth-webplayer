@@ -204,6 +204,10 @@ h4 a:active, h4 a:hover {
 	cursor: pointer;
 }
 
+.team-table tbody tr:nth-child(even) {
+	background: #FAFAFA;
+}
+
 .team-table td {
 	padding: 2px 5px;
 	overflow: hidden;
@@ -220,15 +224,15 @@ h4 a:active, h4 a:hover {
 	text-align: right;
 }
 
-.team-table .selected {
+.team-table tbody tr.selected {
 	background: #CCCCCC;
 }
 
-.team-table .selected.changed {
+.team-table tbody tr.selected.changed {
 	background: #CCCCAA;
 }
 
-.team-table .changed {
+.team-table tbody tr.changed {
 	background: #FFFFCC;
 }
 
