@@ -48,7 +48,7 @@ define([
 				this.trigger('hoveroff');
 			});
 
-			this.boardClip.addEventListener('click', () => {
+			this.boardClip.addEventListener('click', (event) => {
 				const bounds = this.boardClip.getBoundingClientRect();
 				this.trigger('click', [
 					(event.clientX - bounds.left) / this.scaleX,
