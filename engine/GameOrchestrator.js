@@ -26,7 +26,7 @@ define([
 			this.updateTm = null;
 			this.latestState = null;
 
-			this.beginRandom = this.beginRandom.bind(this);
+			this.beginGame = this.beginGame.bind(this);
 			this.replay = this.replay.bind(this);
 			this.step = this.step.bind(this);
 			this.updateGameConfig = this.updateGameConfig.bind(this);
@@ -52,7 +52,7 @@ define([
 			}
 
 			if(this.display) {
-				this.display.removeEventListener('begin', this.beginRandom);
+				this.display.removeEventListener('begin', this.beginGame);
 				this.display.removeEventListener('replay', this.replay);
 				this.display.removeEventListener('step', this.step);
 				this.display.removeEventListener('changegame', this.updateGameConfig);
@@ -62,7 +62,7 @@ define([
 
 			this.display = display;
 			if(this.display) {
-				this.display.addEventListener('begin', this.beginRandom);
+				this.display.addEventListener('begin', this.beginGame);
 				this.display.addEventListener('replay', this.replay);
 				this.display.addEventListener('step', this.step);
 				this.display.addEventListener('changegame', this.updateGameConfig);
@@ -187,8 +187,11 @@ define([
 			this.begin(this.getSeed(), this.config.game.teams);
 		}
 
-		beginRandom() {
-			this.begin('G' + Random.makeRandomSeed(), this.config.game.teams);
+		beginGame({seed = null} = {}) {
+			if(!seed) {
+				seed = 'G' + Random.makeRandomSeed();
+			}
+			this.begin(seed, this.config.game.teams);
 		}
 
 		begin(seed, teams) {
