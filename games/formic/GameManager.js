@@ -272,6 +272,8 @@ define([
 				}
 				entry.errorInput = null;
 				entry.errorOutput = null;
+				entry.cacheView.fill(null);
+				entry.cacheAct.fill(null);
 			}
 			if(pauseOnError !== null) {
 				entry.pauseOnError = pauseOnError;
