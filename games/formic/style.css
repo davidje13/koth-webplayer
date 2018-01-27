@@ -122,10 +122,9 @@
 
 .zoomed-board .mark {
 	position: absolute;
-	pointer-events: none;
 }
 
-.zoomed-board .mark:after {
+.zoomed-board .mark:before {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -135,18 +134,158 @@
 	text-align: center;
 }
 
-.zoomed-board .mark.queen-cell:after {
+.zoomed-board .mark.queen-cell:before {
 	content: '\01F451';
 }
 
-.zoomed-board .mark.worker-cell:after {
+.zoomed-board .mark.worker-cell:before {
 	content: '\01F477';
 }
 
-.zoomed-board .mark.laden-worker-cell:after {
+.zoomed-board .mark.laden-worker-cell:before {
 	content: '\01F3CB';
 }
 
-.zoomed-board .mark.food-cell:after {
+.zoomed-board .mark.food-cell:before {
 	content: '\01F352';
+}
+
+.zoomed-board .team:after {
+	content: '';
+	position: absolute;
+	bottom: 2px;
+	right: 2px;
+	width: 4px;
+	height: 4px;
+	border: 1px solid #000000;
+	background: #DDDDDD;
+}
+
+.zoomed-board .team-T0:after {
+	background: #DD9999;
+}
+
+.zoomed-board .team-T1:after {
+	background: #9999DD;
+}
+
+.zoomed-board .team-T2:after {
+	background: #99DD99;
+}
+
+
+.zoomed-board .team-T3:after {
+	background: #DD99DD;
+}
+
+.zoomed-board .team-T4:after {
+	background: #99DDDD;
+}
+
+.zoomed-board .team-T5:after {
+	background: #DDDD99;
+}
+
+
+.zoomed-board .team-T6:after {
+	background: #BB99DD;
+}
+
+.zoomed-board .team-T7:after {
+	background: #99DDBB;
+}
+
+.zoomed-board .team-T8:after {
+	background: #DDBB99;
+}
+
+
+.zoomed-board .team-T9:after {
+	background: #99BBDD;
+}
+
+.zoomed-board .team-T10:after {
+	background: #BBDD99;
+}
+
+.zoomed-board .team-T11:after {
+	background: #DD99BB;
+}
+
+
+.zoomed-board .team-T12:after {
+	background: #99AADD;
+}
+
+.zoomed-board .team-T13:after {
+	background: #AADD99;
+}
+
+.zoomed-board .team-T14:after {
+	background: #DD99AA;
+}
+
+
+.zoomed-board .team-T15:after {
+	background: #99DDCC;
+}
+
+.zoomed-board .team-T16:after {
+	background: #DDCC99;
+}
+
+.zoomed-board .team-T17:after {
+	background: #CC99DD;
+}
+
+
+.zoomed-board .team-T18:after {
+	background: #99DDAA;
+}
+
+.zoomed-board .team-T19:after {
+	background: #DDAA99;
+}
+
+.zoomed-board .team-T20:after {
+	background: #AA99DD;
+}
+
+
+.zoomed-board .team-T21:after {
+	background: #CCDD99;
+}
+
+.zoomed-board .team-T22:after {
+	background: #DD99CC;
+}
+
+.zoomed-board .team-T23:after {
+	background: #99CCDD;
+}
+
+
+.zoomed-board .team-T24:after {
+	background: #DD7777;
+}
+
+.zoomed-board .team-T25:after {
+	background: #7777DD;
+}
+
+.zoomed-board .team-T26:after {
+	background: #77DD77;
+}
+
+
+.zoomed-board .team-T27:after {
+	background: #DD77DD;
+}
+
+.zoomed-board .team-T28:after {
+	background: #77DDDD;
+}
+
+.zoomed-board .team-T29:after {
+	background: #DDDD77;
 }

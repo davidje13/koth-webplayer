@@ -169,9 +169,13 @@ define([
 				dom.elements.forEach((element) => docutil.empty(element));
 			}
 			const className = 'mark ' + (mark.className || '');
+			const tooltip = mark.tooltip;
 			const container = mark.clip ? this.boardClip : this.board;
 			for(let i = 0; i < dom.visible; ++ i) {
-				docutil.updateAttrs(dom.elements[i], {'class': className});
+				docutil.updateAttrs(dom.elements[i], {
+					'class': className,
+					'title': tooltip,
+				});
 				docutil.setParent(dom.elements[i], container);
 			}
 			for(let i = dom.visible; i < dom.elements.length; ++ i) {

@@ -615,6 +615,32 @@ header .bar-done {
 }
 
 
+.match .team-T24 {
+	background: #DD7777;
+}
+
+.match .team-T25 {
+	background: #7777DD;
+}
+
+.match .team-T26 {
+	background: #77DD77;
+}
+
+
+.match .team-T27 {
+	background: #DD77DD;
+}
+
+.match .team-T28 {
+	background: #77DDDD;
+}
+
+.match .team-T29 {
+	background: #DDDD77;
+}
+
+
 /* Work around https://github.com/codemirror/CodeMirror/issues/4937 */
 .CodeMirror-search-field {
 	width: 10em;

@@ -14,6 +14,7 @@ define(() => {
 			content = null,
 			wrap = true,
 			clip = true,
+			tooltip = '',
 		}) {
 			this.marks.set(key, {
 				x, y,
@@ -23,6 +24,7 @@ define(() => {
 				content,
 				wrap,
 				clip,
+				tooltip,
 			});
 		}
 

@@ -22,6 +22,11 @@ define([
 		[  0,   0,   0, 255], // ant
 	];
 
+	const UNKNOWN_ENTRY = {
+		entry: {id: '', title: 'Unknown'},
+		team: {id: ''},
+	};
+
 	function hasFood(cell) {
 		/* jshint -W016 */ // allow bitwise operation
 		return cell & FOOD_BIT;
@@ -53,6 +58,7 @@ define([
 			this.height = 0;
 			this.scaleX = 0;
 			this.scaleY = 0;
+			this.entries = new Map();
 
 			this.canvas = docutil.make('canvas');
 			this.canvas.width = 0;
@@ -158,9 +164,14 @@ define([
 			this.repaint();
 		}
 
-		updateGameConfig({width, height}) {
+		updateGameConfig({width, height, teams}) {
 			this.boardWidth = width;
 			this.boardHeight = height;
+			this.entries.clear();
+			teams.forEach((team) => team.entries.forEach((entry) => {
+				this.entries.set(entry.id, {team, entry});
+			}));
+			this.rerender();
 		}
 
 		updateDisplayConfig({colourscheme}) {
@@ -215,6 +226,10 @@ define([
 			this.rerender();
 		}
 
+		getEntry(entryID) {
+			return this.entries.get(entryID) || UNKNOWN_ENTRY;
+		}
+
 		populateMarkers(markers) {
 			const ww = this.boardWidth;
 			const hh = this.boardHeight;
@@ -226,7 +241,12 @@ define([
 					const p = ((y + y0) % hh) * ww + (x + x0) % ww;
 					const cell = this.rawBoard[p];
 					if(hasFood(cell)) {
-						markers.set(x + '-' + y, {x, y, className: 'food-cell'});
+						markers.set(x + '-' + y, {
+							x,
+							y,
+							className: 'food-cell',
+							tooltip: '',
+						});
 					}
 				}
 			}
@@ -235,15 +255,25 @@ define([
 				const x = mod(ant.x - x0, this.boardWidth);
 				const y = mod(ant.y - y0, this.boardHeight);
 				if(x < this.width && y < this.height) {
-					let className = '';
+					const entry = this.getEntry(ant.entry);
+					let className = 'team team-' + entry.team.id;
+					let tooltip = entry.entry.title;
 					if(ant.type === QUEEN) {
-						className = 'queen-cell';
+						className += ' queen-cell';
+						tooltip += ': Queen with ' + ant.food + ' food';
 					} else if(ant.food) {
-						className = 'laden-worker-cell';
+						className += ' laden-worker-cell';
+						tooltip += ': Laden type ' + ant.type + ' worker';
 					} else {
-						className = 'worker-cell';
+						className += ' worker-cell';
+						tooltip += ': Type ' + ant.type + ' worker';
 					}
-					markers.set(x + '-' + y, {x, y, className});
+					markers.set(x + '-' + y, {
+						x,
+						y,
+						className,
+						tooltip,
+					});
 				}
 			});
 		}
@@ -274,6 +304,7 @@ define([
 				}
 				docutil.updateAttrs(dom.element, {
 					'class': 'mark ' + (mark.className || ''),
+					'title': mark.tooltip,
 				});
 				docutil.updateStyle(dom.element, {
 					'left': (mark.x * this.scaleX) + 'px',
