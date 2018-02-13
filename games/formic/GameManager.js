@@ -328,6 +328,7 @@ define([
 		}
 
 		moveAnt(index, ant, action, rotation) {
+			/* jshint maxcomplexity:15 */ //Complex interactions for a complex game
 			const p = this.offsetPos(ant, ROTATIONS[rotation][action.cell]);
 			if(action.color) {
 				setColourAtI(this.board, p.i, action.color);
@@ -356,7 +357,26 @@ define([
 				ant.y = p.y;
 				ant.i = p.i;
 			}
-			if(ant.type !== QUEEN) {
+			if(ant.type === QUEEN) {
+				for(let i = 0; i < 9; ++ i) {
+					const target = this.antGrid[this.offsetPos(ant, i).i];
+					if(
+						target && target.type !== QUEEN &&
+						target.entry !== ant.entry
+					) {
+						transferFood(target, ant);
+					}
+				}
+				for(let i = 0; i < 9; ++ i) {
+					const target = this.antGrid[this.offsetPos(ant, i).i];
+					if(
+						target && target.type !== QUEEN &&
+						target.entry === ant.entry
+					) {
+						transferFood(target, ant);
+					}
+				}
+			} else {
 				for(let i = 0; i < 9; ++ i) {
 					const target = this.antGrid[this.offsetPos(ant, i).i];
 					if(
