@@ -182,12 +182,14 @@ define([
 			foodRatio,
 			maxFrame,
 			teams,
+			stepFrame
 		}) {
 			this.random = random;
 			this.width = Math.round(width);
 			this.height = Math.round(height);
 			this.teams = teams;
 			this.maxFrame = Math.max(Math.round(maxFrame), 1);
+			this.stepFrame = Math.max(Math.round(stepFrame), 0);
 			const area = this.width * this.height;
 			this.frame = 0;
 			this.currentAnt = 0;
@@ -287,8 +289,9 @@ define([
 			}
 		}
 
-		updateConfig({maxFrame}) {
+		updateConfig({maxFrame, stepFrame}) {
 			this.maxFrame = Math.max(Math.round(maxFrame), 1);
+			this.stepFrame = Math.max(Math.round(stepFrame), 0);
 		}
 
 		indexFromPos(pos) {

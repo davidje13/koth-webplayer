@@ -14,6 +14,7 @@ define([
 			this.timeout = null;
 
 			this._advance = this._advance.bind(this);
+			this._jump = this._jump.bind(this);
 			this._handleMessage = this._handleMessage.bind(this);
 
 			this.gameWorker = workerUtils.make([
@@ -27,6 +28,7 @@ define([
 			this.gameWorker.postMessage({
 				action: 'BEGIN',
 				config: gameConfig,
+				checkbackTime: playConfig.checkbackTime,
 			});
 		}
 
@@ -48,6 +50,15 @@ define([
 					pauseTriggered: data.pauseTriggered,
 				});
 				break;
+			case 'STEP_INCOMPLETE':
+				self.postMessage({
+					action: 'RENDER',
+					token: this.token,
+					state: data.state,
+					pauseTriggered: false,
+				});
+				break;
+
 			}
 		}
 
@@ -71,11 +82,25 @@ define([
 			this.timeout = null;
 			this.waiting = true;
 			this.lastStartStep = Date.now();
+			let notForward = (type !== null && steps === null);
 			this.gameWorker.postMessage({
 				action: 'STEP',
 				type: type || '',
 				steps: steps || this.playConfig.speed,
-				checkbackTime: (type !== null || steps !== null) ? 0 : this.playConfig.checkbackTime,
+				checkbackTime: notForward ? 0 : this.playConfig.checkbackTime,
+			});
+		}
+
+		_jump(type = null, steps = null) {
+			this.timeout = null;
+			this.waiting = true;
+			this.lastStartStep = Date.now();
+			let notForward = (type !== null && steps === null);
+			this.gameWorker.postMessage({
+				action: 'SKIP',
+				type: type || '',
+				skipFrame: steps || 0,
+				checkbackTime: notForward ? 0 : this.playConfig.checkbackTime,
 			});
 		}
 
@@ -86,6 +111,16 @@ define([
 			this.timeout = null;
 			if(!this.waiting) {
 				this._advance(type, steps);
+			}
+		}
+
+		skip(type, steps) {
+			this.playConfig.delay = 0;
+			this.playConfig.speed = 0;
+			clearTimeout(this.timeout);
+			this.timeout = null;
+			if(!this.waiting) {
+				this._jump(type, steps);
 			}
 		}
 
@@ -158,6 +193,10 @@ define([
 
 		case 'STEP':
 			game.step(data.type, data.steps);
+			break;
+
+		case 'SKIP':
+			game.skip(data.type, data.steps);
 			break;
 
 		case 'STOP':

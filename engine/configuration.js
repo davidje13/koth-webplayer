@@ -24,7 +24,7 @@ define(['display/documentUtils'], (docutil) => {
 		basePlayConfig,
 		basePlayHiddenConfig: JSON.parse(meta(
 			'play-hidden-config',
-			'{"speed": -1, "checkbackTime": 250}'
+			'{"speed": -1, "checkbackTime": 1000}'
 		)),
 		basePlayScreensaverConfig: JSON.parse(meta(
 			'play-screensaver-config',

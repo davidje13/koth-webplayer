@@ -29,6 +29,7 @@ define([
 			this.beginGame = this.beginGame.bind(this);
 			this.replay = this.replay.bind(this);
 			this.step = this.step.bind(this);
+			this.skip = this.skip.bind(this);
 			this.updateGameConfig = this.updateGameConfig.bind(this);
 			this.updatePlayConfig = this.updatePlayConfig.bind(this);
 			this.updateDisplayConfig = this.updateDisplayConfig.bind(this);
@@ -54,6 +55,7 @@ define([
 			if(this.display) {
 				this.display.removeEventListener('begin', this.beginGame);
 				this.display.removeEventListener('replay', this.replay);
+				this.display.removeEventListener('skip', this.skip);
 				this.display.removeEventListener('step', this.step);
 				this.display.removeEventListener('changegame', this.updateGameConfig);
 				this.display.removeEventListener('changeplay', this.updatePlayConfig);
@@ -64,6 +66,7 @@ define([
 			if(this.display) {
 				this.display.addEventListener('begin', this.beginGame);
 				this.display.addEventListener('replay', this.replay);
+				this.display.addEventListener('skip', this.skip);
 				this.display.addEventListener('step', this.step);
 				this.display.addEventListener('changegame', this.updateGameConfig);
 				this.display.addEventListener('changeplay', this.updatePlayConfig);
@@ -109,8 +112,47 @@ define([
 						token: this.token,
 						type,
 						steps,
+						checkbackTime: this.config.play.checkbackTime,
 					});
 				}, this.gameActive);
+			}
+		}
+
+		skip() {
+			if (this.config.game.skipFrame === undefined) {
+				throw new Error('Skipping not enabled for this game type');
+			}
+			if (this.dead) {
+				throw new Error('Attempt to use terminated game');
+			}
+			Object.assign(this.config.play, {
+				delay: 0,
+				speed: 0,
+			});
+			if(this.display) {
+				this.display.updatePlayConfig(this.config.play);
+			}
+			if (this.config.game.skipFrame <= this.latestState.frame) {
+				this.latestState.frame = 0;
+				this.replay(this.config.game.skipFrame);
+			}
+			else {
+				if(this.gameStarted) {
+					const currentToken = this.token;
+					this.parent.awaitCapacity(() => {
+						if(this.token !== currentToken) {
+							return;
+						}
+						this.gameActive = true;
+						this.parent.sandbox.postMessage({
+							action: 'SKIP',
+							token: this.token,
+							type: null,
+							steps: this.config.game.skipFrame,
+							checkbackTime: this.config.play.checkbackTime,
+						});
+					}, this.gameActive);
+				}
 			}
 		}
 
@@ -183,8 +225,8 @@ define([
 			return this.config.game;
 		}
 
-		replay() {
-			this.begin(this.getSeed(), this.config.game.teams);
+		replay(startFrame = 0) {
+			this.begin(this.getSeed(), this.config.game.teams, startFrame);
 		}
 
 		beginGame({seed = null} = {}) {
@@ -194,7 +236,7 @@ define([
 			this.begin(seed, this.config.game.teams);
 		}
 
-		begin(seed, teams) {
+		begin(seed, teams, frame = 0) {
 			if(this.dead) {
 				throw new Error('Attempt to use terminated game');
 			}
@@ -212,6 +254,7 @@ define([
 			}
 			this.config.game.seed = seed;
 			this.config.game.teams = teams;
+			this.config.game.startFrame = frame;
 			if(this.display) {
 				this.display.clear();
 				this.display.updatePlayConfig(this.config.play);
@@ -346,11 +389,12 @@ define([
 				game: Object.assign({
 					seed: null,
 					teams,
+					startFrame: 0,
 				}, baseGameConfig),
 				play: Object.assign({
 					delay: 0,
 					speed: 0,
-					checkbackTime: 500,
+					checkbackTime: 1000,
 				}, basePlayConfig),
 				display: Object.assign({
 					focussed: [],
