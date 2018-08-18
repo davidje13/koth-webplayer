@@ -1,9 +1,9 @@
 define([
-	'require',
+	'requirejs',
 	'document',
 	'./test.css',
 ], (
-	require,
+	requirejs,
 	document
 ) => {
 	'use strict';
@@ -260,7 +260,7 @@ define([
 		runModule(module) {
 			this.currentModule = module;
 			return (
-				require([module + '_test'])
+				requirejs([module + '_test'])
 				.then(this.beginModule)
 				.then(this.invokeQueueSynchronously)
 				.then(this.completeModule)

@@ -1,4 +1,4 @@
-define(['require', 'document', 'jshint/jshint'], (require, document, jshint) => {
+define(['requirejs', 'document', 'jshint/jshint'], (requirejs, document, jshint) => {
 	'use strict';
 
 	function makeJSHintOptions(predef) {
@@ -121,7 +121,7 @@ define(['require', 'document', 'jshint/jshint'], (require, document, jshint) => 
 		}
 
 		invokeOne(module) {
-			return require(['def:' + module], (def) => {
+			return requirejs(['def:' + module], (def) => {
 				let code = def.code();
 				if(!code) {
 					this.log('lint-skip', module + ' SKIP');
@@ -130,6 +130,9 @@ define(['require', 'document', 'jshint/jshint'], (require, document, jshint) => 
 
 				if(code.startsWith('require.define')) {
 					code = code.substr('require.'.length);
+				}
+				else if (code.startsWith('requirejs.define')) {
+					code = code.substr('requirejs.'.length);
 				}
 
 				// Ignore number of args in module definitions

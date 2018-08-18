@@ -1,5 +1,5 @@
 define([
-	'require',
+	'requirejs',
 	'core/sandboxUtils',
 	'display/documentUtils',
 	'display/SplitView',
@@ -11,7 +11,7 @@ define([
 	'./MatchScorer',
 	'path:./sandboxedLoader',
 ], (
-	require,
+	requirejs,
 	sandboxUtils,
 	docutil,
 	SplitView,
@@ -30,14 +30,14 @@ define([
 	const gameTypes = new Map();
 
 	function loadTeamType(type) {
-		return require(['teams/' + type], (TeamMaker) => {
+		return requirejs(['teams/' + type], (TeamMaker) => {
 			teamTypes.set(type, TeamMaker);
 			return TeamMaker;
 		});
 	}
 
 	function loadMatchType(type) {
-		return require(['matches/' + type], (Match) => {
+		return requirejs(['matches/' + type], (Match) => {
 			matchTypes.set(type, Match);
 			return Match;
 		});
@@ -45,7 +45,7 @@ define([
 
 	function loadGameType(type) {
 		const gameDir = 'games/' + type;
-		return require([
+		return requirejs([
 			'path:' + gameDir + '/GameManager',
 			gameDir + '/Display',
 			gameDir + '/GameScorer',

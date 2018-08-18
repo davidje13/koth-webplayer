@@ -8,7 +8,7 @@ const requireFactory = () => {
 	const hooks = {};
 	let unnamedDef = null;
 	let blocked = false;
-	let require = null;
+	let requirejs = null;
 
 	hooks.performLoad = (src, done) => {
 		const script = window.document.createElement('script');
@@ -181,7 +181,7 @@ const requireFactory = () => {
 				}
 				const content = state.factory.toString();
 				return (
-					'require.define(' +
+					'requirejs.define(' +
 					stringifySingle(src, false) + ', ' +
 					stringifySingle(
 						state.depends,
@@ -221,7 +221,7 @@ const requireFactory = () => {
 			return Promise.resolve(state.module);
 		}
 
-		return require(state.depends, state.factory, state.base).then((o) => {
+		return requirejs(state.depends, state.factory, state.base).then((o) => {
 			state.building = null;
 			state.module = o;
 			return o;
@@ -261,7 +261,7 @@ const requireFactory = () => {
 		return state.building.promise();
 	}
 
-	require = (sources, fn, base) => {
+	requirejs = (sources, fn, base) => {
 		return (Promise
 			.all(sources.map(requireOne.bind(null, base)))
 			.then((deps) => fn && fn.apply(null, deps))
@@ -294,7 +294,7 @@ const requireFactory = () => {
 	// (we're a pretty close API anyway)
 	define.amd = true;
 
-	augment(require, {
+	augment(requirejs, {
 		define,
 
 		replaceLoader: (loader) => {
@@ -310,7 +310,7 @@ const requireFactory = () => {
 		},
 
 		shed: () => {
-			self.require = {define};
+			self.requirejs = {define};
 			self.requireFactory = undefined;
 			blocked = true;
 		},
@@ -332,17 +332,17 @@ const requireFactory = () => {
 		}
 
 		/* globals requireFactory */
-		const KEY_REQUIRE = stateOf('require');
+		const KEY_REQUIRE = stateOf('requirejs');
 		KEY_REQUIRE.factory = requireFactory;
-		KEY_REQUIRE.module = require;
+		KEY_REQUIRE.module = requirejs;
 	}
 
 	loadBuiltins();
 
-	self.require = require;
+	self.requirejs = requirejs;
 	self.define = define;
 	self.exports = {};
 
-	return require;
+	return requirejs;
 };
 requireFactory();

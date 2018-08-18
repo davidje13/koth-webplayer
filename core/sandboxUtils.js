@@ -1,12 +1,12 @@
 define([
-	'require',
-	'def:require',
+	'requirejs',
+	'def:requirejs',
 	'document',
 	'./EventObject',
 	'def:./EventObject',
 	'def:./sandboxUtilsInner',
 ], (
-	require,
+	requirejs,
 	defRequire,
 	document,
 	EventObject,
@@ -37,11 +37,11 @@ define([
 
 	function buildInvocation(dependencies, fn) {
 		if(fn && dependencies.length > 0) {
-			return '() => require(' + JSON.stringify(dependencies) + ', ' + fn.toString() + ')';
+			return '() => requirejs(' + JSON.stringify(dependencies) + ', ' + fn.toString() + ')';
 		} else if(fn) {
 			return fn.toString();
 		} else {
-			return '() => require(' + JSON.stringify(dependencies) + ')';
+			return '() => requirejs(' + JSON.stringify(dependencies) + ')';
 		}
 	}
 
@@ -97,7 +97,7 @@ define([
 			'requireFactory();\n' +
 			defEventObject.code() + '\n' +
 			defInner.code() + '\n' +
-			'require([' + JSON.stringify(defInner.src) + '])' +
+			'requirejs([' + JSON.stringify(defInner.src) + '])' +
 			'.then(' + buildInvocation(dependencies, fn) + ');\n'
 		);
 
@@ -162,9 +162,9 @@ define([
 				return;
 			}
 			if(blockRequire) {
-				throw new Error('Blocked late sandbox require() call: ' + path);
+				throw new Error('Blocked late sandbox requirejs() call: ' + path);
 			}
-			require(['def:' + path], (def) => {
+			requirejs(['def:' + path], (def) => {
 				postMessage({
 					requireScriptPath: path,
 					requireScriptCode: def.code(),

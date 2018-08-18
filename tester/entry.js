@@ -1,13 +1,13 @@
 'use strict';
 
-require([
-	'require',
+requirejs([
+	'requirejs',
 	'document',
 	'tester/Test',
 	'tester/matchers',
 	'tester/Lint',
 ], (
-	require,
+	requirejs,
 	document,
 	Test,
 	matchers,
@@ -32,7 +32,7 @@ require([
 	document.body.appendChild(lint.dom());
 
 	test.invoke(testModules).then(() => {
-		const jsPaths = require.getAllPaths().filter((path) => !path.endsWith('.css'));
+		const jsPaths = requirejs.getAllPaths().filter((path) => !path.endsWith('.css'));
 		lintModules.forEach((module) => {
 			if(jsPaths.indexOf(module) === -1) {
 				jsPaths.push(module);

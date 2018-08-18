@@ -1,4 +1,4 @@
-define(['require', './EventObject'], (require, EventObject) => {
+define(['requirejs', './EventObject'], (requirejs, EventObject) => {
 	'use strict';
 
 	/* jshint worker: true */
@@ -31,18 +31,18 @@ define(['require', './EventObject'], (require, EventObject) => {
 	}
 
 	if(self.restrictedRequire) {
-		require.replaceLoader((path, done) => {
+		requirejs.replaceLoader((path, done) => {
 			awaiting.set(path, done);
 			self.postMessage({requireScriptPath: path});
 		});
 
-		const originalShed = require.shed;
-		require.shed = () => {
+		const originalShed = requirejs.shed;
+		requirejs.shed = () => {
 			self.postMessage({requireScriptPath: null});
 			originalShed();
 		};
 	} else {
-		require.replaceLoader((path, done) => {
+		requirejs.replaceLoader((path, done) => {
 			const href = self.rootHref;
 			importScripts(href.substr(0, href.lastIndexOf('/') + 1) + path + '.js');
 			done();
@@ -50,7 +50,7 @@ define(['require', './EventObject'], (require, EventObject) => {
 	}
 
 	// We must manage the "message" events ourselves so that we can intercept
-	// require() results. Simply adding a "message" listener wouldn't be enough
+	// requirejs() results. Simply adding a "message" listener wouldn't be enough
 	// to avoid potential race conditions (messages will queue while there are
 	// NO listeners, but not once there's ONE)
 

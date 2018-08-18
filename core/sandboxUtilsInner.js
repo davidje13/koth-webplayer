@@ -1,9 +1,9 @@
 define([
-	'require',
+	'requirejs',
 	'document',
 	'./EventObject',
 ], (
-	require,
+	requirejs,
 	document,
 	EventObject
 ) => {
@@ -97,18 +97,18 @@ define([
 
 	// Safari allows relaxing script-src rules inside iframes (Chrome doesn't)
 	if(self.restrictedRequire) {
-		require.replaceLoader((path, done) => {
+		requirejs.replaceLoader((path, done) => {
 			awaiting.set(path, done);
 			self.postMessage({requireScriptPath: path});
 		});
 
-		const originalShed = require.shed;
-		require.shed = () => {
+		const originalShed = requirejs.shed;
+		requirejs.shed = () => {
 			self.postMessage({requireScriptPath: null});
 			originalShed();
 		};
 	} else {
-		require.replaceLoader((path, done) => {
+		requirejs.replaceLoader((path, done) => {
 			const script = document.createElement('script');
 			const href = self.rootHref || window.location.href;
 			script.setAttribute('src', href.substr(0, href.lastIndexOf('/') + 1) + path + '.js');

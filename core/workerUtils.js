@@ -1,12 +1,12 @@
 define([
-	'require',
-	'def:require',
+	'requirejs',
+	'def:requirejs',
 	'./EventObject',
 	'def:./EventObject',
 	'def:./workerUtilsInner',
 	'path:./workerUtilsLoader',
 ], (
-	require,
+	requirejs,
 	defRequire,
 	EventObject,
 	defEventObject,
@@ -32,11 +32,11 @@ define([
 		let invocation;
 		const depstr = escape(dependencies);
 		if(fn && dependencies.length > 0) {
-			invocation = '() => require(' + depstr + ', ' + fn.toString() + ')';
+			invocation = '() => requirejs(' + depstr + ', ' + fn.toString() + ')';
 		} else if(fn) {
 			invocation = fn.toString();
 		} else {
-			invocation = '() => require(' + depstr + ')';
+			invocation = '() => requirejs(' + depstr + ')';
 		}
 
 		const src = (
@@ -47,9 +47,9 @@ define([
 			'requireFactory();\n' +
 			defEventObject.code() + '\n' +
 			defInner.code() + '\n' +
-			'require([' + escape(defInner.src) + '])' +
+			'requirejs([' + escape(defInner.src) + '])' +
 			'.then(' + invocation + ')' +
-			'.then(() => require.shed());\n'
+			'.then(() => requirejs.shed());\n'
 		);
 
 		return {
@@ -100,9 +100,9 @@ define([
 					return;
 				}
 				if(blockRequire) {
-					throw new Error('Blocked late worker require() call: ' + modulePath);
+					throw new Error('Blocked late worker requirejs() call: ' + modulePath);
 				}
-				require(['def:' + modulePath], (def) => {
+				requirejs(['def:' + modulePath], (def) => {
 					worker.postMessage({
 						requireScriptPath: modulePath,
 						requireScriptCode: def.code(),

@@ -1,12 +1,12 @@
 define([
-	'require',
+	'requirejs',
 	'core/EventObject',
 	'core/rateUtils',
 	'display/documentUtils',
 	'display/SplitView',
 	'display/TreeTable',
 ], (
-	require,
+	requirejs,
 	EventObject,
 	rateUtils,
 	docutil,
@@ -142,7 +142,7 @@ define([
 				this.trigger('select', [this.getSelectedEntry()]);
 			});
 
-			require([
+			requirejs([
 				'codemirror/lib/codemirror',
 				'codemirror/mode/javascript/javascript',
 				'codemirror/addon/comment/comment',

@@ -6,14 +6,14 @@
 //   thought on how to handle propagating changes made in a game back to
 //   tournaments / welcome screen)
 
-require([
-	'require',
+requirejs([
+	'requirejs',
 	'display/documentUtils',
 	'engine/configuration',
 	'engine/Navigation',
 	'engine/style.css',
 ], (
-	require,
+	requirejs,
 	docutil,
 	pageConfig,
 	Navigation
@@ -67,7 +67,7 @@ require([
 	window.addEventListener('unhandledrejection', handleLoadError);
 
 	navigation.setLoadState('user interface', 0.1);
-	require(['engine/Engine'], (Engine) => {
+	requirejs(['engine/Engine'], (Engine) => {
 		const engine = new Engine(pageConfig, navigation.nav);
 		navigation.setLoadState('game engine', 0.2);
 		engine.loadGame().then(() => {
