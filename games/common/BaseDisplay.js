@@ -1,7 +1,7 @@
 define([
 	'core/EventObject',
 	'display/documentUtils',
-	'./style.css',
+	'games/common/style.css',
 ], (
 	EventObject,
 	docutil

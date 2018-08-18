@@ -1,4 +1,4 @@
-define(['./matchers'], (matchers) => {
+define(['../tester/matchers'], (matchers) => {
 	'use strict';
 
 	let latestError = null;

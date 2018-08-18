@@ -1,5 +1,5 @@
 define([
-	'./Match',
+	'matches/Match',
 	'core/arrayUtils',
 	'math/Random',
 ], (
