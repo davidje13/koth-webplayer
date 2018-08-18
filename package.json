@@ -1,0 +1,116 @@
+{
+  "name": "koth-webplayer",
+  "version": "0.1.2",
+  "description": "KotH code challenge webplayer",
+  "main": "node/main.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eaglgenes101/koth-webplayer.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/eaglgenes101/koth-webplayer/issues"
+  },
+  "homepage": "https://github.com/eaglgenes101/koth-webplayer#readme",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.2",
+    "cssesc": "^2.0.0",
+    "isolated-vm": "^1.7.0",
+    "jshint": "^2.9.6",
+    "node-fetch": "^2.2.0",
+    "node-getopt": "^0.3.2",
+    "requirejs": "^2.3.5",
+    "terminal-kit": "^1.19.2",
+    "winston": "^3.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^5.3.0",
+    "jshint": "^2.9.6"
+  },
+  "jshintConfig": {
+    "bitwise": true,
+    "curly": true,
+    "eqeqeq": true,
+    "esversion": 6,
+    "forin": true,
+    "freeze": true,
+    "futurehostile": true,
+    "latedef": true,
+    "maxcomplexity": 10,
+    "maxdepth": 5,
+    "maxparams": 5,
+    "maxstatements": 50,
+    "noarg": true,
+    "nonbsp": true,
+    "nonew": true,
+    "strict": true,
+    "undef": true,
+    "unused": true,
+    "varstmt": true,
+    "browser": true,
+    "node": true,
+    "globals": {
+      "define": false,
+      "requirejs": false,
+      "it": false,
+      "equals": false,
+      "expect": false,
+      "describe": false,
+      "itAsynchronously": false,
+      "not": false,
+      "isGreaterThan": false,
+      "isLowerThan": false,
+      "fail": false,
+      "identicalTo": false
+    }
+  },
+  "eslintConfig": {
+    "env": {
+      "browser": true,
+      "commonjs": true,
+      "amd": true,
+      "es6": true,
+      "node": true,
+      "jest": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+      "ecmaVersion": 2015
+    },
+    "rules": {
+      "indent": [
+        "error",
+        "tab"
+      ],
+      "linebreak-style": [
+        "error",
+        "unix"
+      ],
+      "quotes": [
+        "error",
+        "single"
+      ],
+      "semi": [
+        "error",
+        "always"
+      ]
+    },
+    "globals": {
+      "requirejs": false,
+      "equals": false,
+      "itAsynchronously": false,
+      "not": false,
+      "isGreaterThan": false,
+      "isLowerThan": false,
+      "fail": false,
+      "identicalTo": false
+    }
+  }
+}

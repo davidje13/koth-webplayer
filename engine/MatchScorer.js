@@ -16,12 +16,16 @@ define(['math/statistics'], (statistics) => {
 					allScores: [],
 					certainty: null,
 					games: 0,
+					disqualified: false,
+					error: false,
 					entries: team.entries.map((entry) => {
 						const entryAgg = {
 							id: entry.id,
 							total: 0,
 							score: 0,
 							games: 0,
+							disqualified: false,
+							error: false,
 						};
 						entryLookup.set(entry.id, entryAgg);
 						return entryAgg;
@@ -36,14 +40,27 @@ define(['math/statistics'], (statistics) => {
 				}
 				gameScore.teams.forEach((gameTeamScore) => {
 					const teamItem = teamLookup.get(gameTeamScore.id);
-					teamItem.total += gameTeamScore.score;
-					teamItem.allScores.push(gameTeamScore.score);
-					++ teamItem.games;
-					gameTeamScore.entries.forEach((gameEntryScore) => {
-						const entryItem = entryLookup.get(gameEntryScore.id);
-						entryItem.total += gameEntryScore.score;
-						++ entryItem.games;
-					});
+					if (teamItem !== undefined) { //Because sometimes things derp up
+						teamItem.total += gameTeamScore.score;
+						teamItem.allScores.push(gameTeamScore.score);
+						teamItem.games++;
+						gameTeamScore.entries.forEach((gameEntryScore) => {
+							const entryItem = entryLookup.get(gameEntryScore.id);
+							entryItem.total += gameEntryScore.score;
+							++ entryItem.games;
+							if (gameEntryScore.disqualified) {
+								entryItem.disqualified = true;
+							}
+						});
+						if (teamItem.entries.every((teamEntryScore)=>teamEntryScore.disqualified)) {
+							teamItem.disqualified = true;
+						}
+						if (teamItem.entries.every((teamEntryScore)=>teamEntryScore.error)) {
+							teamItem.error = true;
+						}
+					} else {
+						throw new Error({expected: gameScore.teams, actual: teams});
+					}
 				});
 			});
 			teamLookup.forEach((teamItem) => {
