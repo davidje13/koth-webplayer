@@ -60,6 +60,7 @@ define([
 				allColumns.push({
 					title: 'Thinking Time',
 					attribute: 'time',
+					className: 'thinkingTime',
 				});
 				this.flatColumns.push({
 					attribute: 'time',
