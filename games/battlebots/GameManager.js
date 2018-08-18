@@ -53,7 +53,7 @@ define([
 		if(Math.round(action) !== action || action < 0 || action > 6) {
 			return 'Invalid action: ' + action;
 		}
-		if(elapsed > 15) {
+		if(elapsed > 50) {
 			return 'Too long to respond: ' + elapsed + 'ms';
 		}
 		return '';
