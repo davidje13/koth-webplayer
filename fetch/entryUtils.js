@@ -105,9 +105,9 @@ define([
 
 	return {
 		compile: (code, parameters, {pre = '', returning = null} = {}) => {
-			let post = '';
+			let after = '';
 			if(returning !== null) {
-				post = buildFunctionFinder(code, returning);
+				after = buildFunctionFinder(code, returning);
 			}
 
 			// Wrap code in function which blocks access to obviously dangerous
@@ -160,7 +160,7 @@ define([
 					pre +
 					'extras = undefined;' +
 					'return (function({' + parameters.join(',') + '}) {\n' +
-						code + '\n' + post +
+						code + '\n' + after +
 					'}).call(parameters["this"] || {}, parameters);' +
 				'};\n'
 			);
