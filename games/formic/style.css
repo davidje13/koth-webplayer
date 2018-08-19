@@ -39,6 +39,10 @@
 	z-index: 4;
 }
 
+.game-board .mark:after {
+	font-family: 'noto color emoji', sans-serif;
+}
+
 .game-board .mark.next-mover-locator-pointer:after {
 	content: '\2605';
 	position: relative;
@@ -132,6 +136,7 @@
 	height: 100%;
 	line-height: 1em;
 	text-align: center;
+	font-family: 'noto color emoji', sans-serif;
 }
 
 .zoomed-board .mark.queen-cell:before {
