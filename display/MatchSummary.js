@@ -117,10 +117,10 @@ define([
 				attribute: 'score',
 				className: 'result',
 			}, {
-				title: 'K-S',
+				title: 'M-W',
 				tooltip: (
 					'distinctness from next-highest entry' +
-					' (two-sample Kolmogorov-Smirnov test)'
+					' (Mann-Whitney U test)'
 				),
 				attribute: 'certainty',
 				className: 'certainty',

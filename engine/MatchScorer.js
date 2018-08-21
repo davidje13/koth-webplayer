@@ -69,7 +69,7 @@ define(['math/statistics'], (statistics) => {
 						matchTeamScore.winner = true;
 					}
 					if(index < matchTeamScores.length - 1) {
-						matchTeamScore.certainty = 1 - statistics.ksTest(
+						matchTeamScore.certainty = 1 - statistics.mwTest(
 							matchTeamScore.allScores,
 							matchTeamScores[index + 1].allScores
 						);
