@@ -14,13 +14,6 @@ define([
 		params: [],
 	};
 
-	const SKIP_BUTTON = {
-		label: 'Skip to',
-		title: 'Skip to specified frame (potentially restarting the game if required)',
-		event: 'skip',
-		params: [],
-	};
-
 	const RANDOM_BUTTON = {
 		label: 'Random',
 		title: 'New Random Game',
@@ -144,7 +137,17 @@ define([
 				'value': 0,
 				'step': '1',
 			});
-			this.skipButton = makeButton(SKIP_BUTTON, this).element;
+
+			this.skipButton = docutil.make(
+				'button',
+				{'title': 'Skip to specified frame (potentially restarting the game if required)'},
+				['Skip to']
+			);
+			this.skipButton.addEventListener('click', () => {
+				const skipFrame = Math.max(Math.round(this.skipFrame.value), 0);
+				this.trigger('skip', [skipFrame]);
+			});
+
 			this.seedEntry = docutil.make('input', {'type': 'text', 'class': 'seed-entry'});
 			this.seedGo = docutil.make('button', {}, ['Go']);
 
@@ -155,10 +158,6 @@ define([
 			this.maxFrame.addEventListener('change', () => {
 				const maxFrame = Math.max(Math.round(this.maxFrame.value), 1);
 				this.trigger('changegame', [{maxFrame}]);
-			});
-			this.skipFrame.addEventListener('change', () => {
-				const skipFrame = Math.max(Math.round(this.skipFrame.value), 0);
-				this.trigger('changegame', [{skipFrame}]);
 			});
 			this.seedGo.addEventListener('click', () => {
 				this.trigger('begin', [{seed: this.seedEntry.value}]);
@@ -233,21 +232,16 @@ define([
 		updateGameConfig(config) {
 			if(config.maxFrame === undefined) {
 				docutil.updateAttrs(this.maxFrame, {'disabled': 'disabled'});
-			} else if(this.maxFrame !== docutil.document.activeElement) {
-				this.maxFrame.value = config.maxFrame;
-				if (this.skipFrame.value > this.maxFrame.value) {
-					this.skipFrame.value = this.maxFrame.value;
+			} else {
+				if(this.maxFrame !== docutil.document.activeElement) {
+					this.maxFrame.value = config.maxFrame;
 				}
-			}
-			if(config.skipFrame === undefined) {
-				docutil.updateStyle(this.skipButton, {'display': 'none'});
-				docutil.updateStyle(this.skipFrame, {'display': 'none'});
-				docutil.updateAttrs(this.skipFrame, {'disabled': 'disabled'});
-			} else if(this.skipFrame !== docutil.document.activeElement) {
-				if (config.maxFrame !== docutil.document.activeElement) {
-					this.skipFrame.max = config.maxFrame;
+				this.skipFrame.max = config.maxFrame;
+				if(this.skipFrame !== docutil.document.activeElement) {
+					if (this.skipFrame.value > config.maxFrame) {
+						this.skipFrame.value = config.maxFrame;
+					}
 				}
-				this.skipFrame.value = config.skipFrame;
 			}
 			if(config.seed !== this.currentSeed) {
 				this.currentSeed = config.seed;

@@ -89,7 +89,7 @@ define([
 			return this.config.game.teams;
 		}
 
-		step(type = null, steps = null) {
+		_step(action, type, steps) {
 			if(this.dead) {
 				throw new Error('Attempt to use terminated game');
 			}
@@ -108,7 +108,7 @@ define([
 					}
 					this.gameActive = true;
 					this.parent.sandbox.postMessage({
-						action: 'STEP',
+						action,
 						token: this.token,
 						type,
 						steps,
@@ -118,42 +118,15 @@ define([
 			}
 		}
 
-		skip() {
-			if (this.config.game.skipFrame === undefined) {
-				throw new Error('Skipping not enabled for this game type');
+		step(type = null, steps = null) {
+			this._step('STEP', type, steps);
+		}
+
+		skip(frame) {
+			if(frame <= this.latestState.frame) {
+				this.replay();
 			}
-			if (this.dead) {
-				throw new Error('Attempt to use terminated game');
-			}
-			Object.assign(this.config.play, {
-				delay: 0,
-				speed: 0,
-			});
-			if(this.display) {
-				this.display.updatePlayConfig(this.config.play);
-			}
-			if (this.config.game.skipFrame <= this.latestState.frame) {
-				this.latestState.frame = 0;
-				this.replay(this.config.game.skipFrame);
-			}
-			else {
-				if(this.gameStarted) {
-					const currentToken = this.token;
-					this.parent.awaitCapacity(() => {
-						if(this.token !== currentToken) {
-							return;
-						}
-						this.gameActive = true;
-						this.parent.sandbox.postMessage({
-							action: 'SKIP',
-							token: this.token,
-							type: null,
-							steps: this.config.game.skipFrame,
-							checkbackTime: this.config.play.checkbackTime,
-						});
-					}, this.gameActive);
-				}
-			}
+			this._step('SKIP', null, frame);
 		}
 
 		updateGameConfig(delta) {
@@ -225,8 +198,8 @@ define([
 			return this.config.game;
 		}
 
-		replay(startFrame = 0) {
-			this.begin(this.getSeed(), this.config.game.teams, startFrame);
+		replay() {
+			this.begin(this.getSeed(), this.config.game.teams);
 		}
 
 		beginGame({seed = null} = {}) {
@@ -236,7 +209,7 @@ define([
 			this.begin(seed, this.config.game.teams);
 		}
 
-		begin(seed, teams, frame = 0) {
+		begin(seed, teams) {
 			if(this.dead) {
 				throw new Error('Attempt to use terminated game');
 			}
@@ -254,7 +227,6 @@ define([
 			}
 			this.config.game.seed = seed;
 			this.config.game.teams = teams;
-			this.config.game.startFrame = frame;
 			if(this.display) {
 				this.display.clear();
 				this.display.updatePlayConfig(this.config.play);
@@ -389,7 +361,6 @@ define([
 				game: Object.assign({
 					seed: null,
 					teams,
-					startFrame: 0,
 				}, baseGameConfig),
 				play: Object.assign({
 					delay: 0,

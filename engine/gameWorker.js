@@ -29,37 +29,12 @@ define(['math/Random'], (Random) => {
 			});
 		}
 
-		function begin(config, checkbackTime) {
+		function begin(config) {
 			if(game) {
 				throw new Error('Cannot re-use game worker');
 			}
 			time0 = Date.now();
 			game = new GameManager(new Random(config.seed), config);
-			//I consider this a hack, but it's hard to figure out a better way
-			if (config.hasOwnProperty('startFrame') && config.startFrame > 0) {
-				let limit = 0;
-				if (checkbackTime) {
-					let prevLim = Math.floor(Date.now()/checkbackTime)*checkbackTime;
-					limit = prevLim + checkbackTime;
-				}
-				try {
-					for(let i = 0; (i < config.startFrame) && !game.isOver(); ++ i) {
-						game.step(null);
-						/* jshint maxdepth:6 */
-						if(limit && Date.now() >= limit) {
-							let prevLim = Math.floor(Date.now()/checkbackTime)*checkbackTime;
-							limit = prevLim + checkbackTime;
-							sendIncomplete();
-						}
-					}
-				} catch(e) {
-					if(e === 'PAUSE') {
-						sendState(true);
-					} else {
-						throw e;
-					}
-				}
-			}
 			sendState();
 		}
 
@@ -87,26 +62,9 @@ define(['math/Random'], (Random) => {
 		}
 
 		function skip({checkbackTime, skipFrame, type}) {
-			let limit = 0;
-			if (checkbackTime) {
-				limit = Math.floor(Date.now()/checkbackTime)*checkbackTime + checkbackTime;
-			}
-			try {
-				while(!game.isOver() && game.getState().frame < skipFrame) {
-					game.step(type);
-					if(limit && Date.now() >= limit) {
-						let prevLim = Math.floor(Date.now()/checkbackTime)*checkbackTime;
-						limit = prevLim + checkbackTime;
-						sendIncomplete();
-					}
-				}
-				sendState();
-			} catch(e) {
-				if(e === 'PAUSE') {
-					sendState(true);
-				} else {
-					throw e;
-				}
+			const steps = skipFrame - game.getState().frame;
+			if(steps > 0) {
+				step({checkbackTime, steps, type});
 			}
 		}
 
@@ -115,7 +73,7 @@ define(['math/Random'], (Random) => {
 
 			switch(data.action) {
 			case 'BEGIN':
-				begin(data.config, data.checkbackTime);
+				begin(data.config);
 				break;
 
 			case 'STEP':
