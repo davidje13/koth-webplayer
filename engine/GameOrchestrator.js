@@ -350,7 +350,7 @@ define([
 				play: Object.assign({
 					delay: 0,
 					speed: 0,
-					maxTime: 500,
+					checkbackTime: 500,
 				}, basePlayConfig),
 				display: Object.assign({
 					focussed: [],

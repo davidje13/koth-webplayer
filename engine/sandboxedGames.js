@@ -75,7 +75,7 @@ define([
 				action: 'STEP',
 				type: type || '',
 				steps: steps || this.playConfig.speed,
-				maxTime: (type !== null || steps !== null) ? 0 : this.playConfig.maxTime,
+				checkbackTime: (type !== null || steps !== null) ? 0 : this.playConfig.checkbackTime,
 			});
 		}
 
@@ -101,7 +101,7 @@ define([
 			if(
 				this.playConfig.delay !== config.delay ||
 				this.playConfig.speed !== config.speed ||
-				this.playConfig.maxTime !== config.maxTime
+				this.playConfig.checkbackTime !== config.checkbackTime
 			) {
 				this.playConfig = config;
 				if(!this.waiting) {

@@ -26,8 +26,8 @@ define(['math/Random'], (Random) => {
 			sendState();
 		}
 
-		function step({maxTime, steps, type}) {
-			const limit = maxTime ? (Date.now() + maxTime) : 0;
+		function step({checkbackTime, steps, type}) {
+			const limit = checkbackTime ? (Date.now() + checkbackTime) : 0;
 			try {
 				for(let i = 0; (steps < 0 || i < steps) && !game.isOver(); ++ i) {
 					game.step(type);
