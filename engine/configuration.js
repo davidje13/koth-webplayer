@@ -24,15 +24,17 @@ define(['display/documentUtils'], (docutil) => {
 		basePlayConfig,
 		basePlayHiddenConfig: JSON.parse(meta(
 			'play-hidden-config',
-			'{"speed": -1, "maxTime": 250}'
+			'{"speed": -1, "checkbackInterval": 1000}'
 		)),
 		basePlayScreensaverConfig: JSON.parse(meta(
 			'play-screensaver-config',
 			'null'
 		)) || Object.assign({
 			swapDelay: 5000,
+			checkbackInterval: 250,
 		}, basePlayConfig, {
 			delay: Math.max(basePlayConfig.delay, basePlayConfig.speed > 1 ? 100 : 50),
+			maxDuration: null,
 		}),
 		baseDisplayConfig: JSON.parse(meta('display-config', '{}')),
 		teamViewColumns: JSON.parse(meta('team-view-columns', '[]')),

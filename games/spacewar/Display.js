@@ -115,7 +115,7 @@ define([
 				'0': {delay: 30, speed: 1},
 				'1': {delay: 6, speed: 1},
 				'2': {delay: 0, speed: 1},
-				'3': {delay: 0, speed: 10},
+				'3': {delay: 0, speed: 10, checkbackInterval: 250, maxDuration: 1000},
 			}, {stepSingle: false}));
 			this.markers = new MarkerStore();
 			this.board = new FullSwitchingBoard({

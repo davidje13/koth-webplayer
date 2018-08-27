@@ -11,6 +11,11 @@ define([
 ) => {
 	'use strict';
 
+	const STOP = {
+		delay: 0,
+		speed: 0,
+	};
+
 	class Game extends EventObject {
 		constructor(parent, token, display, config, swapTokenFn) {
 			super();
@@ -29,6 +34,7 @@ define([
 			this.beginGame = this.beginGame.bind(this);
 			this.replay = this.replay.bind(this);
 			this.step = this.step.bind(this);
+			this.skip = this.skip.bind(this);
 			this.updateGameConfig = this.updateGameConfig.bind(this);
 			this.updatePlayConfig = this.updatePlayConfig.bind(this);
 			this.updateDisplayConfig = this.updateDisplayConfig.bind(this);
@@ -54,6 +60,7 @@ define([
 			if(this.display) {
 				this.display.removeEventListener('begin', this.beginGame);
 				this.display.removeEventListener('replay', this.replay);
+				this.display.removeEventListener('skip', this.skip);
 				this.display.removeEventListener('step', this.step);
 				this.display.removeEventListener('changegame', this.updateGameConfig);
 				this.display.removeEventListener('changeplay', this.updatePlayConfig);
@@ -64,6 +71,7 @@ define([
 			if(this.display) {
 				this.display.addEventListener('begin', this.beginGame);
 				this.display.addEventListener('replay', this.replay);
+				this.display.addEventListener('skip', this.skip);
 				this.display.addEventListener('step', this.step);
 				this.display.addEventListener('changegame', this.updateGameConfig);
 				this.display.addEventListener('changeplay', this.updatePlayConfig);
@@ -86,14 +94,11 @@ define([
 			return this.config.game.teams;
 		}
 
-		step(type = null, steps = null) {
+		_step({action, checkbackInterval = null, steps, maxDuration = null, type = null}) {
 			if(this.dead) {
 				throw new Error('Attempt to use terminated game');
 			}
-			Object.assign(this.config.play, {
-				delay: 0,
-				speed: 0,
-			});
+			Object.assign(this.config.play, STOP);
 			if(this.display) {
 				this.display.updatePlayConfig(this.config.play);
 			}
@@ -105,13 +110,36 @@ define([
 					}
 					this.gameActive = true;
 					this.parent.sandbox.postMessage({
-						action: 'STEP',
+						action,
 						token: this.token,
 						type,
 						steps,
+						maxDuration,
+						checkbackInterval,
 					});
 				}, this.gameActive);
 			}
+		}
+
+		step(type = null, steps = null, maxDuration = null) {
+			this._step({
+				action: 'STEP',
+				checkbackInterval: 250,
+				maxDuration,
+				steps,
+				type,
+			});
+		}
+
+		skip(frame) {
+			if(frame <= this.latestState.frame) {
+				this.replay();
+			}
+			this._step({
+				action: 'SKIP',
+				checkbackInterval: 500,
+				steps: frame,
+			});
 		}
 
 		updateGameConfig(delta) {
@@ -285,7 +313,7 @@ define([
 					if(game) {
 						game.updateState(data.state);
 						if(data.pauseTriggered) {
-							game.updatePlayConfig({delay: 0, speed: 0});
+							game.updatePlayConfig(STOP);
 						}
 					}
 					break;
@@ -347,11 +375,7 @@ define([
 					seed: null,
 					teams,
 				}, baseGameConfig),
-				play: Object.assign({
-					delay: 0,
-					speed: 0,
-					maxTime: 500,
-				}, basePlayConfig),
+				play: Object.assign({}, STOP, basePlayConfig),
 				display: Object.assign({
 					focussed: [],
 				}, baseDisplayConfig),

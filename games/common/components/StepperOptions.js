@@ -79,7 +79,7 @@ define([
 				label: '\u25B6!',
 				title: 'Fastest Possible',
 				event: 'changeplay',
-				params: [{delay: 0, speed: -1}],
+				params: [{delay: 0, speed: -1, checkbackInterval: 1000, maxDuration: 2000}],
 			});
 		}
 		return buttons;
@@ -131,6 +131,23 @@ define([
 				'min': '1',
 				'step': '1',
 			});
+			this.skipFrame = docutil.make('input', {
+				'type': 'number',
+				'min': '0',
+				'value': 0,
+				'step': '1',
+			});
+
+			this.skipButton = docutil.make(
+				'button',
+				{'title': 'Skip to specified frame (potentially restarting the game if required)'},
+				['Skip to']
+			);
+			this.skipButton.addEventListener('click', () => {
+				const skipFrame = Math.max(Math.round(this.skipFrame.value), 0);
+				this.trigger('skip', [skipFrame]);
+			});
+
 			this.seedEntry = docutil.make('input', {'type': 'text', 'class': 'seed-entry'});
 			this.seedGo = docutil.make('button', {}, ['Go']);
 
@@ -163,6 +180,8 @@ define([
 					docutil.make('span', {'class': 'frame'}, [this.frame]),
 					' of ',
 					this.maxFrame,
+					this.skipButton,
+					this.skipFrame,
 				]),
 				docutil.make('span', {'class': 'play-speed'},
 					this.buttons.map((button) => button.element)
@@ -214,8 +233,16 @@ define([
 		updateGameConfig(config) {
 			if(config.maxFrame === undefined) {
 				docutil.updateAttrs(this.maxFrame, {'disabled': 'disabled'});
-			} else if(this.maxFrame !== docutil.document.activeElement) {
-				this.maxFrame.value = config.maxFrame;
+			} else {
+				if(this.maxFrame !== docutil.document.activeElement) {
+					this.maxFrame.value = config.maxFrame;
+				}
+				this.skipFrame.max = config.maxFrame;
+				if(this.skipFrame !== docutil.document.activeElement) {
+					if (this.skipFrame.value > config.maxFrame) {
+						this.skipFrame.value = config.maxFrame;
+					}
+				}
 			}
 			if(config.seed !== this.currentSeed) {
 				this.currentSeed = config.seed;

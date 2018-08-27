@@ -53,11 +53,14 @@ define([
 
 			// You may also want to trigger step-by-step progression of your
 			// game:
-			// this.trigger('step', ['customName', stepsToAdvance]);
-			// (customName should tie to something you have defined in
-			// GameManager.step, and is '' by default. stepsToAdvance should
-			// be a number showing how many times to call the step function
-			// before returning a state for rendering)
+			// this.trigger('step', ['customName', stepsToAdvance, maxDuration])
+			//
+			// - customName should tie to something you have defined in
+			//   GameManager.step, and is '' by default
+			// - stepsToAdvance is a number showing how many times to call the
+			//   step function before allowing further user interaction
+			// - maxDuration is an optional time limit; if processing takes
+			//   more than this many milliseconds, it will stop early
 		}
 
 		clear() {

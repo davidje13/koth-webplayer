@@ -181,9 +181,9 @@ define([
 				'-2': {delay: 500, speed: 1},
 				'-1': {delay: 250, speed: 1},
 				'0': {delay: 0, speed: 1},
-				'1': {delay: 0, speed: 10},
-				'2': {delay: 0, speed: 50},
-				'3': {delay: 0, speed: 500},
+				'1': {delay: 0, speed: 10, checkbackInterval: 200, maxDuration: 500},
+				'2': {delay: 0, speed: 50, checkbackInterval: 250, maxDuration: 500},
+				'3': {delay: 0, speed: 500, checkbackInterval: 500, maxDuration: 1000},
 			}));
 
 			const visualOptions = new OptionsBar('changedisplay', [

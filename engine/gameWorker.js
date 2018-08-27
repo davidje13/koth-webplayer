@@ -5,11 +5,11 @@ define(['math/Random'], (Random) => {
 		let game = null;
 		let time0 = null;
 
-		function sendState(pauseTriggered = false) {
+		function sendState({complete = true, pauseTriggered = false} = {}) {
 			const now = Date.now();
 			const state = game.getState();
 			self.postMessage({
-				action: 'STEP_COMPLETE',
+				action: complete ? 'STEP_COMPLETE' : 'STEP_INCOMPLETE',
 				state: Object.assign({}, state, {
 					realWorldTime: now - time0,
 				}),
@@ -26,22 +26,61 @@ define(['math/Random'], (Random) => {
 			sendState();
 		}
 
-		function step({maxTime, steps, type}) {
-			const limit = maxTime ? (Date.now() + maxTime) : 0;
-			try {
-				for(let i = 0; (steps < 0 || i < steps) && !game.isOver(); ++ i) {
-					game.step(type);
-					if(limit && Date.now() >= limit) {
-						break;
-					}
+		function nextCheckbackTime(interval) {
+			if(!interval) {
+				return Number.POSITIVE_INFINITY;
+			}
+			return Math.floor((Date.now() / interval) + 1) * interval;
+		}
+
+		function durationDeadline(duration) {
+			if(!duration) {
+				return Number.POSITIVE_INFINITY;
+			}
+			return Date.now() + duration;
+		}
+
+		function runSteps({checkbackInterval = null, maxDuration = null, steps, type}) {
+			const timeLimit = durationDeadline(maxDuration);
+			let checkbackTime = nextCheckbackTime(checkbackInterval);
+
+			for(let i = 0; (steps < 0 || i < steps) && !game.isOver(); ++ i) {
+				game.step(type);
+				const now = Date.now();
+				if(now >= timeLimit) {
+					return;
 				}
+				if(now >= checkbackTime) {
+					checkbackTime = nextCheckbackTime(checkbackInterval);
+					if(checkbackTime >= timeLimit) {
+						// Next checkback will be too late;
+						// exit early instead to keep framerate consistent
+						return;
+					}
+					// Carry on computing, but send a frame back so the user
+					// can see what's happening
+					sendState({complete: false});
+				}
+			}
+		}
+
+		function step(options) {
+			try {
+				runSteps(options);
 				sendState();
 			} catch(e) {
 				if(e === 'PAUSE') {
-					sendState(true);
+					sendState({pauseTriggered: true});
 				} else {
 					throw e;
 				}
+			}
+		}
+
+		function skip({checkbackInterval, skipFrame, type}) {
+			const steps = skipFrame - game.getState().frame;
+			if(steps > 0) {
+				step({checkbackInterval, steps, type});
 			}
 		}
 
@@ -55,6 +94,10 @@ define(['math/Random'], (Random) => {
 
 			case 'STEP':
 				step(data);
+				break;
+
+			case 'SKIP':
+				skip(data);
 				break;
 
 			case 'UPDATE_CONFIG':

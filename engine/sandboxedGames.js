@@ -10,10 +10,10 @@ define([
 	class GameStepper {
 		constructor(token, pathGameManager, playConfig, gameConfig) {
 			this.playConfig = playConfig;
+			this.playing = (this.playConfig.speed !== 0);
 			this.token = token;
 			this.timeout = null;
 
-			this._advance = this._advance.bind(this);
 			this._handleMessage = this._handleMessage.bind(this);
 
 			this.gameWorker = workerUtils.make([
@@ -36,8 +36,7 @@ define([
 			case 'STEP_COMPLETE':
 				this.waiting = false;
 				if(data.pauseTriggered) {
-					this.playConfig.delay = 0;
-					this.playConfig.speed = 0;
+					this.playing = false;
 				} else if(!data.state.over) {
 					this._advanceDelayed(true);
 				}
@@ -48,65 +47,88 @@ define([
 					pauseTriggered: data.pauseTriggered,
 				});
 				break;
+
+			case 'STEP_INCOMPLETE':
+				self.postMessage({
+					action: 'RENDER',
+					token: this.token,
+					state: data.state,
+					pauseTriggered: false,
+				});
+				break;
 			}
 		}
 
 		_advanceDelayed(subtractStepTime) {
 			clearTimeout(this.timeout);
 			this.timeout = null;
-			if(this.playConfig.speed) {
+			if(this.playing) {
 				let delay = this.playConfig.delay;
 				if(subtractStepTime) {
 					delay -= (Date.now() - this.lastStartStep);
 				}
+				const call = () => this._advance({
+					type: '',
+					steps: this.playConfig.speed,
+					maxDuration: this.playConfig.maxDuration,
+					checkbackInterval: this.playConfig.checkbackInterval,
+				});
 				if(delay > 0) {
-					this.timeout = setTimeout(this._advance, delay);
+					this.timeout = setTimeout(call, delay);
 				} else {
-					this._advance();
+					call();
 				}
 			}
 		}
 
-		_advance(type = null, steps = null) {
+		_advance({type, steps, maxDuration, checkbackInterval}) {
 			this.timeout = null;
 			this.waiting = true;
 			this.lastStartStep = Date.now();
 			this.gameWorker.postMessage({
 				action: 'STEP',
 				type: type || '',
-				steps: steps || this.playConfig.speed,
-				maxTime: (type !== null || steps !== null) ? 0 : this.playConfig.maxTime,
+				steps,
+				maxDuration,
+				checkbackInterval,
 			});
 		}
 
-		step(type, steps) {
-			this.playConfig.delay = 0;
-			this.playConfig.speed = 0;
-			clearTimeout(this.timeout);
-			this.timeout = null;
+		step({type, steps, maxDuration, checkbackInterval}) {
+			this.stop();
 			if(!this.waiting) {
-				this._advance(type, steps);
+				this._advance({type, steps, maxDuration, checkbackInterval});
 			}
 		}
 
-		terminate() {
-			this.playConfig.delay = 0;
-			this.playConfig.speed = 0;
+		skip(skipFrame, checkbackInterval) {
+			this.stop();
+
+			this.waiting = true;
+			this.gameWorker.postMessage({
+				action: 'SKIP',
+				type: '',
+				skipFrame,
+				checkbackInterval,
+			});
+		}
+
+		stop() {
+			this.playing = false;
 			clearTimeout(this.timeout);
 			this.timeout = null;
+		}
+
+		terminate() {
+			this.stop();
 			this.gameWorker.terminate();
 		}
 
 		updatePlayConfig(config) {
-			if(
-				this.playConfig.delay !== config.delay ||
-				this.playConfig.speed !== config.speed ||
-				this.playConfig.maxTime !== config.maxTime
-			) {
-				this.playConfig = config;
-				if(!this.waiting) {
-					this._advanceDelayed(false);
-				}
+			this.playConfig = config;
+			this.playing = (this.playConfig.speed !== 0);
+			if(!this.waiting) {
+				this._advanceDelayed(false);
 			}
 		}
 
@@ -157,7 +179,11 @@ define([
 			break;
 
 		case 'STEP':
-			game.step(data.type, data.steps);
+			game.step(data);
+			break;
+
+		case 'SKIP':
+			game.skip(data.steps, data.checkbackInterval);
 			break;
 
 		case 'STOP':
