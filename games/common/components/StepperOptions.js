@@ -79,7 +79,7 @@ define([
 				label: '\u25B6!',
 				title: 'Fastest Possible',
 				event: 'changeplay',
-				params: [{delay: 0, speed: -1}],
+				params: [{delay: 0, speed: -1, checkbackInterval: 1000, maxDuration: 2000}],
 			});
 		}
 		return buttons;
@@ -159,6 +159,7 @@ define([
 				const maxFrame = Math.max(Math.round(this.maxFrame.value), 1);
 				this.trigger('changegame', [{maxFrame}]);
 			});
+
 			this.seedGo.addEventListener('click', () => {
 				this.trigger('begin', [{seed: this.seedEntry.value}]);
 			});

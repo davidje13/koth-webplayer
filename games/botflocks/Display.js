@@ -87,8 +87,8 @@ define([
 				'-1': {delay: 250, speed: 1},
 				'0': {delay: 10, speed: 1},
 				'1': {delay: 0, speed: 1},
-				'2': {delay: 0, speed: 25},
-				'3': {delay: 0, speed: 50},
+				'2': {delay: 0, speed: 25, checkbackInterval: 250, maxDuration: 500},
+				'3': {delay: 0, speed: 50, checkbackInterval: 500, maxDuration: 1000},
 			}, {stepSingle: false}));
 			const visualOptions = new OptionsBar('changedisplay', [
 				{attribute: 'colourscheme', values: COLOUR_OPTIONS_SELECT},

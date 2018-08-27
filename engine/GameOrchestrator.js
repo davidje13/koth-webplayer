@@ -11,6 +11,11 @@ define([
 ) => {
 	'use strict';
 
+	const STOP = {
+		delay: 0,
+		speed: 0,
+	};
+
 	class Game extends EventObject {
 		constructor(parent, token, display, config, swapTokenFn) {
 			super();
@@ -89,14 +94,11 @@ define([
 			return this.config.game.teams;
 		}
 
-		_step(action, type, steps) {
+		_step({action, checkbackInterval = null, steps, maxDuration = null, type = null}) {
 			if(this.dead) {
 				throw new Error('Attempt to use terminated game');
 			}
-			Object.assign(this.config.play, {
-				delay: 0,
-				speed: 0,
-			});
+			Object.assign(this.config.play, STOP);
 			if(this.display) {
 				this.display.updatePlayConfig(this.config.play);
 			}
@@ -112,21 +114,32 @@ define([
 						token: this.token,
 						type,
 						steps,
-						checkbackTime: this.config.play.checkbackTime,
+						maxDuration,
+						checkbackInterval,
 					});
 				}, this.gameActive);
 			}
 		}
 
-		step(type = null, steps = null) {
-			this._step('STEP', type, steps);
+		step(type = null, steps = null, maxDuration = null) {
+			this._step({
+				action: 'STEP',
+				checkbackInterval: 250,
+				maxDuration,
+				steps,
+				type,
+			});
 		}
 
 		skip(frame) {
 			if(frame <= this.latestState.frame) {
 				this.replay();
 			}
-			this._step('SKIP', null, frame);
+			this._step({
+				action: 'SKIP',
+				checkbackInterval: 500,
+				steps: frame,
+			});
 		}
 
 		updateGameConfig(delta) {
@@ -300,7 +313,7 @@ define([
 					if(game) {
 						game.updateState(data.state);
 						if(data.pauseTriggered) {
-							game.updatePlayConfig({delay: 0, speed: 0});
+							game.updatePlayConfig(STOP);
 						}
 					}
 					break;
@@ -362,11 +375,7 @@ define([
 					seed: null,
 					teams,
 				}, baseGameConfig),
-				play: Object.assign({
-					delay: 0,
-					speed: 0,
-					checkbackTime: 1000,
-				}, basePlayConfig),
+				play: Object.assign({}, STOP, basePlayConfig),
 				display: Object.assign({
 					focussed: [],
 				}, baseDisplayConfig),
