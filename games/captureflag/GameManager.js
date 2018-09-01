@@ -61,7 +61,7 @@ define([
 		if(typeof action.x !== 'number' || typeof action.y !== 'number') {
 			return 'Invalid action delta: ' + action;
 		}
-		if(elapsed > 50) {
+		if(elapsed > 250) {
 			return 'Too long to respond: ' + elapsed + 'ms';
 		}
 		return '';
