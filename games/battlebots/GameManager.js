@@ -142,6 +142,8 @@ define([
 							let getMsg = (id) => {
 								return messages[id];
 							};
+							let setMessage = setMsg;
+							let getMessage = getMsg;
 						`,
 						code: `
 							let action = (()=>{${code}})();
