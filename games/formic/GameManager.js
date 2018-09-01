@@ -83,7 +83,7 @@ define([
 			api[i] = {
 				color: ((v >>> SV_COLOUR_SHIFT) & COLOUR_BITS) + 1,
 				// Original challenge implementation uses ints, not bools, for food
-				food: Boolean(v & SV_FOOD) ? 1 : 0,
+				food: (v & SV_FOOD) ? 1 : 0,
 				ant: type ? {
 					type,
 					food: v >>> SV_ANT_FOOD_SHIFT,
