@@ -268,7 +268,7 @@ define([
 		pickNewGoal() {
 			let x = 0;
 			let y = 0;
-			while(true) {
+			for (;;) {
 				const p = this.random.next(this.width * this.height);
 				x = p % this.width;
 				y = Math.floor(p / this.width);

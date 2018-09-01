@@ -7,6 +7,7 @@ define([
 	workerUtils,
 	pathLoaderWorker
 ) => {
+	/* eslint-env worker */
 	'use strict';
 
 	/* jshint worker: true */
