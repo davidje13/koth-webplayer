@@ -81,10 +81,7 @@ define([
 
 	function buildFunctionFinder(code, returning) {
 		let parts = '';
-		for(let k in returning) {
-			if(!returning.hasOwnProperty(k)) {
-				continue;
-			}
+		for(let k of Object.keys(returning)) {
 			parts += JSON.stringify(k) + ':';
 			const vars = findCandidates(code, returning[k]);
 			if(vars.size === 1) {
