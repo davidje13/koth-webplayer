@@ -57,22 +57,24 @@ define([
 		));
 	}
 
-	function lineIntersection(l1, l2) {
-		const result = new LineSegment(
-			new vector.V2(l1[0].x, l1[0].y),
-			new vector.V2(l1[1].x, l1[1].y)
-		).findLineIntersection(new LineSegment(
-			new vector.V2(l2[0].x, l2[0].y),
-			new vector.V2(l2[1].x, l2[1].y)
-		));
-		if(!result.intersection) {
+	// This function is sent to the worker stringified later, so cannot
+	// use any external functions, such as vectors.
+	const lineIntersection = ([a1, a2], [b1, b2]) => {
+		const s1 = [a2[0]-a1[0], a2[1]-a1[1]];
+		const s2 = [b2[0]-b1[0], b2[1]-b1[1]];
+		const d = [b1[0]-a1[0], b1[1]-a1[1]];
+		const norm = 1/(s1[0]*s2[1] - s1[1]*s2[0]);
+		const f1 = (d[0]*s2[1] - d[1]*s2[0])*norm;
+		const f2 = (d[0]*s1[1] - d[1]*s1[0])*norm;
+		const intersection = (f1 >= 0 && f1 <= 1 && f2 >= 0 && f2 <= 1);
+		if(!intersection) {
 			return [];
 		}
 		return [
-			[result.intersection.x, result.intersection.y],
-			[result.fraction1, result.fraction2],
+			[a1[0]+b1[0]*f1, a1[1]+b1[1]*f1],
+			[f1, f2],
 		];
-	}
+	};
 
 	function shipHealth(entry) {
 		return (entry.leftWing ?
