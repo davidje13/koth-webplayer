@@ -79,17 +79,18 @@ define([
 		return found;
 	}
 
-	function buildFunctionFinder(code, returning) {
+	function buildFunctionFinder(code, returning, putPrefix='', searchPrefix='') {
 		let parts = '';
 		for(let k of Object.keys(returning)) {
 			parts += JSON.stringify(k) + ':';
-			const vars = findCandidates(code, returning[k]);
+			const vars = findCandidates(code, searchPrefix+returning[k]);
 			if(vars.size === 1) {
-				parts += vars.values().next().value;
+				parts += putPrefix+vars.values().next().value.slice(searchPrefix.length);
 			} else if(vars.size > 1) {
 				parts += (
 					'((() => {' +
-					vars.map((v) => 'try {return ' + v + ';} catch(e) {}').join('') +
+						vars.map((v) => 'try {return ' +
+						putPrefix+v.slice(searchPrefix.length) + ';} catch(e) {}').join('') +
 					'})())'
 				);
 			} else {
