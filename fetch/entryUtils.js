@@ -1,7 +1,9 @@
 define([
+	'core/evalUtils',
 	'core/workerUtils',
 	'path:./loaderWorker',
 ], (
+	evalUtils,
 	workerUtils,
 	pathLoaderWorker
 ) => {
@@ -140,27 +142,11 @@ define([
 
 		const begin = performance.now();
 		try {
-			importScripts(URL.createObjectURL(new Blob(
-				[src],
-				{type: 'text/javascript'}
-			)));
+			evalUtils.invoke(src);
 			fn = self.tempFn.bind({});
 			self.tempFn = null;
 		} catch(e) {
-			// WORKAROUND (Safari): blobs inaccessible when run
-			// from the filesystem, so fall-back to a nasty eval
-			if(e.toString().includes('DOM Exception 19')) {
-				try {
-					/* jshint evil: true */
-					eval(src);
-					fn = self.tempFn.bind({});
-					self.tempFn = null;
-				} catch(e2) {
-					compileError = stringifyCompileError(e2);
-				}
-			} else {
-				compileError = stringifyCompileError(e);
-			}
+			compileError = stringifyCompileError(e);
 		}
 		const compileTime = performance.now() - begin;
 

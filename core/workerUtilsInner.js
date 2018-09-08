@@ -1,4 +1,12 @@
-define(['requirejs', './EventObject'], (requirejs, EventObject) => {
+define([
+	'requirejs',
+	'./EventObject',
+	'./evalUtils',
+], (
+	requirejs,
+	EventObject,
+	evalUtils
+) => {
 	'use strict';
 
 	/* jshint worker: true */
@@ -14,18 +22,7 @@ define(['requirejs', './EventObject'], (requirejs, EventObject) => {
 		if(!done) {
 			return;
 		}
-		try {
-			importScripts(URL.createObjectURL(new Blob(
-				[event.data.requireScriptCode],
-				{type: 'text/javascript'}
-			)));
-		} catch(e) {
-			// WORKAROUND (Safari local filesystem)
-			if(e.toString().includes('DOM Exception 19')) {
-				/* jshint evil: true */
-				eval(event.data.requireScriptCode);
-			}
-		}
+		evalUtils.invoke(event.data.requireScriptCode);
 		awaiting.delete(path);
 		done();
 	}

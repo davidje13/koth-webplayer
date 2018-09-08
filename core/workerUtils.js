@@ -3,6 +3,7 @@ define([
 	'def:requirejs',
 	'./EventObject',
 	'def:./EventObject',
+	'def:./evalUtils',
 	'def:./workerUtilsInner',
 	'path:./workerUtilsLoader',
 ], (
@@ -10,6 +11,7 @@ define([
 	defRequire,
 	EventObject,
 	defEventObject,
+	defEvalUtils,
 	defInner,
 	pathLoader
 ) => {
@@ -46,6 +48,7 @@ define([
 			'const requireFactory = ' + defRequire.factory() + ';\n' +
 			'requireFactory();\n' +
 			defEventObject.code() + '\n' +
+			defEvalUtils.code() + '\n' +
 			defInner.code() + '\n' +
 			'requirejs([' + escape(defInner.src) + '])' +
 			'.then(' + invocation + ')' +
