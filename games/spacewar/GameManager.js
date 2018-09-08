@@ -1,10 +1,12 @@
 define([
 	'core/objectUtils',
+	'fetch/sourceUtils',
 	'fetch/entryUtils',
 	'math/vector',
 	'math/LineSegment',
 ], (
 	objectUtils,
+	sourceUtils,
 	entryUtils,
 	vector,
 	LineSegment
@@ -182,12 +184,12 @@ define([
 			}
 			if(code !== null) {
 				const compiledCode = entryUtils.compile(
-					code,
-					['shipShapes', 'LineIntersection', 'getShipCoords'],
-					{returning: {
-						setup: '*_setup',
-						actions: '*_getActions',
-					}}
+					code + '\n' +
+					'return {' +
+					'setup: ' + sourceUtils.buildFunctionFinder(code, '*_setup') + ',' +
+					'actions: ' + sourceUtils.buildFunctionFinder(code, '*_getActions') +
+					'}',
+					['shipShapes', 'LineIntersection', 'getShipCoords']
 				);
 				if(compiledCode.compileError) {
 					entry.disqualified = true;

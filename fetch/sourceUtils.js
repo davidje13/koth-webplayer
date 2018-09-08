@@ -33,18 +33,7 @@ define(() => {
 		);
 	}
 
-	function buildMultiFunctionFinder(code, returning) {
-		let parts = '';
-		for(let k of Object.keys(returning)) {
-			parts += JSON.stringify(k) + ':';
-			parts += buildFunctionFinder(code, returning[k]);
-			parts += ',';
-		}
-		return 'return {' + parts + '};';
-	}
-
 	return {
 		buildFunctionFinder,
-		buildMultiFunctionFinder,
 	};
 });

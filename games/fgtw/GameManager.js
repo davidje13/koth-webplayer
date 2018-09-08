@@ -179,9 +179,9 @@ define([
 			}
 			if(code !== null) {
 				const compiledCode = entryUtils.compile(
-					code,
-					[],
-					{returning: {attributes: 'attributes', main: 'main'}}
+					code + '\n' +
+					'return {attributes, main}',
+					[]
 				);
 				if(compiledCode.compileError) {
 					entry.disqualified = true;

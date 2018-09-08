@@ -1,9 +1,7 @@
 define([
-	'./sourceUtils',
 	'core/workerUtils',
 	'path:./loaderWorker',
 ], (
-	sourceUtils,
 	workerUtils,
 	pathLoaderWorker
 ) => {
@@ -65,12 +63,7 @@ define([
 		return prefix + e.toString();
 	}
 
-	function compile(code, parameters, {pre = '', returning = null} = {}) {
-		let after = '';
-		if(returning !== null) {
-			after = sourceUtils.buildMultiFunctionFinder(code, returning);
-		}
-
+	function compile(code, parameters, {pre = ''} = {}) {
 		// Wrap code in function which blocks access to obviously dangerous
 		// globals (this wrapping cannot be relied on as there may be other
 		// ways to access global scope, but should prevent accidents - other
@@ -121,7 +114,7 @@ define([
 				pre +
 				'extras = undefined;' +
 				'return (function({' + parameters.join(',') + '}) {\n' +
-					code + '\n' + after +
+					code +
 				'}).call(parameters["this"] || {}, parameters);' +
 			'};\n'
 		);
