@@ -9,10 +9,8 @@ define([
 	'use strict';
 
 	function augment(target, source) {
-		for(let key in source) {
-			if(source.hasOwnProperty(key)) {
-				target[key] = source[key];
-			}
+		for(const key of Object.keys(source)) {
+			target[key] = source[key];
 		}
 	}
 

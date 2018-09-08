@@ -37,11 +37,9 @@ define([
 		}
 
 		checkModeMask(modeMask) {
-			for(let k in modeMask) {
-				if(modeMask.hasOwnProperty(k)) {
-					if(Boolean(this.mode[k]) !== Boolean(modeMask[k])) {
-						return false;
-					}
+			for(const k of Object.keys(modeMask)) {
+				if(Boolean(this.mode[k]) !== Boolean(modeMask[k])) {
+					return false;
 				}
 			}
 			return true;

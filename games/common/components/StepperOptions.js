@@ -105,11 +105,9 @@ define([
 	}
 
 	function configMatches(config, setter) {
-		for(let i in setter) {
-			if(setter.hasOwnProperty(i)) {
-				if(config[i] !== setter[i]) {
-					return false;
-				}
+		for(const i of Object.keys(setter)) {
+			if(config[i] !== setter[i]) {
+				return false;
 			}
 		}
 		return true;

@@ -11,10 +11,8 @@ define(() => {
 			r = {};
 		}
 		mapping.set(o, r);
-		for(let key in o) {
-			if(o.hasOwnProperty(key)) {
-				r[key] = deepCopy(o[key], mapping);
-			}
+		for(const key of Object.keys(o)) {
+			r[key] = deepCopy(o[key], mapping);
 		}
 		return r;
 	}

@@ -16,10 +16,8 @@ define(() => {
 	function makeTexture(gl, type, params) {
 		const tex = gl.createTexture();
 		gl.bindTexture(type, tex);
-		for(let pname in params) {
-			if(params.hasOwnProperty(pname)) {
-				gl.texParameteri(type, pname, params[pname]);
-			}
+		for(const pname of Object.keys(params)) {
+			gl.texParameteri(type, pname, params[pname]);
 		}
 		return tex;
 	}
@@ -157,34 +155,26 @@ define(() => {
 
 		uniform(map) {
 			const state = {texIndex: 0};
-			for(let attr in map) {
-				if(map.hasOwnProperty(attr)) {
-					setUniform(this.gl, this.findUniform(attr), map[attr], state);
-				}
+			for(const attr of Object.keys(map)) {
+				setUniform(this.gl, this.findUniform(attr), map[attr], state);
 			}
 		}
 
 		uniformi(map) {
-			for(let attr in map) {
-				if(map.hasOwnProperty(attr)) {
-					setUniformI(this.gl, this.findUniform(attr), map[attr]);
-				}
+			for(const attr of Object.keys(map)) {
+				setUniformI(this.gl, this.findUniform(attr), map[attr]);
 			}
 		}
 
 		uniformf(map) {
-			for(let attr in map) {
-				if(map.hasOwnProperty(attr)) {
-					setUniformF(this.gl, this.findUniform(attr), map[attr]);
-				}
+			for(const attr of Object.keys(map)) {
+				setUniformF(this.gl, this.findUniform(attr), map[attr]);
 			}
 		}
 
 		uniformMatrix(map) {
-			for(let attr in map) {
-				if(map.hasOwnProperty(attr)) {
-					setUniformM(this.gl, this.findUniform(attr), map[attr]);
-				}
+			for(const attr of Object.keys(map)) {
+				setUniformM(this.gl, this.findUniform(attr), map[attr]);
 			}
 		}
 
@@ -194,20 +184,18 @@ define(() => {
 		}
 
 		vertexAttribPointer(map) {
-			for(let attr in map) {
-				if(map.hasOwnProperty(attr)) {
-					const locn = this.findAttribute(attr);
-					const v = map[attr];
-					this.gl.enableVertexAttribArray(locn);
-					this.gl.vertexAttribPointer(
-						locn,
-						v.size,
-						v.type,
-						v.normalized || false,
-						v.stride || 0,
-						v.offset || 0
-					);
-				}
+			for(const attr of Object.keys(map)) {
+				const locn = this.findAttribute(attr);
+				const v = map[attr];
+				this.gl.enableVertexAttribArray(locn);
+				this.gl.vertexAttribPointer(
+					locn,
+					v.size,
+					v.type,
+					v.normalized || false,
+					v.stride || 0,
+					v.offset || 0
+				);
 			}
 		}
 	}

@@ -42,10 +42,8 @@ define(['document'], (document) => {
 				throw new Error('Children should be a list');
 			}
 			const o = document.createElement(type);
-			for(let k in attrs) {
-				if(attrs.hasOwnProperty(k)) {
-					o.setAttribute(k, attrs[k]);
-				}
+			for(const k of Object.keys(attrs)) {
+				o.setAttribute(k, attrs[k]);
 			}
 			for(let i = 0; i < children.length; ++ i) {
 				const child = children[i];
@@ -65,11 +63,9 @@ define(['document'], (document) => {
 		},
 
 		updateAttrs: (element, attrs) => {
-			for(let k in attrs) {
-				if(attrs.hasOwnProperty(k)) {
-					if(element.getAttribute(k) !== attrs[k]) {
-						element.setAttribute(k, attrs[k]);
-					}
+			for(const k of Object.keys(attrs)) {
+				if(element.getAttribute(k) !== attrs[k]) {
+					element.setAttribute(k, attrs[k]);
 				}
 			}
 		},
@@ -93,11 +89,9 @@ define(['document'], (document) => {
 		},
 
 		updateStyle: (element, style) => {
-			for(let k in style) {
-				if(style.hasOwnProperty(k)) {
-					if(element.style[k] !== style[k]) {
-						element.style[k] = style[k];
-					}
+			for(const k of Object.keys(style)) {
+				if(element.style[k] !== style[k]) {
+					element.style[k] = style[k];
 				}
 			}
 		},

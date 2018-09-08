@@ -64,10 +64,8 @@ const requireFactory = () => {
 	}
 
 	function augment(target, source) {
-		for(let key in source) {
-			if(source.hasOwnProperty(key)) {
-				target[key] = source[key];
-			}
+		for(const key of Object.keys(source)) {
+			target[key] = source[key];
 		}
 	}
 
@@ -88,10 +86,8 @@ const requireFactory = () => {
 	}
 
 	function getExports() {
-		for(let key in self.exports) {
-			if(self.exports.hasOwnProperty(key)) {
-				return self.exports;
-			}
+		if(Object.keys(self.exports).length > 0) {
+			return self.exports;
 		}
 		return null;
 	}

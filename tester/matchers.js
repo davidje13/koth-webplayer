@@ -16,13 +16,13 @@ define(() => {
 	let checkEqualsDeep = null;
 
 	function checkEqualsKeys(value, actual, seen) {
-		for(let k in actual) {
-			if(actual.hasOwnProperty(k) && !checkEqualsDeep(value[k], actual[k], seen)) {
+		for(const k of Object.keys(actual)) {
+			if(!checkEqualsDeep(value[k], actual[k], seen)) {
 				return false;
 			}
 		}
-		for(let k in value) {
-			if(value.hasOwnProperty(k) && !actual.hasOwnProperty(k)) {
+		for(const k of Object.keys(value)) {
+			if(!actual.hasOwnProperty(k)) {
 				return false;
 			}
 		}

@@ -97,10 +97,8 @@ define([
 	};
 
 	const COLOUR_OPTIONS_SELECT = [];
-	for(let i in COLOUR_OPTIONS) {
-		if(COLOUR_OPTIONS.hasOwnProperty(i)) {
-			COLOUR_OPTIONS_SELECT.push({value: i, label: COLOUR_OPTIONS[i].name});
-		}
+	for(const i of Object.keys(COLOUR_OPTIONS)) {
+		COLOUR_OPTIONS_SELECT.push({value: i, label: COLOUR_OPTIONS[i].name});
 	}
 
 	return class Display extends BaseDisplay {
