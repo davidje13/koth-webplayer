@@ -63,60 +63,76 @@ define([
 		return prefix + e.toString();
 	}
 
+	const boilerplateBlock = `
+		const self = undefined;
+		const window = undefined;
+		const require = undefined;
+		const requireFactory = undefined;
+		const define = undefined;
+		const addEventListener = undefined;
+		const removeEventListener = undefined;
+		const postMessage = undefined;
+		const Date = undefined;
+		const performance = undefined;
+	`;
+
+	const consoleBuilderFn = ({consoleTarget, consoleLimit = 100, consoleItemLimit = 1024}) => {
+		if(!consoleTarget) {
+			return undefined;
+		}
+
+		const dolog = (type, values) => {
+			consoleTarget.push({
+				type,
+				value: Array.prototype.map.call(values, (v) => {
+					if(v && v.message) {
+						return String(v.message);
+					}
+					try {
+						return JSON.stringify(v);
+					} catch(e) {
+						return String(v);
+					}
+				}).join(' ').substr(0, consoleItemLimit),
+			});
+			if(consoleTarget.length > consoleLimit) {
+				consoleTarget.shift();
+			}
+		};
+
+		return {
+			clear: () => {consoleTarget.length = 0;},
+			info: function() {dolog('info', arguments);},
+			log: function() {dolog('log', arguments);},
+			warn: function() {dolog('warn', arguments);},
+			error: function() {dolog('error', arguments);},
+		};
+	};
+
+	function stripNewlines(code) {
+		// All prelude is rendered on 1 line so that line numbers in
+		// reported errors are easy to rectify
+		return code.replace(/[\r\n]+\t*/gm, '');
+	}
+
 	function compile(code, parameters, {pre = ''} = {}) {
 		// Wrap code in function which blocks access to obviously dangerous
 		// globals (this wrapping cannot be relied on as there may be other
 		// ways to access global scope, but should prevent accidents - other
 		// measures must be used to prevent malice)
 		const src = (
-			// All prelude is rendered on 1 line so that line numbers in
-			// reported errors are easy to rectify
-			'"use strict";' +
-			'self.tempFn = function(parameters, extras) {' +
-				'const self = undefined;' +
-				'const window = undefined;' +
-				'const require = undefined;' +
-				'const requireFactory = undefined;' +
-				'const define = undefined;' +
-				'const addEventListener = undefined;' +
-				'const removeEventListener = undefined;' +
-				'const postMessage = undefined;' +
-				'const Date = undefined;' +
-				'const performance = undefined;' +
-				'const console = (extras.consoleTarget ?' +
-				'((({consoleTarget, consoleLimit = 100, consoleItemLimit = 1024}) => {' +
-					'const dolog = (type, values) => {' +
-						'consoleTarget.push({' +
-							'type,' +
-							'value: Array.prototype.map.call(values, (v) => {' +
-								'if(v && v.message) {' +
-									'return String(v.message);' +
-								'}' +
-								'try {' +
-									'return JSON.stringify(v);' +
-								'} catch(e) {' +
-									'return String(v);' +
-								'}' +
-							'}).join(" ").substr(0, consoleItemLimit),' +
-						'});' +
-						'if(consoleTarget.length > consoleLimit) {' +
-							'consoleTarget.shift();' +
-						'}' +
-					'};' +
-					'return {' +
-						'clear: () => {consoleTarget.length = 0;},' +
-						'info: function() {dolog("info", arguments);},' +
-						'log: function() {dolog("log", arguments);},' +
-						'warn: function() {dolog("warn", arguments);},' +
-						'error: function() {dolog("error", arguments);},' +
-					'};' +
-				'})(extras)) : undefined);' +
-				pre +
-				'extras = undefined;' +
-				'return (function({' + parameters.join(',') + '}) {\n' +
-					code +
-				'}).call(parameters["this"] || {}, parameters);' +
-			'};\n'
+			stripNewlines(`
+				"use strict";
+				self.tempFn = function(parameters, extras) {
+					${boilerplateBlock}
+					const console = (${consoleBuilderFn})(extras);
+					${pre}
+					extras = undefined;
+					return (function({${parameters.join(',')}}) {
+			`) + `\n${code}
+					}).call(parameters['this'] || {}, parameters);
+				};
+			`
 		);
 
 		let fn = null;
