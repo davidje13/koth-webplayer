@@ -79,22 +79,27 @@ define([
 		return found;
 	}
 
-	function buildFunctionFinder(code, returning) {
+	function buildFunctionFinder(code, pattern) {
+		const vars = findCandidates(code, pattern);
+		if(vars.size === 0) {
+			return 'null';
+		}
+		if(vars.size === 1) {
+			return vars.values().next().value;
+		}
+		return (
+			'((() => {' +
+			vars.map((v) => 'try {return ' + v + ';} catch(e) {}').join('') +
+			'return null;' +
+			'})())'
+		);
+	}
+
+	function buildMultiFunctionFinder(code, returning) {
 		let parts = '';
 		for(let k of Object.keys(returning)) {
 			parts += JSON.stringify(k) + ':';
-			const vars = findCandidates(code, returning[k]);
-			if(vars.size === 1) {
-				parts += vars.values().next().value;
-			} else if(vars.size > 1) {
-				parts += (
-					'((() => {' +
-					vars.map((v) => 'try {return ' + v + ';} catch(e) {}').join('') +
-					'})())'
-				);
-			} else {
-				parts += 'null';
-			}
+			parts += buildFunctionFinder(code, returning[k]);
 			parts += ',';
 		}
 		return 'return {' + parts + '};';
@@ -103,7 +108,7 @@ define([
 	function compile(code, parameters, {pre = '', returning = null} = {}) {
 		let after = '';
 		if(returning !== null) {
-			after = buildFunctionFinder(code, returning);
+			after = buildMultiFunctionFinder(code, returning);
 		}
 
 		// Wrap code in function which blocks access to obviously dangerous
