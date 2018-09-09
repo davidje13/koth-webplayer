@@ -264,7 +264,10 @@ define([
 				throw new Error('Attempt to modify an entry which was not registered in the game');
 			}
 			if(code !== null) {
-				const compiledCode = entryUtils.compile(code, ['view']);
+				const compiledCode = entryUtils.compile({
+					code,
+					paramNames: ['view'],
+				});
 				entry.fn = compiledCode.fn;
 				if(compiledCode.compileError) {
 					entry.disqualified = true;

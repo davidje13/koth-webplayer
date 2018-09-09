@@ -143,7 +143,7 @@ define([
 		}
 	}
 
-	function compile(code, paramNames, {pre = ''} = {}) {
+	function compile({code, paramNames, pre}) {
 		let fn = null;
 		let compileError = null;
 

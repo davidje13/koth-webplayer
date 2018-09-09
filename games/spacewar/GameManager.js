@@ -183,14 +183,14 @@ define([
 				throw new Error('Attempt to modify an entry which was not registered in the game');
 			}
 			if(code !== null) {
-				const compiledCode = entryUtils.compile(
-					code + '\n' +
-					'return {' +
-					'setup: ' + sourceUtils.buildFunctionFinder(code, '*_setup') + ',' +
-					'actions: ' + sourceUtils.buildFunctionFinder(code, '*_getActions') +
-					'}',
-					['shipShapes', 'LineIntersection', 'getShipCoords']
-				);
+				const compiledCode = entryUtils.compile({
+					code: `${code}
+						return {
+							setup: ${sourceUtils.buildFunctionFinder(code, '*_setup')},
+							actions: ${sourceUtils.buildFunctionFinder(code, '*_getActions')}
+						};`,
+					paramNames: ['shipShapes', 'LineIntersection', 'getShipCoords'],
+				});
 				if(compiledCode.compileError) {
 					entry.disqualified = true;
 					entry.error = compiledCode.compileError;

@@ -97,15 +97,14 @@ define([
 				throw new Error('Attempt to modify an entry which was not registered in the game');
 			}
 			if(code !== null) {
-				const compiledCode = entryUtils.compile(
-					'return new (' +
-					(code
-						.replace(/^[^\/]*?((?=function)|\()/, '')
-						.replace(/;[ \t\r\n]*$/, '')
-					) +
-					')(first);',
-					['first']
-				);
+				const anonymousCode = code
+					.replace(/^[^\/]*?((?=function)|\()/, '')
+					.replace(/;[ \t\r\n]*$/, '');
+
+				const compiledCode = entryUtils.compile({
+					code: `return new (${anonymousCode})(first);`,
+					paramNames: ['first'],
+				});
 				if(compiledCode.compileError) {
 					entry.disqualified = true;
 					entry.error = compiledCode.compileError;

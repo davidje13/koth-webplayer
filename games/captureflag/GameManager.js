@@ -192,20 +192,24 @@ define([
 				throw new Error('Attempt to modify an entry which was not registered in the game');
 			}
 			if(code !== null) {
-				const compiledCode = entryUtils.compile(code, [
-					'move',
-					'tJailed',
-					'eJailed',
-					'team',
-					'enemies',
-					'tFlag',
-					'eFlag',
-					'messages',
-					'WIDTH',
-					'HEIGHT',
-					'FIELD_PADDING',
-					'DEFENSE_RADIUS',
-				], {pre: 'Math.random = extras.MathRandom;'});
+				const compiledCode = entryUtils.compile({
+					code,
+					paramNames: [
+						'move',
+						'tJailed',
+						'eJailed',
+						'team',
+						'enemies',
+						'tFlag',
+						'eFlag',
+						'messages',
+						'WIDTH',
+						'HEIGHT',
+						'FIELD_PADDING',
+						'DEFENSE_RADIUS',
+					],
+					pre: 'Math.random = extras.MathRandom;',
+				});
 				entry.fn = compiledCode.fn;
 				if(compiledCode.compileError) {
 					entry.disqualified = true;

@@ -63,11 +63,14 @@ define([
 			if(code !== null) {
 				// These parameter names match the key values given to fn() in
 				// step(type) below
-				const compiledCode = entryUtils.compile(code, [
-					'my',
-					'parameters',
-					'here',
-				]);
+				const compiledCode = entryUtils.compile({
+					code,
+					paramNames: [
+						'my',
+						'parameters',
+						'here',
+					],
+				});
 				entry.fn = compiledCode.fn;
 				if(compiledCode.compileError) {
 					entry.disqualified = true;

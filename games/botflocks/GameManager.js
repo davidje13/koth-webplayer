@@ -174,18 +174,22 @@ define([
 				throw new Error('Attempt to modify an entry which was not registered in the game');
 			}
 			if(code !== null) {
-				const compiledCode = entryUtils.compile(code, [
-					'p1',
-					'id',
-					'eid',
-					'move',
-					'goal',
-					'grid',
-					'bots',
-					'ebots',
-					'getMem',
-					'setMem',
-				], {pre: 'Math.random = extras.MathRandom;'});
+				const compiledCode = entryUtils.compile({
+					code,
+					paramNames: [
+						'p1',
+						'id',
+						'eid',
+						'move',
+						'goal',
+						'grid',
+						'bots',
+						'ebots',
+						'getMem',
+						'setMem',
+					],
+					pre: 'Math.random = extras.MathRandom;',
+				});
 				entry.fn = compiledCode.fn;
 				if(compiledCode.compileError) {
 					entry.disqualified = true;
