@@ -126,14 +126,14 @@ define([
 			evalUtils.invoke(
 				stripNewlines(`
 					"use strict";
-					self.tempFn = function(parameters, extras) {
+					self.tempFn = function(params, extras) {
 						${boilerplateBlock}
 						const console = (${consoleBuilderFn})(extras);
 						${pre};
 						extras = undefined;
 						return (function ({${paramNames.join(',')}}) {
 				`) + `\n${code}
-						}).call(parameters['this'] || {}, parameters);
+						}).call(params['this'] || {}, params);
 					};
 				`
 			);
@@ -143,13 +143,13 @@ define([
 		}
 	}
 
-	function compile(code, parameters, {pre = ''} = {}) {
+	function compile(code, paramNames, {pre = ''} = {}) {
 		let fn = null;
 		let compileError = null;
 
 		const begin = performance.now();
 		try {
-			fn = buildSandboxedFunction({code, paramNames: parameters, pre});
+			fn = buildSandboxedFunction({code, paramNames, pre});
 			fn = fn.bind({});
 		} catch(e) {
 			compileError = stringifyCompileError(e);
