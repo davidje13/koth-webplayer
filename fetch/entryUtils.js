@@ -117,34 +117,40 @@ define([
 		return code.replace(/[\r\n]+\t*/gm, '');
 	}
 
-	function compile(code, parameters, {pre = ''} = {}) {
+	function buildSandboxedFunction({code = '', paramNames = [], pre = ''}) {
 		// Wrap code in function which blocks access to obviously dangerous
 		// globals (this wrapping cannot be relied on as there may be other
 		// ways to access global scope, but should prevent accidents - other
 		// measures must be used to prevent malice)
-		const src = (
-			stripNewlines(`
-				"use strict";
-				self.tempFn = function(parameters, extras) {
-					${boilerplateBlock}
-					const console = (${consoleBuilderFn})(extras);
-					${pre}
-					extras = undefined;
-					return (function({${parameters.join(',')}}) {
-			`) + `\n${code}
-					}).call(parameters['this'] || {}, parameters);
-				};
-			`
-		);
+		try {
+			evalUtils.invoke(
+				stripNewlines(`
+					"use strict";
+					self.tempFn = function(parameters, extras) {
+						${boilerplateBlock}
+						const console = (${consoleBuilderFn})(extras);
+						${pre};
+						extras = undefined;
+						return (function ({${paramNames.join(',')}}) {
+				`) + `\n${code}
+						}).call(parameters['this'] || {}, parameters);
+					};
+				`
+			);
+			return self.tempFn;
+		} finally {
+			self.tempFn = null;
+		}
+	}
 
+	function compile(code, parameters, {pre = ''} = {}) {
 		let fn = null;
 		let compileError = null;
 
 		const begin = performance.now();
 		try {
-			evalUtils.invoke(src);
-			fn = self.tempFn.bind({});
-			self.tempFn = null;
+			fn = buildSandboxedFunction({code, paramNames: parameters, pre});
+			fn = fn.bind({});
 		} catch(e) {
 			compileError = stringifyCompileError(e);
 		}
