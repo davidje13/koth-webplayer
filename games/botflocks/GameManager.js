@@ -39,36 +39,34 @@ define([
 		return {type, tx, ty};
 	}
 
-	function makeAPIParams(entry, params, {width, height, board, visibilityDist}) {
-		return Object.assign({
-			grid: (x, y) => { // grid(x, y)
-				if(Math.round(x) !== x || Math.round(y) !== y) {
-					return -1;
+	function makeAPIExtras(entry, {console}, {width, height, board, visibilityDist}) {
+		let sendSet = new Set();
+		let sendGrid = [];
+		entry.bots.forEach((bot) => {
+			//For whatever reason, the board is stored in column-major order
+			//Hence the iteration order
+			for (let dy = -Math.floor(visibilityDist); dy <= visibilityDist; dy++) {
+				if (dy+bot.y < 0) {
+					continue;
+				} else if (dy+bot.y >= height) {
+					break;
 				}
-				if(x < 0 || y < 0 || x >= width || y >= height) {
-					return -1;
+				for (let dx = -Math.floor(visibilityDist); dx <= visibilityDist; dx++) {
+					if (dx+bot.x < 0) {
+						continue;
+					} else if (dx+bot.x >= width) {
+						break;
+					}
+					if (!sendSet.has(`${bot.x+dx}/${bot.y+dy}`)) {
+						sendGrid.push([bot.x+dx, bot.y+dy, board[(bot.y+dy)*width+bot.x+dx]]);
+						sendSet.add(`${bot.x+dx}/${bot.y+dy}`);
+					}
 				}
-				if(entry.bots.some(botNear(x, y, visibilityDist))) {
-					return board[y * width + x];
-				} else {
-					return -1;
-				}
-			},
-			getMem: () => {
-				return entry.memory;
-			},
-			setMem: (msg) => {
-				if(typeof msg === 'string' && msg.length <= 256) {
-					entry.memory = msg;
-				}
-			},
-		}, params);
-	}
-
-	function makeAPIExtras({console, random}) {
+			}
+		});
 		return {
+			gridView: sendGrid,
 			consoleTarget: console,
-			MathRandom: random.floatGenerator(),
 		};
 	}
 
@@ -153,7 +151,6 @@ define([
 							p1: sideInfos.p1,
 							answerID: null,
 							bots,
-							memory: '',
 							moves: 0,
 							points: 0,
 							codeSteps: 0,
@@ -174,23 +171,62 @@ define([
 				throw new Error('Attempt to modify an entry which was not registered in the game');
 			}
 			if(code !== null) {
+				let prevMem = (entry.getMem)?entry.getMem():'';
 				const compiledCode = entryUtils.compile({
-					code,
-					paramNames: [
-						'p1',
-						'id',
-						'eid',
-						'move',
-						'goal',
-						'grid',
-						'bots',
-						'ebots',
-						'getMem',
-						'setMem',
-					],
-					pre: 'Math.random = extras.MathRandom;',
+					initCode: `
+						Math.random = MathRandom;
+						let mem = prevMem;
+						this.getMem = ()=>{return mem};
+						this.setMem = (newMem) => {
+							if (typeof newMem === 'string') {
+								mem = newMem.slice(0, 256);
+							}
+						};
+					`,
+					initParams: {
+						MathRandom: this.random.floatGenerator(),
+						prevMem,
+					},
+				}, {
+					run: {
+						code: code,
+						paramNames: [
+							'p1',
+							'id',
+							'eid',
+							'move',
+							'goal',
+							'bots',
+							'ebots',
+							'getMem',
+							'setMem',
+						],
+						pre: `
+							let gridArray = [];
+							extras.gridView.forEach((ent) => {
+								if (!gridArray.hasOwnProperty(ent[0])) {
+									gridArray[ent[0]] = [];
+								}
+								gridArray[ent[0]][ent[1]] = ent[2];
+							});
+							let grid = (x, y) => {
+								let testValEnt = gridArray[x];
+								let testVal = testValEnt?testValEnt[y]:undefined;
+								return (testVal === undefined)?-1:testVal;
+							};
+						`,
+					},
+					getMem: {
+						code: `
+							return getMem();
+						`,
+						paramNames: [
+							'getMem',
+						],
+					},
 				});
-				entry.fn = compiledCode.fn;
+				entry.fn = compiledCode.fns.run;
+				entry.getMem = compiledCode.fns.getMem;
 				if(compiledCode.compileError) {
 					entry.disqualified = true;
 					entry.error = compiledCode.compileError;
@@ -287,7 +323,7 @@ define([
 					hasWall: bot.hasWall,
 				})),
 				ebots: enemyBots,
-				memory: entry.memory,
+				memory: entry.getMem(),
 			};
 		}
 
@@ -359,15 +395,14 @@ define([
 			try {
 				const begin = performance.now();
 				action = entry.fn(
-					makeAPIParams(entry, params, {
+					params,
+					makeAPIExtras(entry, {
+						console: entry.console,
+					}, {
 						width: this.width,
 						height: this.height,
 						board: this.board,
 						visibilityDist: this.visibilityDist,
-					}),
-					makeAPIExtras({
-						console: entry.console,
-						random: this.random,
 					})
 				);
 				elapsed = performance.now() - begin;

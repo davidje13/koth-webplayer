@@ -183,13 +183,51 @@ define([
 				throw new Error('Attempt to modify an entry which was not registered in the game');
 			}
 			if(code !== null) {
-				const compiledCode = entryUtils.compile({
-					code: `${code}
-						return {
-							setup: ${sourceUtils.buildFunctionFinder(code, '*_setup')},
-							actions: ${sourceUtils.buildFunctionFinder(code, '*_getActions')}
-						};`,
-					paramNames: ['shipShapes', 'LineIntersection', 'getShipCoords'],
+				let compiledCode = entryUtils.compile({
+					initPre: `
+						let LineIntersection = ${lineIntersection};
+						let shipShapes = params.shipShapes;
+					`,
+					initCode: `
+						${code}
+						this._setup = ${sourceUtils.buildFunctionFinder(code, '*_setup')};
+						this._getActions = ${sourceUtils.buildFunctionFinder(code, '*_getActions')};
+					`,
+					initParams: {
+						shipShapes: {
+							'full ship': this.config.shapes.all,
+							'left wing': this.config.shapes.noseLeftWing,
+							'right wing': this.config.shapes.noseRightWing,
+							'nose only': this.config.shapes.nose,
+						},
+					},
+					initSloppy: true,
+				}, {
+					setup: {
+						code: 'return _setup(team)',
+						paramNames: [
+							'_setup',
+							'team',
+						],
+					},
+					getActions: {
+						pre: `
+							let _shipCoords = extras.shipCoords;
+							let getShipCoords = function(color) {
+								if (color === 'red') {
+									return _shipCoords.red;
+								} else if (color === 'blue') {
+									return _shipCoords.blue;
+								}
+							};
+						`,
+						code: 'return _getActions(gameInfo, botVars)',
+						paramNames: [
+							'_getActions',
+							'gameInfo',
+							'botVars',
+						],
+					},
 				});
 				if(compiledCode.compileError) {
 					entry.disqualified = true;
@@ -198,19 +236,10 @@ define([
 					const oldRandom = Math.random;
 					Math.random = this.random.floatGenerator();
 					try {
-						const functions = compiledCode.fn({
-							shipShapes: {
-								'full ship': this.config.shapes.all,
-								'left wing': this.config.shapes.noseLeftWing,
-								'right wing': this.config.shapes.noseRightWing,
-								'nose only': this.config.shapes.nose,
-							},
-							LineIntersection: lineIntersection,
-							getShipCoords: this.entryGetShipCoords.bind(this, id),
-						}, {consoleTarget: entry.console});
+						const functions = compiledCode.fns;
 						const team = teamForSide(entry.side);
 						entry.vars = functions.setup.call({}, team);
-						entry.fn = functions.actions;
+						entry.fn = functions.getActions;
 						// Automatically un-disqualify entries when code is updated
 						entry.error = null;
 						entry.disqualified = false;
@@ -377,7 +406,16 @@ define([
 			Math.degrees = (rad) => (rad * 180 / Math.PI);
 			try {
 				const begin = performance.now();
-				action = entry.fn.call({}, gameInfo, entry.newVars);
+				action = entry.fn.call({}, {
+					gameInfo,
+					botVars: entry.newVars,
+				}, {
+					consoleTarget: this.console,
+					shipCoords: {
+						red: this.entryGetShipCoords(entry.id, 'red'),
+						blue: this.entryGetShipCoords(entry.id, 'blue'),
+					},
+				});
 				elapsed = performance.now() - begin;
 
 				error = checkError(action);

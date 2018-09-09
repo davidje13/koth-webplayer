@@ -76,6 +76,8 @@ define([
 		const postMessage = undefined;
 		const Date = undefined;
 		const performance = undefined;
+		const params = undefined;
+		const extras = undefined;
 	`;
 
 	const consoleBuilderFn = ({consoleTarget, consoleLimit = 100, consoleItemLimit = 1024}) => {
@@ -117,7 +119,7 @@ define([
 		return code.replace(/[\r\n]+\t*/gm, '');
 	}
 
-	function buildSandboxedFunction({code = '', paramNames = [], pre = ''}) {
+	function buildSandboxedFunction({code = '', paramNames = [], pre = '', sloppy = false}) {
 		// Wrap code in function which blocks access to obviously dangerous
 		// globals (this wrapping cannot be relied on as there may be other
 		// ways to access global scope, but should prevent accidents - other
@@ -125,13 +127,12 @@ define([
 		try {
 			evalUtils.invoke(
 				stripNewlines(`
-					"use strict";
 					self.tempFn = function(params, extras) {
-						${boilerplateBlock}
+						${sloppy ? '' : '"use strict";'}
 						const console = (${consoleBuilderFn})(extras);
 						${pre};
-						extras = undefined;
-						return (function ({${paramNames.join(',')}}) {
+						return (({${paramNames.join(',')}}) => {
+							${boilerplateBlock}
 				`) + `\n${code}
 						}).call(params['this'] || {}, params);
 					};
@@ -143,20 +144,48 @@ define([
 		}
 	}
 
-	function compile({code, paramNames, pre}) {
-		let fn = null;
+	function compile({
+		initCode = '',
+		initParams = {},
+		initPre = '',
+		initSloppy = false,
+	} = {}, otherMethods = {}) {
 		let compileError = null;
+		const fns = {};
+		let initObj;
 
 		const begin = performance.now();
 		try {
-			fn = buildSandboxedFunction({code, paramNames, pre});
-			fn = fn.bind({});
+			const initFn = buildSandboxedFunction({
+				code: `return new (function() {${initCode}});`,
+				paramNames: Object.keys(initParams),
+				pre: initPre,
+				sloppy: initSloppy,
+			});
+			initObj = initFn(initParams, {});
 		} catch(e) {
-			compileError = stringifyCompileError(e);
+			compileError = stringifyCompileError(e, 'initialization: ');
+		}
+
+		for (const fnKey of Object.keys(otherMethods)) {
+			if (compileError) {
+				break;
+			}
+			try {
+				const runFn = buildSandboxedFunction(otherMethods[fnKey]).bind({});
+				fns[fnKey] = (params = {}, extras = {}) => {
+					return runFn(
+						Object.assign({}, initObj, params),
+						extras
+					);
+				};
+			} catch(e) {
+				compileError = stringifyCompileError(e, fnKey + ': ');
+			}
 		}
 		const compileTime = performance.now() - begin;
 
-		return {fn, compileError, compileTime};
+		return {fns, compileError, compileTime};
 	}
 
 	function load(site, qid, progressCallback) {

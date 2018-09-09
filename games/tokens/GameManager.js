@@ -93,17 +93,50 @@ define([
 
 		updateEntry({id, code = null, pauseOnError = null, disqualified = null}) {
 			const entry = this.entryLookup.get(id);
+			entry.code = code;
 			if(!entry) {
 				throw new Error('Attempt to modify an entry which was not registered in the game');
 			}
 			if(code !== null) {
-				const anonymousCode = code
-					.replace(/^[^\/]*?((?=function)|\()/, '')
-					.replace(/;[ \t\r\n]*$/, '');
-
 				const compiledCode = entryUtils.compile({
-					code: `return new (${anonymousCode})(first);`,
-					paramNames: ['first'],
+					initCode: `
+						this._f = ${code};
+						this._obj = {};
+						this._expand = (val) => {
+							'use strict';
+							if (val === undefined) {
+								return undefined;
+							} else if (val === -1) {
+								return false;
+							} else {
+								return {
+									color: colours[val%colours.length],
+									points: Math.floor(val/colours.length)
+								};
+							}
+						};
+					`,
+					initParams: {
+						colours: this.colourNames,
+					},
+					initSloppy: true,
+				}, {
+					init: {
+						code: 'Object.assign(_obj, new _f(first));',
+						paramNames: ['_f', '_obj', 'first'],
+					},
+					run: {
+						//Expands a packed representation of the board in place
+						//rather than transferring the whole thing
+						pre: `
+							let board = extras.b.map((column) => (
+								column.map((elm) => (params._expand(elm)))
+							));
+							Object.assign(params.state, {tokens: board});
+						`,
+						code: 'return _obj.yourMove(state);',
+						paramNames: ['_obj', '_expand', 'state'],
+					},
 				});
 				if(compiledCode.compileError) {
 					entry.disqualified = true;
@@ -112,7 +145,8 @@ define([
 					const oldRandom = Math.random;
 					Math.random = this.random.floatGenerator();
 					try {
-						entry.obj = compiledCode.fn({first: entry.first}, {});
+						compiledCode.fns.init(entry.first);
+						entry.fn = compiledCode.fns.run;
 						// Automatically un-disqualify entries when code is updated
 						entry.error = null;
 						entry.disqualified = false;
@@ -177,12 +211,9 @@ define([
 				for(let y = 0; y < this.size; ++ y) {
 					const token = this.board[y * this.size + x];
 					if(token) {
-						column.push({
-							color: this.colourNames[this.colourOf(token)],
-							points: this.valueOf(token),
-						});
+						column.push(token);
 					} else {
-						column.push(false);
+						column.push(-1);
 					}
 				}
 				tokens.push(column);
@@ -251,7 +282,6 @@ define([
 			const params = {
 				player1: this.botToAPI(this.bots[0]),
 				player2: this.botToAPI(entry.first ? this.bots[1] : bot),
-				tokens: this.boardToAPI(),
 			};
 			let action = null;
 			let error = null;
@@ -261,7 +291,10 @@ define([
 			Math.random = this.random.floatGenerator();
 			try {
 				const begin = performance.now();
-				action = entry.obj.yourMove(params);
+				action = entry.fn({state: params}, {
+					b: this.boardToAPI(),
+					consoleTarget: entry.console,
+				});
 				elapsed = performance.now() - begin;
 
 				error = checkError(action);

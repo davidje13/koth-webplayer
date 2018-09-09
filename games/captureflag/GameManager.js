@@ -9,6 +9,11 @@ define([
 ) => {
 	'use strict';
 
+	//To avoid problems with functions getting threaded all the way
+	//between isolates, the messages object instead is a proxy which
+	//intercepts updates and only updates properties which were
+	//changed during the turn.
+
 	function pushAway(obj, from, dist) {
 		const d = (
 			(obj.x - from.x) * (obj.x - from.x) +
@@ -43,10 +48,9 @@ define([
 		);
 	}
 
-	function makeAPIExtras({console, random}) {
+	function makeAPIExtras({console}) {
 		return {
 			consoleTarget: console,
-			MathRandom: random.floatGenerator(),
 		};
 	}
 
@@ -192,25 +196,96 @@ define([
 				throw new Error('Attempt to modify an entry which was not registered in the game');
 			}
 			if(code !== null) {
+				const paramsList = [
+					'move',
+					'tJailed',
+					'eJailed',
+					'team',
+					'enemies',
+					'tFlag',
+					'eFlag',
+				];
 				const compiledCode = entryUtils.compile({
-					code,
-					paramNames: [
-						'move',
-						'tJailed',
-						'eJailed',
-						'team',
-						'enemies',
-						'tFlag',
-						'eFlag',
-						'messages',
-						'WIDTH',
-						'HEIGHT',
-						'FIELD_PADDING',
-						'DEFENSE_RADIUS',
-					],
-					pre: 'Math.random = extras.MathRandom;',
+					initPre: `
+						const WIDTH = ${this.width};
+						const HEIGHT = ${this.height};
+						const FIELD_PADDING = ${this.fieldPadding};
+						const DEFENSE_RADIUS = ${this.defenseRadius};
+						Math.random = params.MathRandom;
+					`,
+					initCode: `
+						let base = {};
+						let changes = {};
+						const messages = new Proxy(base, {
+							defineProperty: (target, prop, desc) => {
+								Object.defineProperty(target, prop, desc);
+								Object.defineProperty(changes, prop, desc);
+								return true;
+							},
+							set: (target, prop, value) => {
+								target[prop] = value;
+								changes[prop] = value;
+								return true;
+							},
+							deleteProperty: (target, prop) => {
+								delete target[prop];
+								changes[prop] = undefined;
+								return true;
+							}
+						});
+						this._setBase = (newChanges) => {
+							Object.assign(base, newChanges);
+						}
+						this._getChanges = () => {
+							let changesCopy = Object.assign({}, changes);
+							for (let key of Object.keys(changes)) {
+								delete changes[key];
+							}
+							return changesCopy;
+						}
+						this._fn = function(${paramsList.join(',')}) {${code}};
+					`,
+					initParams: {
+						MathRandom: this.random.floatGenerator(),
+					},
+					initSloppy: true,
+				}, {
+					run: {
+						code: `
+							let action = (_fn.bind(_thisInfo))(
+								${paramsList.join(',')}
+							);
+							return {
+								action: action,
+								newMessages: _getChanges(),
+							};
+						`,
+						paramNames: [
+							'_fn',
+							'_thisInfo',
+							'_getChanges',
+							'move',
+							'tJailed',
+							'eJailed',
+							'team',
+							'enemies',
+							'tFlag',
+							'eFlag',
+						],
+					},
+					setMessage: {
+						code: `
+							_setBase(_messagesChanges);
+						`,
+						paramNames: [
+							'_setBase',
+							'_messagesChanges',
+						],
+					},
 				});
-				entry.fn = compiledCode.fn;
+				entry.fn = compiledCode.fns.run;
+				entry.setter = compiledCode.fns.setMessage;
+				entry.isNew = true;
 				if(compiledCode.compileError) {
 					entry.disqualified = true;
 					entry.error = compiledCode.compileError;
@@ -282,7 +357,7 @@ define([
 			this.winningTeam = teamIndex;
 		}
 
-		moveBot(bot, entry, action) {
+		moveBot(bot, entry, action, newMessages) {
 			if(bot.captured) {
 				return;
 			}
@@ -356,6 +431,10 @@ define([
 					this.declareWinner(bot.teamIndex);
 				}
 			}
+			Object.assign(this.teamObjects[bot.teamIndex].shared, newMessages);
+			for (let teamMember of this.bots.filter(b => b.teamIndex === bot.teamIndex)) {
+				this.entryLookup.get(teamMember.entry).setter(newMessages);
+			}
 		}
 
 		getBotParams(bot, entry, objs) {
@@ -380,7 +459,7 @@ define([
 			);
 			const otherObjs = this.teamObjects[(bot.teamIndex === 1) ? 0 : 1];
 			return {
-				'this': bots.filter((b) => (b.id === entry.userID))[0],
+				_thisInfo: bots.filter((b) => (b.id === entry.userID))[0],
 				move: bot.moves,
 				tJailed: team.filter((b) => b.isJailed),
 				eJailed: enemies.filter((b) => b.isJailed),
@@ -396,15 +475,10 @@ define([
 					y: otherObjs.flag.y,
 					pickedUpBy: bots.filter((b) => (b.id === otherObjs.flag.holder))[0] || null,
 				},
-				messages: objs.shared, // mutable
-				WIDTH: this.width,
-				HEIGHT: this.height,
-				FIELD_PADDING: this.fieldPadding,
-				DEFENSE_RADIUS: this.defenseRadius,
 			};
 		}
 
-		handleError(bot, params, action, error, sharedRollback) {
+		handleError(bot, params, action, error) {
 			const entry = this.entryLookup.get(bot.entry);
 			entry.errorInput = JSON.stringify(params);
 			entry.errorOutput = JSON.stringify(action);
@@ -414,7 +488,6 @@ define([
 			);
 			if(entry.pauseOnError) {
 				this.random.rollback();
-				this.teamObjects[bot.teamIndex].shared = sharedRollback;
 				throw 'PAUSE';
 			}
 		}
@@ -426,25 +499,31 @@ define([
 			if(entry.disqualified) {
 				return false;
 			}
+			if (entry.isNew) {
+				entry.setter(this.teamObjects[bot.teamIndex].shared);
+				delete entry.isNew;
+			}
 
 			const objs = this.teamObjects[bot.teamIndex];
-			const sharedRollback = objectUtils.deepCopy(objs.shared);
 			const params = this.getBotParams(bot, entry, objs);
 
 			let error = null;
 			let elapsed = 0;
 			let action = null;
+			let newMessages = null;
 
 			const oldRandom = Math.random;
 			try {
 				const begin = performance.now();
-				action = entry.fn(
+				let combination = entry.fn(
 					params,
 					makeAPIExtras({
 						console: entry.console,
-						random: this.random,
 					})
 				);
+				action = combination.action;
+				newMessages = objectUtils.deepCopy(combination.newMessages);
+
 				elapsed = performance.now() - begin;
 
 				error = checkError(action, elapsed);
@@ -457,9 +536,9 @@ define([
 			++ entry.codeSteps;
 
 			if(error) {
-				this.handleError(bot, params, action, error, sharedRollback);
+				this.handleError(bot, params, action, error);
 			} else {
-				this.moveBot(bot, entry, action);
+				this.moveBot(bot, entry, action, newMessages);
 			}
 			++ bot.moves;
 

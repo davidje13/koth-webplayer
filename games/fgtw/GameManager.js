@@ -179,7 +179,36 @@ define([
 			}
 			if(code !== null) {
 				const compiledCode = entryUtils.compile({
-					code: `${code}\nreturn {attributes, main};`,
+					initCode: code,
+				}, {
+					attributes: {
+						code: `
+							return _attributes.call({});
+						`,
+						paramNames: [
+							'_attributes',
+						],
+					},
+					run: {
+						code: `
+							return _main.call(
+								{},
+								bulletsLeft,
+								yourShots,
+								enemyShots,
+								yourMovement,
+								enemyMovement
+							);
+						`,
+						paramNames: [
+							'_main',
+							'bulletsLeft',
+							'yourShots',
+							'enemyShots',
+							'yourMovement',
+							'enemyMovement',
+						],
+					},
 				});
 				if(compiledCode.compileError) {
 					entry.disqualified = true;
@@ -188,10 +217,9 @@ define([
 					const oldRandom = Math.random;
 					Math.random = this.random.floatGenerator();
 					try {
-						const functions = compiledCode.fn({}, {});
-						const attributes = functions.attributes.call({});
+						const attributes = compiledCode.fns.attributes();
 						this.applyAttributes(entry, attributes);
-						entry.mainFn = functions.main;
+						entry.mainFn = compiledCode.fns.run;
 						// Automatically un-disqualify entries when code is updated
 						entry.error = null;
 						entry.disqualified = false;
@@ -260,14 +288,7 @@ define([
 			Math.random = this.random.floatGenerator();
 			try {
 				const begin = performance.now();
-				action = entry.mainFn.call(
-					{},
-					params.bulletsLeft,
-					params.yourShots,
-					params.enemyShots,
-					params.yourMovement,
-					params.enemyMovement
-				);
+				action = entry.mainFn(params, {});
 				elapsed = performance.now() - begin;
 
 				error = checkError(action);
